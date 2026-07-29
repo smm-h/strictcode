@@ -1,0 +1,455 @@
+# strictcode graph vocabulary — the universal node/row/capability truth.
+# A strictspec-gated document (schema/strictspec/vocabulary.schema.toml).
+# Selectors pinned for enum sourcing: node_kinds[].id, row_kinds[].id, capabilities[].id.
+
+format_version = 1
+
+# ---------------------------------------------------------------------------
+# Enumerations referenced by attribute declarations.
+# ---------------------------------------------------------------------------
+
+[[enums]]
+id = "maturity"
+values = ["stable", "speculative"]
+
+[[enums]]
+id = "resolution"
+values = ["syntactic", "type_informed", "unresolved"]
+
+[[enums]]
+id = "dependency_scope"
+values = ["runtime", "dev", "peer", "explicit"]
+
+[[enums]]
+id = "provenance"
+values = ["declared", "derived", "declared_external"]
+
+[[enums]]
+id = "discipline"
+values = ["nominal", "structural"]
+
+[[enums]]
+id = "mechanism"
+values = ["inheritance", "implements", "embedding", "satisfaction", "register", "protocol"]
+
+[[enums]]
+id = "type_form"
+values = ["class", "struct", "interface", "protocol", "enum", "alias", "trait"]
+
+[[enums]]
+id = "visibility"
+values = ["public", "private_convention", "unexported"]
+
+[[enums]]
+id = "entry_point_form"
+values = ["script", "export", "bin", "main_package", "gui_script"]
+
+[[enums]]
+id = "export_form"
+values = ["declared_all", "relative_import", "reexport", "manifest"]
+
+[[enums]]
+id = "reference_context"
+values = ["parameter", "return", "annotation", "body"]
+
+[[enums]]
+id = "endpoint_protocol"
+values = ["http", "rpc", "cli", "other"]
+
+[[enums]]
+id = "db_entity_form"
+values = ["table", "collection", "schema", "view"]
+
+[[enums]]
+id = "capability_status"
+values = ["supported", "planned", "not-applicable"]
+
+# ---------------------------------------------------------------------------
+# Node kinds. Attribute types: "string" | "boolean" | "integer" | "enum:<id>".
+# Identity (the qualified ID, SPEC.md section 2) and span are universal and
+# not repeated per kind.
+# ---------------------------------------------------------------------------
+
+[[node_kinds]]
+id = "workspace_member"
+maturity = "stable"
+description = "A project in a multi-project workspace, with manifest-declared identity."
+[[node_kinds.attributes]]
+name = "member_name"
+type = "string"
+[[node_kinds.attributes]]
+name = "registry_name"
+type = "string"
+[[node_kinds.attributes]]
+name = "is_library"
+type = "boolean"
+[[node_kinds.attributes]]
+name = "is_dev_only"
+type = "boolean"
+[[node_kinds.attributes]]
+name = "root_path"
+type = "string"
+
+[[node_kinds]]
+id = "module"
+maturity = "stable"
+description = "The language's import-addressable unit: Python module file, Go package directory, TS/JS file."
+[[node_kinds.attributes]]
+name = "logical_name"
+type = "string"
+[[node_kinds.attributes]]
+name = "path"
+type = "string"
+[[node_kinds.attributes]]
+name = "test_context"
+type = "boolean"
+
+[[node_kinds]]
+id = "entry_point"
+maturity = "stable"
+description = "A manifest-declared executable or export root: Python [project.scripts], npm exports/main/bin, Go package main."
+[[node_kinds.attributes]]
+name = "form"
+type = "enum:entry_point_form"
+[[node_kinds.attributes]]
+name = "declared_name"
+type = "string"
+
+[[node_kinds]]
+id = "function"
+maturity = "stable"
+description = "A named callable: function, method, procedure."
+[[node_kinds.attributes]]
+name = "visibility"
+type = "enum:visibility"
+[[node_kinds.attributes]]
+name = "is_method"
+type = "boolean"
+[[node_kinds.attributes]]
+name = "is_async"
+type = "boolean"
+[[node_kinds.attributes]]
+name = "is_test"
+type = "boolean"
+
+[[node_kinds]]
+id = "closure"
+maturity = "stable"
+description = "An anonymous callable capturing scope; identity per SPEC.md section 2.3."
+[[node_kinds.attributes]]
+name = "name_hint"
+type = "string"
+[[node_kinds.attributes]]
+name = "ordinal"
+type = "integer"
+[[node_kinds.attributes]]
+name = "fingerprint"
+type = "string"
+
+[[node_kinds]]
+id = "type"
+maturity = "stable"
+description = "A type unit: class, struct, interface, protocol, enum, alias, trait. The form attribute carries the flavor."
+[[node_kinds.attributes]]
+name = "form"
+type = "enum:type_form"
+[[node_kinds.attributes]]
+name = "visibility"
+type = "enum:visibility"
+
+[[node_kinds]]
+id = "type_param"
+maturity = "speculative"
+description = "A generic type parameter declared by a function or type."
+[[node_kinds.attributes]]
+name = "param_name"
+type = "string"
+
+[[node_kinds]]
+id = "variable"
+maturity = "speculative"
+description = "A module-level variable or constant, or a type's field."
+[[node_kinds.attributes]]
+name = "is_constant"
+type = "boolean"
+[[node_kinds.attributes]]
+name = "visibility"
+type = "enum:visibility"
+
+[[node_kinds]]
+id = "endpoint"
+maturity = "speculative"
+description = "An externally reachable route: HTTP endpoint, RPC method, CLI command."
+[[node_kinds.attributes]]
+name = "route"
+type = "string"
+[[node_kinds.attributes]]
+name = "protocol"
+type = "enum:endpoint_protocol"
+
+[[node_kinds]]
+id = "db_entity"
+maturity = "speculative"
+description = "A persistent-state unit: table, collection, schema, view — however declared (ORM model, migration, raw SQL)."
+[[node_kinds.attributes]]
+name = "entity_name"
+type = "string"
+[[node_kinds.attributes]]
+name = "form"
+type = "enum:db_entity_form"
+
+# ---------------------------------------------------------------------------
+# Row kinds (the interaction relation). Universal columns — src, dst, file,
+# span — are not repeated per kind; attributes listed here are the typed
+# per-row extras. src_kinds/dst_kinds reference node kind ids.
+# ---------------------------------------------------------------------------
+
+[[row_kinds]]
+id = "imports"
+maturity = "stable"
+description = "Module-level import dependency."
+src_kinds = ["module"]
+dst_kinds = ["module", "workspace_member"]
+[[row_kinds.attributes]]
+name = "test_context"
+type = "boolean"
+[[row_kinds.attributes]]
+name = "guarded"
+type = "boolean"
+[[row_kinds.attributes]]
+name = "type_checking"
+type = "boolean"
+
+[[row_kinds]]
+id = "declares_dependency"
+maturity = "stable"
+description = "Manifest-declared dependency between workspace members, with scope."
+src_kinds = ["workspace_member"]
+dst_kinds = ["workspace_member"]
+[[row_kinds.attributes]]
+name = "scope"
+type = "enum:dependency_scope"
+
+[[row_kinds]]
+id = "exports"
+maturity = "stable"
+description = "A module exporting a unit: Python __init__ __all__/relative imports, TS re-exports, manifest export maps."
+src_kinds = ["module"]
+dst_kinds = ["module", "function", "type", "variable"]
+[[row_kinds.attributes]]
+name = "form"
+type = "enum:export_form"
+
+[[row_kinds]]
+id = "resolves_to"
+maturity = "stable"
+description = "An entry point resolving to the unit it launches or exposes."
+src_kinds = ["entry_point"]
+dst_kinds = ["module", "function"]
+
+[[row_kinds]]
+id = "contains"
+maturity = "stable"
+description = "Structural containment: module contains function/type; type contains method/field."
+src_kinds = ["module", "type", "function"]
+dst_kinds = ["function", "closure", "type", "variable", "type_param"]
+
+[[row_kinds]]
+id = "calls"
+maturity = "stable"
+description = "A callable invoking a callable. Resolution source is mandatory and honest."
+src_kinds = ["function", "closure"]
+dst_kinds = ["function", "closure"]
+[[row_kinds.attributes]]
+name = "resolution"
+type = "enum:resolution"
+
+[[row_kinds]]
+id = "instantiates"
+maturity = "stable"
+description = "A callable creating an instance of a type."
+src_kinds = ["function", "closure"]
+dst_kinds = ["type"]
+
+[[row_kinds]]
+id = "references"
+maturity = "stable"
+description = "A callable or type referring to a type: parameter, return, annotation, or body use."
+src_kinds = ["function", "closure", "type", "variable"]
+dst_kinds = ["type"]
+[[row_kinds.attributes]]
+name = "context"
+type = "enum:reference_context"
+
+[[row_kinds]]
+id = "conforms_to"
+maturity = "stable"
+description = "Subtype/conformance. Three mandatory orthogonal attributes; declared rows stored, derived rows lazily materialized per check capability; the declared-vs-actual gap is a projection, not a row."
+src_kinds = ["type"]
+dst_kinds = ["type"]
+[[row_kinds.attributes]]
+name = "provenance"
+type = "enum:provenance"
+[[row_kinds.attributes]]
+name = "discipline"
+type = "enum:discipline"
+[[row_kinds.attributes]]
+name = "mechanism"
+type = "enum:mechanism"
+
+[[row_kinds]]
+id = "decorates"
+maturity = "speculative"
+description = "A callable decorating/annotating another unit (Python decorators, TS decorators)."
+src_kinds = ["function"]
+dst_kinds = ["function", "type"]
+
+[[row_kinds]]
+id = "validates"
+maturity = "speculative"
+description = "A test callable validating a production unit."
+src_kinds = ["function"]
+dst_kinds = ["function", "type", "module"]
+
+[[row_kinds]]
+id = "accesses"
+maturity = "speculative"
+description = "A callable reading or writing a variable or field."
+src_kinds = ["function", "closure"]
+dst_kinds = ["variable"]
+[[row_kinds.attributes]]
+name = "writes"
+type = "boolean"
+
+[[row_kinds]]
+id = "handled_by"
+maturity = "speculative"
+description = "An endpoint handled by a callable."
+src_kinds = ["endpoint"]
+dst_kinds = ["function"]
+
+[[row_kinds]]
+id = "persists_to"
+maturity = "speculative"
+description = "A unit reading or writing a persistent entity."
+src_kinds = ["function", "type"]
+dst_kinds = ["db_entity"]
+
+# ---------------------------------------------------------------------------
+# Capabilities — the fine-grained units profiles declare and checks require.
+# ---------------------------------------------------------------------------
+
+[[capabilities]]
+id = "module-enumeration"
+layer = "import-graph"
+description = "Enumerate modules with logical names, paths, and test-context classification."
+
+[[capabilities]]
+id = "resolve-imports-internal"
+layer = "import-graph"
+description = "Resolve import statements to workspace members (normalization, overrides, namespace maps)."
+
+[[capabilities]]
+id = "import-attr-guarded"
+layer = "import-graph"
+description = "Classify imports guarded by an optional-dependency construct (Python try/except ImportError try-body)."
+
+[[capabilities]]
+id = "import-attr-type-checking"
+layer = "import-graph"
+description = "Classify type-only imports (Python if TYPE_CHECKING, TS import type)."
+
+[[capabilities]]
+id = "test-context-classification"
+layer = "import-graph"
+description = "Apply the shared root-relative test-context predicate to files and directories."
+
+[[capabilities]]
+id = "entry-point-discovery"
+layer = "import-graph"
+description = "Discover manifest-declared entry points and resolve their targets."
+
+[[capabilities]]
+id = "declared-dependency-extraction"
+layer = "import-graph"
+description = "Read manifest-declared dependencies with scopes into declares_dependency rows."
+
+[[capabilities]]
+id = "export-extraction"
+layer = "import-graph"
+description = "Extract module export surfaces (exports rows)."
+
+[[capabilities]]
+id = "callable-extraction"
+layer = "full-semantic-graph"
+description = "Extract named callables and closures with containment."
+
+[[capabilities]]
+id = "type-extraction"
+layer = "full-semantic-graph"
+description = "Extract type units with form and containment."
+
+[[capabilities]]
+id = "call-resolution-syntactic"
+layer = "full-semantic-graph"
+description = "Resolve calls through imports, module attributes, and class methods via the symbol table; unresolvable calls emit resolution=unresolved."
+
+[[capabilities]]
+id = "call-resolution-type-informed"
+layer = "full-semantic-graph"
+description = "Opt-in mode: resolve method calls using an external type checker's inferences. Hard error if configured and unavailable."
+
+[[capabilities]]
+id = "conformance-declared"
+layer = "full-semantic-graph"
+description = "Extract declared conformance rows (extends, implements, embedding, ABC registration)."
+
+[[capabilities]]
+id = "conformance-derived"
+layer = "full-semantic-graph"
+description = "Lazily materialize derived conformance (Go satisfaction, TS structural compatibility, Python Protocol)."
+
+[[capabilities]]
+id = "instantiation-extraction"
+layer = "full-semantic-graph"
+description = "Extract instantiates rows."
+
+[[capabilities]]
+id = "reference-extraction"
+layer = "full-semantic-graph"
+description = "Extract references rows with context."
+
+[[capabilities]]
+id = "decoration-extraction"
+layer = "full-semantic-graph"
+description = "Extract decorates rows."
+
+[[capabilities]]
+id = "endpoint-discovery"
+layer = "boundary-graph"
+description = "Discover endpoints and their handlers."
+
+[[capabilities]]
+id = "db-entity-discovery"
+layer = "boundary-graph"
+description = "Discover persistent entities and persists_to rows."
+
+# ---------------------------------------------------------------------------
+# Layers — named capability bundles for presentation and matrix grouping.
+# A layer is exactly its capability set.
+# ---------------------------------------------------------------------------
+
+[[layers]]
+id = "import-graph"
+maturity = "stable"
+description = "Modules, imports, exports, entry points, declared dependencies — everything the seed catalog needs."
+
+[[layers]]
+id = "full-semantic-graph"
+maturity = "stable"
+description = "Callables, types, calls, conformance, references — deep architectural checks."
+
+[[layers]]
+id = "boundary-graph"
+maturity = "speculative"
+description = "Endpoints and persistent state — where the code graph meets the outside world."
