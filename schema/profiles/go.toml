@@ -1,0 +1,117 @@
+# strictcode language profile: Go.
+# A strictspec-gated document (schema/strictspec/profile.schema.toml).
+
+format_version = 1
+language = "go"
+display_name = "Go"
+grammar = "tree-sitter-go"
+
+# --- Construct mappings ---
+
+[[constructs]]
+construct = "package directory"
+node_kind = "module"
+notes = "The import-addressable unit is the package, not the file. Logical name = import path relative to the member's module path."
+
+[[constructs]]
+construct = "func"
+node_kind = "function"
+notes = "Methods use the receiver type as container; pointer-ness normalized (SPEC.md 2.5). Visibility=unexported for lowercase identifiers."
+
+[[constructs]]
+construct = "func literal"
+node_kind = "closure"
+notes = "Identity per SPEC.md 2.3."
+
+[[constructs]]
+construct = "struct type"
+node_kind = "type"
+notes = "form=struct."
+
+[[constructs]]
+construct = "interface type"
+node_kind = "type"
+notes = "form=interface."
+
+[[constructs]]
+construct = "struct/interface embedding"
+row_kind = "conforms_to"
+notes = "provenance=declared, discipline=nominal, mechanism=embedding. Composition that carries method sets."
+
+[[constructs]]
+construct = "implicit interface satisfaction"
+row_kind = "conforms_to"
+notes = "provenance=derived, discipline=structural, mechanism=satisfaction. Never declared in source; lazily materialized under conformance-derived."
+
+[[constructs]]
+construct = "import declaration"
+row_kind = "imports"
+notes = "Member match = module path equality or module-path prefix. guarded and type_checking are always false (not applicable)."
+
+[[constructs]]
+construct = "package main + func main"
+node_kind = "entry_point"
+notes = "form=main_package; resolves_to the main function."
+
+# --- Capability statuses ---
+
+[capabilities.module-enumeration]
+status = "planned"
+
+[capabilities.resolve-imports-internal]
+status = "planned"
+
+[capabilities.import-attr-guarded]
+status = "not-applicable"
+reason = "Go has no optional-import construct; every import is unconditional and required at compile time."
+
+[capabilities.import-attr-type-checking]
+status = "not-applicable"
+reason = "Go has no type-only import form; all imports are ordinary compile-time dependencies."
+
+[capabilities.test-context-classification]
+status = "planned"
+
+[capabilities.entry-point-discovery]
+status = "planned"
+
+[capabilities.declared-dependency-extraction]
+status = "planned"
+
+[capabilities.export-extraction]
+status = "planned"
+
+[capabilities.callable-extraction]
+status = "planned"
+
+[capabilities.type-extraction]
+status = "planned"
+
+[capabilities.call-resolution-syntactic]
+status = "planned"
+
+[capabilities.call-resolution-type-informed]
+status = "not-applicable"
+reason = "Go is statically typed; syntactic resolution over the package symbol table already has type information — there is no external-type-checker mode to opt into."
+
+[capabilities.conformance-declared]
+status = "planned"
+
+[capabilities.conformance-derived]
+status = "planned"
+
+[capabilities.instantiation-extraction]
+status = "planned"
+
+[capabilities.reference-extraction]
+status = "planned"
+
+[capabilities.decoration-extraction]
+status = "not-applicable"
+reason = "Go has no decorator or annotation construct."
+
+[capabilities.endpoint-discovery]
+status = "planned"
+
+[capabilities.db-entity-discovery]
+status = "planned"

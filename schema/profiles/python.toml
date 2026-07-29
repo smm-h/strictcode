@@ -1,0 +1,124 @@
+# strictcode language profile: Python.
+# A strictspec-gated document (schema/strictspec/profile.schema.toml).
+# Declares how Python constructs map onto the vocabulary and the status of every capability.
+
+format_version = 1
+language = "py"
+display_name = "Python"
+grammar = "tree-sitter-python"
+
+# --- Construct mappings (semantic modeling decisions, reviewable in one place) ---
+
+[[constructs]]
+construct = "module file"
+node_kind = "module"
+notes = "Logical name = dotted path from the discovered package root."
+
+[[constructs]]
+construct = "def / async def"
+node_kind = "function"
+notes = "is_async from async def; is_test from the shared test-context predicate plus test_* naming."
+
+[[constructs]]
+construct = "lambda"
+node_kind = "closure"
+notes = "Identity per SPEC.md 2.3 (name hint, ordinal, fingerprint)."
+
+[[constructs]]
+construct = "class"
+node_kind = "type"
+notes = "form=class; form=protocol when inheriting typing.Protocol; form=enum for enum.Enum subclasses."
+
+[[constructs]]
+construct = "class inheritance (bases list)"
+row_kind = "conforms_to"
+notes = "provenance=declared, discipline=nominal, mechanism=inheritance. Multiple inheritance emits one row per base."
+
+[[constructs]]
+construct = "ABC.register(cls)"
+row_kind = "conforms_to"
+notes = "provenance=declared_external, discipline=nominal, mechanism=register."
+
+[[constructs]]
+construct = "typing.Protocol conformance"
+row_kind = "conforms_to"
+notes = "provenance=derived, discipline=structural, mechanism=protocol. Lazily materialized under conformance-derived."
+
+[[constructs]]
+construct = "decorator application"
+row_kind = "decorates"
+notes = "The decorator callable decorates the target function or class."
+
+[[constructs]]
+construct = "import / from-import"
+row_kind = "imports"
+notes = "guarded per try/except ImportError try-body rule; type_checking per if TYPE_CHECKING; resolution to workspace members per the DESIGN.md 6.3 order."
+
+[[constructs]]
+construct = "__init__.py exports (__all__, relative imports)"
+row_kind = "exports"
+notes = "form=declared_all or relative_import; feeds the dead-module exemption."
+
+[[constructs]]
+construct = "[project.scripts] / [project.gui-scripts]"
+node_kind = "entry_point"
+notes = "form=script or gui_script; resolves_to the named callable."
+
+# --- Capability statuses (every vocabulary capability, explicitly) ---
+
+[capabilities.module-enumeration]
+status = "planned"
+
+[capabilities.resolve-imports-internal]
+status = "planned"
+
+[capabilities.import-attr-guarded]
+status = "planned"
+
+[capabilities.import-attr-type-checking]
+status = "planned"
+
+[capabilities.test-context-classification]
+status = "planned"
+
+[capabilities.entry-point-discovery]
+status = "planned"
+
+[capabilities.declared-dependency-extraction]
+status = "planned"
+
+[capabilities.export-extraction]
+status = "planned"
+
+[capabilities.callable-extraction]
+status = "planned"
+
+[capabilities.type-extraction]
+status = "planned"
+
+[capabilities.call-resolution-syntactic]
+status = "planned"
+
+[capabilities.call-resolution-type-informed]
+status = "planned"
+
+[capabilities.conformance-declared]
+status = "planned"
+
+[capabilities.conformance-derived]
+status = "planned"
+
+[capabilities.instantiation-extraction]
+status = "planned"
+
+[capabilities.reference-extraction]
+status = "planned"
+
+[capabilities.decoration-extraction]
+status = "planned"
+
+[capabilities.endpoint-discovery]
+status = "planned"
+
+[capabilities.db-entity-discovery]
+status = "planned"

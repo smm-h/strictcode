@@ -1,0 +1,134 @@
+# strictcode language profile: TypeScript/JavaScript (one column — TS is a superset of JS).
+# A strictspec-gated document (schema/strictspec/profile.schema.toml).
+
+format_version = 1
+language = "ts"
+display_name = "TypeScript/JavaScript"
+grammar = "tree-sitter-typescript"
+
+# --- Construct mappings ---
+
+[[constructs]]
+construct = "source file"
+node_kind = "module"
+notes = "No logical module identity exists; logical name = member-relative path, extension stripped, index collapsed (SPEC.md 2.2)."
+
+[[constructs]]
+construct = "function declaration / method"
+node_kind = "function"
+notes = "Overload signatures disambiguated by source-order index (SPEC.md 2.4)."
+
+[[constructs]]
+construct = "arrow function / function expression"
+node_kind = "closure"
+notes = "Name hint from the assigned variable or property where derivable."
+
+[[constructs]]
+construct = "class"
+node_kind = "type"
+notes = "form=class."
+
+[[constructs]]
+construct = "interface"
+node_kind = "type"
+notes = "form=interface. Declaration merging: merged declarations are one node; the ID's source-order index rule applies only to non-merging same-name siblings."
+
+[[constructs]]
+construct = "type alias"
+node_kind = "type"
+notes = "form=alias."
+
+[[constructs]]
+construct = "class extends class / interface extends interface"
+row_kind = "conforms_to"
+notes = "provenance=declared, discipline=nominal, mechanism=inheritance."
+
+[[constructs]]
+construct = "class implements interface"
+row_kind = "conforms_to"
+notes = "provenance=declared, discipline=nominal, mechanism=implements."
+
+[[constructs]]
+construct = "structural compatibility"
+row_kind = "conforms_to"
+notes = "provenance=derived, discipline=structural, mechanism=satisfaction. Lazily materialized under conformance-derived."
+
+[[constructs]]
+construct = "import / export-from / require() / dynamic import()"
+row_kind = "imports"
+notes = "Specifier reduction per DESIGN.md 6.3 (TS/JS); type_checking=true for import type; guarded always false."
+
+[[constructs]]
+construct = "re-exports (export ... from)"
+row_kind = "exports"
+notes = "form=reexport; feeds BFS reachability."
+
+[[constructs]]
+construct = "package.json exports/main/bin"
+node_kind = "entry_point"
+notes = "form=export or bin; exports condition/subpath tree traversed recursively."
+
+[[constructs]]
+construct = "TS decorators"
+row_kind = "decorates"
+notes = "Stage-3 decorators on classes and methods."
+
+# --- Capability statuses ---
+
+[capabilities.module-enumeration]
+status = "planned"
+
+[capabilities.resolve-imports-internal]
+status = "planned"
+
+[capabilities.import-attr-guarded]
+status = "not-applicable"
+reason = "No declared optional-dependency import construct; a try/catch around dynamic import() is control flow, not an optionality declaration."
+
+[capabilities.import-attr-type-checking]
+status = "planned"
+
+[capabilities.test-context-classification]
+status = "planned"
+
+[capabilities.entry-point-discovery]
+status = "planned"
+
+[capabilities.declared-dependency-extraction]
+status = "planned"
+
+[capabilities.export-extraction]
+status = "planned"
+
+[capabilities.callable-extraction]
+status = "planned"
+
+[capabilities.type-extraction]
+status = "planned"
+
+[capabilities.call-resolution-syntactic]
+status = "planned"
+
+[capabilities.call-resolution-type-informed]
+status = "planned"
+
+[capabilities.conformance-declared]
+status = "planned"
+
+[capabilities.conformance-derived]
+status = "planned"
+
+[capabilities.instantiation-extraction]
+status = "planned"
+
+[capabilities.reference-extraction]
+status = "planned"
+
+[capabilities.decoration-extraction]
+status = "planned"
+
+[capabilities.endpoint-discovery]
+status = "planned"
+
+[capabilities.db-entity-discovery]
+status = "planned"
