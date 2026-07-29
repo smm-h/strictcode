@@ -92,6 +92,15 @@ These attributes exist so that dependency-hygiene checks are ordinary graph quer
 
 The full schema (all node types, all edge types, all attributes) is designed and versioned **before** extraction code is written. This prevents schema churn from rippling through every language extractor later, and gives the matrix a stable vocabulary. The three-dimensional reality — language × check × fix-tier — hangs off this vocabulary.
 
+**AMENDED 2026-07-29 — the schema spec is drafted (`schema/`).** The design round resolved:
+
+- **Model:** a flat typed **interaction relation** is the source of truth; the algorithm graph, findings feed, and JSON output are deterministic projections. Canonical form (sorted rows, SHA-256) is defined once on the relation.
+- **Identity:** hierarchical qualified names (logical module identity, never file paths; name-hint + ordinal + fingerprint for anonymous units; source-order index for overloads; Go receiver pointer-ness normalized; collisions and case-only clashes are hard errors). Location is an attribute; tier-1 verification uses structural correspondence, not ID or location equality. Spans are byte ranges over LF-normalized UTF-8; line/col derived at output.
+- **Vocabulary:** universal kinds in a versioned TOML vocabulary; **two-tier capabilities** (fine-grained capability IDs bundled into layers); per-language **profiles** declare construct mappings and per-capability status (`supported`/`planned`/`not-applicable` + mandatory reason); the matrix is **generated** from profiles ∩ check requirements.
+- **Subtyping:** one `conforms_to` row kind with three mandatory orthogonal attributes (`provenance`, `discipline`, `mechanism`); declared rows stored, derived satisfaction lazily materialized per check capability; the declared−actual gap is a first-class projection.
+- **Speculative design, labeled:** outer kinds (endpoints, DB entities, variables, type params) are fully drafted with `maturity = "speculative"` — iteration via strictspec migrations is expected and cheap; only silent speculation is banned. Tests and decorators are relationships (`validates`, `decorates`), not node kinds.
+- **Gating and content versioning:** all schema artifacts are strictspec documents (strictspec shipped 0.1.0 and is a live dependency). Vocabulary content versioning rides strictspec enum sourcing (decision 32): the profile and findings schemas bake their kind enums from `vocabulary.toml`, so content changes are toolchain-gated format changes. No separate `vocabulary_version` field.
+
 ## 5. What "wrong" means: checks
 
 Rules are **built-in only**: Go code shipped with the tool, enabled/disabled and threshold-tuned via a config file (the Ruff model). No user-defined rule DSL, no embedded query language. Rules stay correct, testable, and fixable because they are code; users cannot write broken rules.
@@ -373,7 +382,7 @@ strictcode is consumed by rlsbl through rlsbl's **external-check protocol** — 
 
 ## 12. Open work (in dependency order)
 
-1. **Graph schema spec.** The versioned node/edge/attribute vocabulary everything else builds on — now including import-edge attributes (`test_context`, `guarded`, `type_checking`), entry-point nodes, and workspace-member nodes with scoped declared-dependency edges. Full design upfront, before any extraction code.
+1. **Graph schema spec.** DRAFTED 2026-07-29 (`schema/SPEC.md`, `schema/vocabulary.toml`, `schema/profiles/*.toml`, `schema/strictspec/*.schema.toml`). Remaining follow-ons: the `strictspec.toml` consumer manifest and generated readers at repo scaffolding time, and the Go-constants/matrix generator that consumes the vocabulary and profiles.
 2. **Rule catalog v1.** The seed catalog (§6) is specified; remaining work is mapping each seed check to its graph queries, finalizing the deep-architectural checks of wave two, and fixing stable rule identifiers and severities.
 3. **Config format design.** The strictcode-native config surface implementing §6.6's principles.
 4. **Binding evaluation.** Benchmark gotreesitter vs official CGo bindings on real Python codebases: grammar fidelity, query support, throughput, memory. Commit to one.
