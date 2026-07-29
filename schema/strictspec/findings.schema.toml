@@ -1,0 +1,107 @@
+name = "strictcode-findings"
+meta_version = 1
+format_version = 1
+document_syntax = "json"
+role = "schema"
+root = "Findings"
+targets = ["go"]
+description = "The strictcode JSON output format. Minimal v1 shape, designed for iteration. Vocabulary content versioning physically lives here: kind enums are SOURCED from schema/vocabulary.toml, so vocabulary changes are format changes of this schema (strictspec decision 32)."
+
+[types.Findings]
+type = "record"
+
+[types.Findings.fields.strictcode_version]
+type = "string"
+required = true
+non_empty = true
+
+[types.Findings.fields.workspace_root]
+type = "string"
+required = true
+non_empty = true
+
+[types.Findings.fields.findings]
+type = "array"
+required = true
+[types.Findings.fields.findings.item]
+type = "Finding"
+
+[types.Finding]
+type = "record"
+
+[types.Finding.fields.rule]
+type = "string"
+required = true
+regex = "^[a-z][a-z0-9-]*$"
+description = "Stable rule identifier (lowercase, hyphenated) — the same identifiers rlsbl external-check configs reference."
+
+[types.Finding.fields.severity]
+type = "enum"
+required = true
+values = ["error", "warning"]
+
+[types.Finding.fields.message]
+type = "string"
+required = true
+non_empty = true
+
+[types.Finding.fields.target]
+type = "Target"
+required = true
+
+[types.Finding.fields.fix]
+type = "Fix"
+required = false
+
+[types.Target]
+type = "record"
+
+[types.Target.fields.id]
+type = "string"
+required = true
+non_empty = true
+description = "Serialized qualified node ID (SPEC.md section 2)."
+
+[types.Target.fields.kind]
+type = "enum"
+required = true
+description = "Sourced from the vocabulary (node kinds)."
+[types.Target.fields.kind.source]
+document = "schema/vocabulary.toml"
+selector = "node_kinds[].id"
+baked = [
+  "workspace_member",
+  "module",
+  "entry_point",
+  "function",
+  "closure",
+  "type",
+  "type_param",
+  "variable",
+  "endpoint",
+  "db_entity",
+]
+
+[types.Target.fields.file]
+type = "string"
+required = true
+non_empty = true
+
+[types.Target.fields.line]
+type = "integer"
+required = true
+min = 1
+
+[types.Fix]
+type = "record"
+
+[types.Fix.fields.tier]
+type = "integer"
+required = true
+min = 1
+max = 3
+
+[types.Fix.fields.description]
+type = "string"
+required = true
+non_empty = true

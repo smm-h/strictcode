@@ -1,0 +1,198 @@
+name = "strictcode-vocabulary"
+meta_version = 1
+format_version = 1
+document_syntax = "toml"
+role = "schema"
+root = "Vocabulary"
+targets = ["go"]
+description = "Gates schema/vocabulary.toml: the universal node/row/capability vocabulary."
+
+[types.Vocabulary]
+type = "record"
+
+[types.Vocabulary.fields.enums]
+type = "array"
+required = true
+[types.Vocabulary.fields.enums.item]
+type = "Enum"
+
+[types.Vocabulary.fields.node_kinds]
+type = "array"
+required = true
+[types.Vocabulary.fields.node_kinds.item]
+type = "NodeKind"
+
+[types.Vocabulary.fields.row_kinds]
+type = "array"
+required = true
+[types.Vocabulary.fields.row_kinds.item]
+type = "RowKind"
+
+[types.Vocabulary.fields.capabilities]
+type = "array"
+required = true
+[types.Vocabulary.fields.capabilities.item]
+type = "Capability"
+
+[types.Vocabulary.fields.layers]
+type = "array"
+required = true
+[types.Vocabulary.fields.layers.item]
+type = "Layer"
+
+[[types.Vocabulary.constraints]]
+form = "unique-by"
+collection = "enums"
+field = "id"
+normalization = "none"
+
+[[types.Vocabulary.constraints]]
+form = "unique-by"
+collection = "node_kinds"
+field = "id"
+normalization = "none"
+
+[[types.Vocabulary.constraints]]
+form = "unique-by"
+collection = "row_kinds"
+field = "id"
+normalization = "none"
+
+[[types.Vocabulary.constraints]]
+form = "unique-by"
+collection = "capabilities"
+field = "id"
+normalization = "none"
+
+[[types.Vocabulary.constraints]]
+form = "unique-by"
+collection = "layers"
+field = "id"
+normalization = "none"
+
+[[types.Vocabulary.constraints]]
+form = "intra-document-references"
+reference = "capabilities[].layer"
+resolves_into = "layers[].id"
+resolves_by = "equality"
+
+[[types.Vocabulary.constraints]]
+form = "intra-document-references"
+reference = "row_kinds[].src_kinds[]"
+resolves_into = "node_kinds[].id"
+resolves_by = "equality"
+
+[[types.Vocabulary.constraints]]
+form = "intra-document-references"
+reference = "row_kinds[].dst_kinds[]"
+resolves_into = "node_kinds[].id"
+resolves_by = "equality"
+
+[types.Ident]
+type = "string"
+regex = "^[a-z][a-z0-9_-]*$"
+
+[types.Maturity]
+type = "enum"
+values = ["stable", "speculative"]
+
+[types.AttributeType]
+type = "string"
+regex = "^(string|boolean|integer|enum:[a-z][a-z0-9_]*)$"
+description = "A scalar attribute type or a reference to a declared enum (enum:<id>)."
+
+[types.Attribute]
+type = "record"
+[types.Attribute.fields.name]
+type = "Ident"
+required = true
+[types.Attribute.fields.type]
+type = "AttributeType"
+required = true
+
+[types.Enum]
+type = "record"
+[types.Enum.fields.id]
+type = "Ident"
+required = true
+[types.Enum.fields.values]
+type = "array"
+required = true
+min_len = 1
+[types.Enum.fields.values.item]
+type = "string"
+non_empty = true
+
+[types.NodeKind]
+type = "record"
+[types.NodeKind.fields.id]
+type = "Ident"
+required = true
+[types.NodeKind.fields.maturity]
+type = "Maturity"
+required = true
+[types.NodeKind.fields.description]
+type = "string"
+required = true
+non_empty = true
+[types.NodeKind.fields.attributes]
+type = "array"
+required = false
+[types.NodeKind.fields.attributes.item]
+type = "Attribute"
+
+[types.RowKind]
+type = "record"
+[types.RowKind.fields.id]
+type = "Ident"
+required = true
+[types.RowKind.fields.maturity]
+type = "Maturity"
+required = true
+[types.RowKind.fields.description]
+type = "string"
+required = true
+non_empty = true
+[types.RowKind.fields.src_kinds]
+type = "array"
+required = true
+min_len = 1
+[types.RowKind.fields.src_kinds.item]
+type = "Ident"
+[types.RowKind.fields.dst_kinds]
+type = "array"
+required = true
+min_len = 1
+[types.RowKind.fields.dst_kinds.item]
+type = "Ident"
+[types.RowKind.fields.attributes]
+type = "array"
+required = false
+[types.RowKind.fields.attributes.item]
+type = "Attribute"
+
+[types.Capability]
+type = "record"
+[types.Capability.fields.id]
+type = "Ident"
+required = true
+[types.Capability.fields.layer]
+type = "Ident"
+required = true
+[types.Capability.fields.description]
+type = "string"
+required = true
+non_empty = true
+
+[types.Layer]
+type = "record"
+[types.Layer.fields.id]
+type = "Ident"
+required = true
+[types.Layer.fields.maturity]
+type = "Maturity"
+required = true
+[types.Layer.fields.description]
+type = "string"
+required = true
+non_empty = true

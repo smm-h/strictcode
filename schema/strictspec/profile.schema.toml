@@ -1,0 +1,122 @@
+name = "strictcode-profile"
+meta_version = 1
+format_version = 1
+document_syntax = "toml"
+role = "schema"
+root = "Profile"
+targets = ["go"]
+description = "Gates schema/profiles/*.toml: per-language construct mappings and capability statuses. node_kind/row_kind arms are SOURCED from schema/vocabulary.toml (strictspec decision 32) — vocabulary content changes surface here as baked-arm staleness."
+
+[types.Profile]
+type = "record"
+
+[types.Profile.fields.language]
+type = "enum"
+required = true
+values = ["py", "go", "ts"]
+
+[types.Profile.fields.display_name]
+type = "string"
+required = true
+non_empty = true
+
+[types.Profile.fields.grammar]
+type = "string"
+required = true
+regex = "^tree-sitter-[a-z0-9-]+$"
+
+[types.Profile.fields.constructs]
+type = "array"
+required = true
+min_len = 1
+[types.Profile.fields.constructs.item]
+type = "Construct"
+
+[types.Profile.fields.capabilities]
+type = "map"
+required = true
+key_pattern = "^[a-z][a-z0-9-]*$"
+order = "incidental"
+[types.Profile.fields.capabilities.value]
+type = "CapabilityStatus"
+
+[types.Construct]
+type = "record"
+[types.Construct.fields.construct]
+type = "string"
+required = true
+non_empty = true
+
+[types.Construct.fields.node_kind]
+type = "enum"
+required = false
+description = "Sourced from the vocabulary; exactly one of node_kind/row_kind per construct."
+[types.Construct.fields.node_kind.source]
+document = "schema/vocabulary.toml"
+selector = "node_kinds[].id"
+baked = [
+  "workspace_member",
+  "module",
+  "entry_point",
+  "function",
+  "closure",
+  "type",
+  "type_param",
+  "variable",
+  "endpoint",
+  "db_entity",
+]
+
+[types.Construct.fields.row_kind]
+type = "enum"
+required = false
+description = "Sourced from the vocabulary; exactly one of node_kind/row_kind per construct."
+[types.Construct.fields.row_kind.source]
+document = "schema/vocabulary.toml"
+selector = "row_kinds[].id"
+baked = [
+  "imports",
+  "declares_dependency",
+  "exports",
+  "resolves_to",
+  "contains",
+  "calls",
+  "instantiates",
+  "references",
+  "conforms_to",
+  "decorates",
+  "validates",
+  "accesses",
+  "handled_by",
+  "persists_to",
+]
+
+[types.Construct.fields.notes]
+type = "string"
+required = true
+non_empty = true
+
+[[types.Construct.constraints]]
+form = "exactly-one-of"
+fields = ["node_kind", "row_kind"]
+
+[types.CapabilityStatus]
+type = "record"
+[types.CapabilityStatus.fields.status]
+type = "enum"
+required = true
+values = ["supported", "planned", "not-applicable"]
+[types.CapabilityStatus.fields.reason]
+type = "string"
+required = false
+non_empty = true
+
+[[types.CapabilityStatus.constraints]]
+form = "conditional-required"
+field = "reason"
+when = { field = "status", predicate = "equals", value = "not-applicable" }
+
+[[types.CapabilityStatus.constraints]]
+form = "forbidden-when"
+field = "reason"
+when = { field = "status", predicate = "in", values = ["supported", "planned"] }
