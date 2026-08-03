@@ -38,3 +38,25 @@ deferred; "todo filed in `todo/.defer/` at repo scaffolding time").
 - Scaffold detected the go target as `artifact: library` (no binaries). The
   DESIGN §12.5 goreleaser-binaries distribution is a release-round concern;
   the scaffold config can be extended then.
+
+## 2026-08-03 — strictspec integration
+
+**First toolchain contact: zero corrections.** The three schemas in
+`schema/strictspec/` (authored from the spec appendix, never previously run
+through the toolchain) passed `strictspec check` authoring validation, `strictspec
+gen`, and full document validation (`--with-domain-checks`) of
+`schema/vocabulary.toml` and all three profiles without a single surface-syntax
+correction. The build charter anticipated fixes; none were needed.
+
+**Manifest and reader layout.** `strictspec.toml` declares one Go target per
+schema; generated readers live in per-schema packages
+`internal/spec/{vocabspec,profilespec,findingsspec}` (one package per schema
+avoids any future type-name collisions between generated bindings). Runtime
+dependency `github.com/smm-h/strictspec/go v0.1.0` (registry version — no path
+sources, per ecosystem policy).
+
+**Round-trip tests.** `internal/spec/roundtrip_test.go` validates the committed
+documents through the generated readers and enforces the closed-set rule
+(SPEC.md §5): every profile declares a status for every vocabulary capability,
+and no profile declares an unknown capability. Note: strictspec generates map
+fields as raw `strictspec.Value` (entries via `.Entries()`), not Go maps.
