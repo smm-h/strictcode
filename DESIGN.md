@@ -112,6 +112,21 @@ The catalog has two waves:
 
 The rule engine is custom-built and operates on graph nodes and edges, not AST nodes. All checks in one run share the single graph built for that run — there is no per-check re-scanning by construction.
 
+**AMENDED 2026-08-03 — rule identity and the catalog (see `CATALOG.md`).** Rule IDs follow
+the mint-once scheme: flat lowercase-hyphenated names, one ID per diagnosis, encoding
+nothing — all metadata (severity, capabilities, tiers, groups) lives in the registry (Go
+declarations + committed schema dump; drift CI-gated). Lifecycle is mint (minor) and
+tombstone (breaking — configs referencing a dead ID hard-error with the tombstone's reason,
+`replaced_by` successors, and migration hint; IDs are never renamed or reused). Aggregates
+are dissolved: `library-lint` became `group:library` over four atomic rules; groups never
+appear on findings. Donor names were re-minted at their best form pre-ship
+(`circular-deps` → `import-cycles`, `dead-modules-stale` → `stale-suppression`,
+`deps-dev-in-lib` → `deps-dev-in-production`); `deps-hard-guarded-only` and
+`library-direct-logging` were split out as distinct diagnoses; `unreachable-code` is
+standalone, all-projects (departure from the donor's library-only scoping, flagged in the
+catalog). Rules declare `requires` vs `uses` capability lists; per-language `not_applicable`
+overrides carry mandatory reasons.
+
 ## 6. Seed catalog: the absorbed rlsbl source-analysis checks
 
 ### 6.1 Origin, authority, and boundary
@@ -383,7 +398,10 @@ strictcode is consumed by rlsbl through rlsbl's **external-check protocol** — 
 ## 12. Open work (in dependency order)
 
 1. **Graph schema spec.** DRAFTED 2026-07-29 (`schema/SPEC.md`, `schema/vocabulary.toml`, `schema/profiles/*.toml`, `schema/strictspec/*.schema.toml`). Remaining follow-ons: the `strictspec.toml` consumer manifest and generated readers at repo scaffolding time, and the Go-constants/matrix generator that consumes the vocabulary and profiles.
-2. **Rule catalog v1.** The seed catalog (§6) is specified; remaining work is mapping each seed check to its graph queries, finalizing the deep-architectural checks of wave two, and fixing stable rule identifiers and severities.
+2. **Rule catalog v1.** DRAFTED 2026-08-03 (`CATALOG.md`): registry lifecycle
+   (mint/tombstone with actionable tombstones), `group:library`, fourteen minted seed rules
+   with severities, requires/uses capabilities, query sketches, and donor lineage. Wave-two
+   architectural checks are minted when designed; the scheme needs no changes for them.
 3. **Config format design.** The strictcode-native config surface implementing §6.6's principles.
 4. **Binding evaluation.** Benchmark gotreesitter vs official CGo bindings on real Python codebases: grammar fidelity, query support, throughput, memory. Commit to one.
 5. **Repo scaffolding.** rlsbl scaffold, Apache 2.0 LICENSE, `todo/` directory (including the deferred SARIF todo), Go module init.
