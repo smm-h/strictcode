@@ -60,3 +60,67 @@ documents through the generated readers and enforces the closed-set rule
 (SPEC.md §5): every profile declares a status for every vocabulary capability,
 and no profile declares an unknown capability. Note: strictspec generates map
 fields as raw `strictspec.Value` (entries via `.Entries()`), not Go maps.
+
+## 2026-08-03 — Binding benchmark: CGo bindings win
+
+Criteria were pinned in DESIGN.md §12.4; no judgment call remained. Verdict:
+**the official CGo bindings (`github.com/tree-sitter/go-tree-sitter`) win** —
+on every criterion, not just one.
+
+**Candidates.** `github.com/odvcencio/gotreesitter` v0.48.0 (pure Go; the
+design table referenced v0.15.x — the project moved fast) vs
+`github.com/tree-sitter/go-tree-sitter` v0.25.0 with
+`github.com/tree-sitter/tree-sitter-python` v0.25.0.
+
+**Corpus.** `/home/m/Projects/rlsbl` (561 Python files) plus a fresh shallow
+clone of django/django (2,927 Python files); 3,488 files, 27.15 MB total.
+
+**Methodology.** Harness committed at `benchmark/binding-eval/` (a standalone
+Go module, so the main module only carries the winning dependency). Three
+modes:
+
+- `identical`: parse every corpus file with both engines; serialize every node
+  (all children, anonymous leaves included) as
+  `(kind[!MISSING] start..end field:(child)...)` with identical walkers;
+  compare byte-for-byte.
+- `queries`: 15 Python queries covering every query form strictcode's
+  extractors need (named nodes, fields, captures, anonymous leaves,
+  alternation, wildcard, quantifiers `? * +`, anchor `.`, negated field
+  `!field`, grouping, predicates `#eq? #not-eq? #match? #any-of?`); compile on
+  both engines and compare full capture sets (pattern index, capture name,
+  byte span) per file.
+- `throughput`: single-threaded parse of the in-memory corpus, 3 rounds
+  best-of, one reused parser per engine.
+
+**Results.**
+
+| Criterion | Result |
+|---|---|
+| Byte-identical trees (gate) | **FAIL** — rlsbl: 560/561 files mismatch; django: 2,265/2,927 mismatch |
+| Query forms compile (gate) | pass — all 15 forms compile on both engines |
+| Query results equal (gate) | **FAIL** — 537/561 rlsbl files differ (consequence of tree shape) |
+| Throughput gts/cgo | **0.142** (0.60 MB/s vs 4.24 MB/s) — far below the 0.75 threshold |
+
+**Root cause of the tree mismatch (not a harness artifact):** gotreesitter
+deliberately normalizes Python trees away from C output —
+`normalizePythonModuleNode` in `parser_result_python.go` unwraps single-child
+`expression_statement` (and `_simple_statements`, `expression`,
+`primary_expression`) wrapper nodes. Docstring statements therefore appear as
+bare `(string)` children of `module`/`block` where the C grammar produces
+`(expression_statement (string))`. This is by design in gotreesitter v0.48
+(per-language "result compatibility" machinery), and it directly changes query
+semantics: the docstring-anchor query
+`(block . (expression_statement (string)) @docstring)` matches on CGo and not
+on gotreesitter.
+
+**Deviation from the design table.** DESIGN.md §9's comparison table recorded
+"~1.15x faster full parse" for gotreesitter; measured reality on this corpus
+is 7x slower. The table's numbers came from the project's own claims at
+v0.15.x and do not hold for Python at v0.48.0.
+
+**Consequences adopted with the CGo choice:** manual `Close()` on every
+Parser/Tree/Query/QueryCursor (the integration layer owns this),
+cross-compilation constraints (CGo), and `go test -race` limitations across
+the FFI boundary. Grammar version pinning is now explicit in go.mod per
+grammar (`tree-sitter-python` et al.), which is an upside: the C grammar and
+the runtime are upstream-official.

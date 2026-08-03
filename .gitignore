@@ -16,3 +16,6 @@ target/
 .env
 .env.local
 *.local-only
+
+# benchmark harness binary
+benchmark/binding-eval/binding-eval
