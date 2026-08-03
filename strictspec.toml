@@ -1,0 +1,29 @@
+# strictspec consumer manifest for strictcode.
+# Declares the three schema artifacts and their generated Go readers.
+# Run `strictspec check` for authoring validity + generated-code freshness,
+# `strictspec gen` to (re)generate.
+format_version = 1
+
+[[schemas]]
+path = "schema/strictspec/vocabulary.schema.toml"
+
+  [[schemas.targets]]
+  lang    = "go"
+  output  = "internal/spec/vocabspec/vocabulary_gen.go"
+  package = "vocabspec"
+
+[[schemas]]
+path = "schema/strictspec/profile.schema.toml"
+
+  [[schemas.targets]]
+  lang    = "go"
+  output  = "internal/spec/profilespec/profile_gen.go"
+  package = "profilespec"
+
+[[schemas]]
+path = "schema/strictspec/findings.schema.toml"
+
+  [[schemas.targets]]
+  lang    = "go"
+  output  = "internal/spec/findingsspec/findings_gen.go"
+  package = "findingsspec"
