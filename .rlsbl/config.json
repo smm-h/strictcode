@@ -1,0 +1,14 @@
+{
+  "targets": [
+    "go"
+  ],
+  "publish_mode": "ci",
+  "pipelines": {
+    "go": {
+      "type": "go",
+      "local": false,
+      "target": "go",
+      "artifact": "library"
+    }
+  }
+}
