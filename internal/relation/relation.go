@@ -37,11 +37,11 @@ type Node struct {
 // Row is one interaction-relation row:
 // (row_kind, src_node, dst_node, file, span, attrs).
 type Row struct {
-	Kind vocab.RowKind
-	Src  NodeID
-	Dst  NodeID
-	File string
-	Span Span
+	Kind  vocab.RowKind
+	Src   NodeID
+	Dst   NodeID
+	File  string
+	Span  Span
 	Attrs map[string]Value
 }
 

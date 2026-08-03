@@ -10,9 +10,9 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/smm-h/strictcli/go/strictcli"
 	strictcode "github.com/smm-h/strictcode"
 	"github.com/smm-h/strictcode/internal/registrydump"
-	"github.com/smm-h/strictcli/go/strictcli"
 )
 
 func main() {
