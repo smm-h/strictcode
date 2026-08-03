@@ -27,3 +27,11 @@ path = "schema/strictspec/findings.schema.toml"
   lang    = "go"
   output  = "internal/spec/findingsspec/findings_gen.go"
   package = "findingsspec"
+
+[[schemas]]
+path = "schema/strictspec/registry.schema.toml"
+
+  [[schemas.targets]]
+  lang    = "go"
+  output  = "internal/spec/registryspec/registry_gen.go"
+  package = "registryspec"

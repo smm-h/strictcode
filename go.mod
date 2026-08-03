@@ -3,6 +3,7 @@ module github.com/smm-h/strictcode
 go 1.26.3
 
 require (
+	github.com/smm-h/strictcli/go v0.27.0
 	github.com/smm-h/strictspec/go v0.1.0
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-go v0.25.0

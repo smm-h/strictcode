@@ -1,0 +1,187 @@
+name = "strictcode-registry"
+meta_version = 1
+format_version = 1
+document_syntax = "json"
+role = "schema"
+root = "Registry"
+targets = ["go"]
+description = "Gates REGISTRY.json: the committed rule-registry dump (CATALOG.md lifecycle — minted rules, groups, tombstones). The CI release diff classifies bumps from this artifact. Capability enums are SOURCED from schema/vocabulary.toml (strictspec decision 32)."
+
+[types.Registry]
+type = "record"
+
+[types.Registry.fields.rules]
+type = "array"
+required = true
+min_len = 1
+[types.Registry.fields.rules.item]
+type = "RuleDecl"
+
+[types.Registry.fields.groups]
+type = "map"
+required = true
+key_pattern = "^[a-z][a-z0-9-]*$"
+order = "incidental"
+[types.Registry.fields.groups.value]
+type = "array"
+[types.Registry.fields.groups.value.item]
+type = "RuleId"
+
+[types.Registry.fields.tombstones]
+type = "array"
+required = true
+[types.Registry.fields.tombstones.item]
+type = "TombstoneDecl"
+
+[[types.Registry.constraints]]
+form = "unique-by"
+collection = "rules"
+field = "id"
+normalization = "none"
+
+[[types.Registry.constraints]]
+form = "unique-by"
+collection = "tombstones"
+field = "id"
+normalization = "none"
+
+[types.RuleId]
+type = "string"
+regex = "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+description = "A minted rule identifier: flat, lowercase, hyphenated, encoding nothing."
+
+[types.CapabilityId]
+type = "enum"
+description = "Sourced from the vocabulary (capabilities)."
+[types.CapabilityId.source]
+document = "schema/vocabulary.toml"
+selector = "capabilities[].id"
+baked = [
+  "module-enumeration",
+  "import-extraction",
+  "resolve-imports-internal",
+  "resolve-imports-modules",
+  "import-attr-guarded",
+  "import-attr-type-checking",
+  "test-context-classification",
+  "entry-point-discovery",
+  "declared-dependency-extraction",
+  "export-extraction",
+  "callable-extraction",
+  "type-extraction",
+  "call-resolution-syntactic",
+  "call-resolution-type-informed",
+  "conformance-declared",
+  "conformance-derived",
+  "instantiation-extraction",
+  "reference-extraction",
+  "decoration-extraction",
+  "unreachable-statement-analysis",
+  "endpoint-discovery",
+  "db-entity-discovery",
+]
+
+[types.RuleDecl]
+type = "record"
+
+[types.RuleDecl.fields.id]
+type = "RuleId"
+required = true
+
+[types.RuleDecl.fields.severity]
+type = "enum"
+required = true
+values = ["error", "warning"]
+
+[types.RuleDecl.fields.description]
+type = "string"
+required = true
+non_empty = true
+
+[types.RuleDecl.fields.requires]
+type = "array"
+required = true
+[types.RuleDecl.fields.requires.item]
+type = "CapabilityId"
+
+[types.RuleDecl.fields.uses]
+type = "array"
+required = true
+[types.RuleDecl.fields.uses.item]
+type = "CapabilityId"
+
+[types.RuleDecl.fields.groups]
+type = "array"
+required = true
+[types.RuleDecl.fields.groups.item]
+type = "string"
+regex = "^[a-z][a-z0-9-]*$"
+
+[types.RuleDecl.fields.suppression]
+type = "enum"
+required = true
+values = ["none", "path", "project-dep", "member-set", "member"]
+description = "The rule's suppression target shape (DESIGN.md section 12.3)."
+
+[types.RuleDecl.fields.fix_tier]
+type = "integer"
+required = true
+min = 1
+max = 3
+
+[types.RuleDecl.fields.planned_fixes]
+type = "array"
+required = true
+[types.RuleDecl.fields.planned_fixes.item]
+type = "PlannedFixDecl"
+
+[types.RuleDecl.fields.not_applicable]
+type = "map"
+required = true
+key_pattern = "^(py|go|ts)$"
+order = "incidental"
+[types.RuleDecl.fields.not_applicable.value]
+type = "string"
+non_empty = true
+
+[types.PlannedFixDecl]
+type = "record"
+
+[types.PlannedFixDecl.fields.tier]
+type = "integer"
+required = true
+min = 1
+max = 2
+
+[types.PlannedFixDecl.fields.description]
+type = "string"
+required = true
+non_empty = true
+
+[types.TombstoneDecl]
+type = "record"
+
+[types.TombstoneDecl.fields.id]
+type = "RuleId"
+required = true
+
+[types.TombstoneDecl.fields.retired_in]
+type = "string"
+required = true
+non_empty = true
+
+[types.TombstoneDecl.fields.reason]
+type = "string"
+required = true
+non_empty = true
+
+[types.TombstoneDecl.fields.replaced_by]
+type = "array"
+required = true
+[types.TombstoneDecl.fields.replaced_by.item]
+type = "RuleId"
+
+[types.TombstoneDecl.fields.migration]
+type = "string"
+required = true
+non_empty = true
