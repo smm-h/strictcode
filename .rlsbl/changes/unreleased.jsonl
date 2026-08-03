@@ -7,3 +7,4 @@
 {"format_version":1,"id":"18c863430378fd73a8eafc1b299f427e8384a625ec98a4c0","commits":["1862ef9c5a6f4ee021384189331b0d2643019a39"],"user_facing":false}
 {"format_version":1,"id":"18c863430da885ba8263b84cba354e5a803766f1e8fe6bbf","commits":["13162376ff1395bd1694c5613f1daa1ee882c2f4"],"user_facing":false}
 {"format_version":1,"id":"18c86344337070b69ddf2ee5912043f5b4192baede16369d","commits":["e66913f6430263de6fea906c8f9eded6ff89229f"],"user_facing":true,"description":"**`strictcode` CLI.** First command surface: `registry dump` writes the committed rule-registry artifact (REGISTRY.json); `matrix gen` writes the generated language-by-feature support matrix (docs/MATRIX.md).","type":"feature"}
+{"format_version":1,"id":"18c863443dcd36e9cfdd4fac4e86431c959911dcade018bd","commits":["1723d92d4571ab896acb4236c93b02eac96bdc83","4ccfb522bc78d97ee3075034f97622a7a42201b5"],"user_facing":false}
