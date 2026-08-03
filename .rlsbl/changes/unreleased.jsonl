@@ -9,3 +9,4 @@
 {"format_version":1,"id":"18c86344337070b69ddf2ee5912043f5b4192baede16369d","commits":["e66913f6430263de6fea906c8f9eded6ff89229f"],"user_facing":true,"description":"**`strictcode` CLI.** First command surface: `registry dump` writes the committed rule-registry artifact (REGISTRY.json); `matrix gen` writes the generated language-by-feature support matrix (docs/MATRIX.md).","type":"feature"}
 {"format_version":1,"id":"18c863443dcd36e9cfdd4fac4e86431c959911dcade018bd","commits":["1723d92d4571ab896acb4236c93b02eac96bdc83","4ccfb522bc78d97ee3075034f97622a7a42201b5"],"user_facing":false}
 {"format_version":1,"id":"18c86344474729ec7231a86069124867b45fe5ca86326de4","commits":["4d2508a2a4254da8dd3e134720868d29e21822d5"],"user_facing":false}
+{"format_version":1,"id":"18c8634451110a99275eb006f2d94d48bc9d9a63eecee99a","commits":["de19f0dc73eeefd9631b89798d893410066fc8c1"],"user_facing":false}
