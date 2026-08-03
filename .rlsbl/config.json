@@ -8,7 +8,8 @@
       "type": "go",
       "local": false,
       "target": "go",
-      "artifact": "library"
+      "artifact": "library",
+      "install_paths": ["./cmd/strictcode"]
     }
   }
 }
