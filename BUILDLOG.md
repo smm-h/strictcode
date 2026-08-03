@@ -22,3 +22,19 @@ deviation.
 
 **SARIF todo.** Filed directly in `todo/.defer/` per DESIGN.md §10 (SARIF output
 deferred; "todo filed in `todo/.defer/` at repo scaffolding time").
+
+**rlsbl scaffold.** Ran `rlsbl scaffold --target go --publish-mode ci
+--no-auto-tag --yes`. Decisions:
+
+- `--no-auto-tag`: the auto-tag flag writes a GitHub topic to the remote repo.
+  The build charter forbids touching the remote in any way (nothing is pushed
+  before the first release), so the topic tag is left for the release session.
+- The pre-existing `.github/workflows/publish.yml` was the hand-written PyPI
+  placeholder workflow (manual dispatch, used for the name claim). Scaffold
+  refuses to merge over a file it has no base for; the placeholder workflow was
+  renamed to `.github/workflows/pypi-placeholder-publish.yml` (it remains
+  useful if the placeholder ever needs republishing) and scaffold now owns
+  `publish.yml` for the Go target.
+- Scaffold detected the go target as `artifact: library` (no binaries). The
+  DESIGN §12.5 goreleaser-binaries distribution is a release-round concern;
+  the scaffold config can be extended then.
