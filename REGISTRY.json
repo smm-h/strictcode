@@ -1,0 +1,293 @@
+{
+  "format_version": 1,
+  "rules": [
+    {
+      "id": "deps-unused",
+      "severity": "error",
+      "description": "A workspace-internal dependency declared in the manifest that no source file imports.",
+      "requires": [
+        "import-extraction",
+        "resolve-imports-internal",
+        "declared-dependency-extraction",
+        "test-context-classification"
+      ],
+      "uses": [
+        "import-attr-guarded"
+      ],
+      "groups": [],
+      "suppression": "project-dep",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 2,
+          "description": "Remove the declaration from the manifest."
+        }
+      ],
+      "not_applicable": {}
+    },
+    {
+      "id": "deps-hard-guarded-only",
+      "severity": "error",
+      "description": "A hard dependency (scope runtime/explicit) imported only under optional-import guards — contradictory; declare it optional or import it unconditionally.",
+      "requires": [
+        "import-extraction",
+        "resolve-imports-internal",
+        "declared-dependency-extraction",
+        "test-context-classification",
+        "import-attr-guarded"
+      ],
+      "uses": [],
+      "groups": [],
+      "suppression": "project-dep",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {}
+    },
+    {
+      "id": "deps-undeclared",
+      "severity": "error",
+      "description": "Production source importing a workspace package the manifest does not declare.",
+      "requires": [
+        "import-extraction",
+        "resolve-imports-internal",
+        "declared-dependency-extraction",
+        "test-context-classification"
+      ],
+      "uses": [
+        "import-attr-guarded",
+        "import-attr-type-checking"
+      ],
+      "groups": [],
+      "suppression": "project-dep",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 2,
+          "description": "Add the declaration to the manifest."
+        }
+      ],
+      "not_applicable": {}
+    },
+    {
+      "id": "deps-runtime-test-only",
+      "severity": "warning",
+      "description": "A runtime-scoped dependency imported only by test code — should be dev-scoped.",
+      "requires": [
+        "import-extraction",
+        "resolve-imports-internal",
+        "declared-dependency-extraction",
+        "test-context-classification"
+      ],
+      "uses": [
+        "import-attr-guarded"
+      ],
+      "groups": [],
+      "suppression": "project-dep",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 2,
+          "description": "Rescope the declaration to dev."
+        }
+      ],
+      "not_applicable": {}
+    },
+    {
+      "id": "deps-dev-in-production",
+      "severity": "error",
+      "description": "A dev-scoped dependency imported by production code.",
+      "requires": [
+        "import-extraction",
+        "resolve-imports-internal",
+        "declared-dependency-extraction",
+        "test-context-classification"
+      ],
+      "uses": [
+        "import-attr-guarded"
+      ],
+      "groups": [],
+      "suppression": "project-dep",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 2,
+          "description": "Rescope the declaration to runtime."
+        }
+      ],
+      "not_applicable": {}
+    },
+    {
+      "id": "dead-modules",
+      "severity": "warning",
+      "description": "Source units unreachable or unreferenced, per the per-language algorithms pinned in DESIGN.md section 6.2.",
+      "requires": [
+        "module-enumeration",
+        "import-extraction",
+        "resolve-imports-modules",
+        "export-extraction",
+        "test-context-classification"
+      ],
+      "uses": [
+        "entry-point-discovery"
+      ],
+      "groups": [],
+      "suppression": "path",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 2,
+          "description": "Delete the dead unit (consent-gated: deletion is behavior-relevant)."
+        }
+      ],
+      "not_applicable": {}
+    },
+    {
+      "id": "dead-workspace-packages",
+      "severity": "warning",
+      "description": "A library workspace member no sibling imports; test-only importers reported distinctly from zero importers.",
+      "requires": [
+        "import-extraction",
+        "resolve-imports-internal",
+        "declared-dependency-extraction",
+        "test-context-classification"
+      ],
+      "uses": [],
+      "groups": [],
+      "suppression": "member",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {}
+    },
+    {
+      "id": "import-cycles",
+      "severity": "warning",
+      "description": "Import cycles within a project: Tarjan SCC over the module imports projection, SCCs of size \u003e= 2 only.",
+      "requires": [
+        "module-enumeration",
+        "import-extraction",
+        "resolve-imports-modules"
+      ],
+      "uses": [],
+      "groups": [],
+      "suppression": "member-set",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "the Go compiler rejects import cycles; re-checking is noise"
+      }
+    },
+    {
+      "id": "stale-suppression",
+      "severity": "error",
+      "description": "A suppression in strictcode.toml referencing a path, rule, or (project, dep) pair that no longer exists on disk or in the registry.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {}
+    },
+    {
+      "id": "library-forbidden-imports",
+      "severity": "error",
+      "description": "A library importing an application-concern module (per-language default lists, replaceable; workspace and per-language allow lists subtracted).",
+      "requires": [
+        "import-extraction"
+      ],
+      "uses": [
+        "test-context-classification"
+      ],
+      "groups": [
+        "library"
+      ],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {}
+    },
+    {
+      "id": "library-stdout",
+      "severity": "error",
+      "description": "A library writing to standard streams (print, sys.stdout.write, fmt.Print*, console.log family).",
+      "requires": [
+        "callable-extraction",
+        "call-resolution-syntactic"
+      ],
+      "uses": [],
+      "groups": [
+        "library"
+      ],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {}
+    },
+    {
+      "id": "library-direct-logging",
+      "severity": "warning",
+      "description": "A Python library calling the root logger directly instead of taking a logger.",
+      "requires": [
+        "callable-extraction",
+        "call-resolution-syntactic"
+      ],
+      "uses": [],
+      "groups": [
+        "library"
+      ],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "the diagnosis is specific to Python's root-logger idiom",
+        "ts": "the diagnosis is specific to Python's root-logger idiom"
+      }
+    },
+    {
+      "id": "library-entry-point",
+      "severity": "error",
+      "description": "A library declaring a CLI entry point ([project.scripts], func main in package main, npm bin).",
+      "requires": [
+        "entry-point-discovery"
+      ],
+      "uses": [],
+      "groups": [
+        "library"
+      ],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {}
+    },
+    {
+      "id": "unreachable-code",
+      "severity": "error",
+      "description": "Statements following an unconditional terminator in the same block (comment-aware; nested scopes independent). All projects, not only libraries.",
+      "requires": [
+        "unreachable-statement-analysis"
+      ],
+      "uses": [],
+      "groups": [],
+      "suppression": "path",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 1,
+          "description": "Remove the unreachable statements (the flagship whitelisted transform)."
+        }
+      ],
+      "not_applicable": {
+        "go": "go vet reports unreachable code natively"
+      }
+    }
+  ],
+  "groups": {
+    "library": [
+      "library-forbidden-imports",
+      "library-stdout",
+      "library-direct-logging",
+      "library-entry-point"
+    ]
+  },
+  "tombstones": []
+}
