@@ -1,0 +1,91 @@
+{
+  "defaults": {
+    "app": {
+      "commands": {},
+      "config": false,
+      "deprecated": {},
+      "env_prefix": null,
+      "global_flags": [],
+      "groups": {},
+      "tag_contracts": {}
+    },
+    "arg": {
+      "choices": null,
+      "default": null,
+      "required": true,
+      "type": "str",
+      "variadic": false
+    },
+    "command": {
+      "args": [],
+      "constraints": [],
+      "flags": [],
+      "hidden": false,
+      "interactive": false,
+      "passthrough": false,
+      "tags": []
+    },
+    "flag": {
+      "choices": null,
+      "default": null,
+      "env": null,
+      "env_separator": null,
+      "hidden": false,
+      "negatable": null,
+      "repeatable": false,
+      "short": null,
+      "unique": false
+    },
+    "group": {
+      "commands": {},
+      "deprecated": {},
+      "groups": {},
+      "hidden": false,
+      "tags": []
+    },
+    "schema_version": 1
+  },
+  "groups": {
+    "matrix": {
+      "commands": {
+        "gen": {
+          "flags": [
+            {
+              "default": "docs/MATRIX.md",
+              "help": "Output path for the matrix",
+              "name": "out",
+              "type": "str"
+            }
+          ],
+          "help": "Write the generated support matrix (rules and capabilities per language)",
+          "name": "gen"
+        }
+      },
+      "help": "Language x feature support matrix",
+      "name": "matrix"
+    },
+    "registry": {
+      "commands": {
+        "dump": {
+          "flags": [
+            {
+              "default": "REGISTRY.json",
+              "help": "Output path for the registry dump",
+              "name": "out",
+              "type": "str"
+            }
+          ],
+          "help": "Write the committed registry dump (rules, groups, tombstones) as JSON",
+          "name": "dump"
+        }
+      },
+      "help": "Rule registry artifacts (mint-once IDs, tombstones)",
+      "name": "registry"
+    }
+  },
+  "help": "strictcode: a deterministic linter for architecture, with tiered auto-fixes",
+  "name": "strictcode",
+  "project_id": "github.com/smm-h/strictcode",
+  "schema_version": 1,
+  "version": "0.0.0"
+}
