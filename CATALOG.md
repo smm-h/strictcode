@@ -170,8 +170,8 @@ Requires: `entry-point-discovery`.
 
 ### Correctness
 
-**`unreachable-code`** — error. Lineage: library-lint/unreachable-code. **Departure flagged
-for review:** the donor ran this only on libraries as part of the aggregate; minted here as
+**`unreachable-code`** — error. Lineage: library-lint/unreachable-code. **Departure
+approved 2026-08-03:** the donor ran this only on libraries as part of the aggregate; minted here as
 a standalone rule scoped to all projects, because unreachable statements are a correctness
 diagnosis with no library-boundary false-positive risk (lesson 22 protected the boundary
 rules, not this one). Semantics unchanged: unconditional-terminator analysis with comment

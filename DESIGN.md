@@ -402,10 +402,35 @@ strictcode is consumed by rlsbl through rlsbl's **external-check protocol** — 
    (mint/tombstone with actionable tombstones), `group:library`, fourteen minted seed rules
    with severities, requires/uses capabilities, query sketches, and donor lineage. Wave-two
    architectural checks are minted when designed; the scheme needs no changes for them.
-3. **Config format design.** The strictcode-native config surface implementing §6.6's principles.
-4. **Binding evaluation.** Benchmark gotreesitter vs official CGo bindings on real Python codebases: grammar fidelity, query support, throughput, memory. Commit to one.
-5. **Repo scaffolding.** rlsbl scaffold, Apache 2.0 LICENSE, `todo/` directory (including the deferred SARIF todo), Go module init.
+3. **Config format design.** DECIDED 2026-08-03: a single strictspec-gated `strictcode.toml`
+   (rule toggles/thresholds/severities, analysis modes, suppressions). Suppressions use
+   **per-rule natural target shapes** declared in the registry (path for `dead-modules` and
+   `unreachable-code`, `(project, dep)` for the dep rules, member-set for `import-cycles`,
+   none for `stale-suppression`), each with a mandatory non-empty reason; staleness and
+   malformed config are hard errors. Group toggles address `group:<name>`. Concrete schema
+   authored during the foundation build.
+4. **Binding evaluation.** CRITERIA PINNED 2026-08-03, auto-commit: absolute gates are
+   byte-identical parses vs the C grammars on a real-Python corpus (ecosystem repos plus one
+   large OSS codebase) and support for every tree-sitter query form strictcode needs; given
+   the gates pass, gotreesitter wins if its throughput is ≥ 75% of the official CGo
+   bindings', else the CGo bindings win. No judgment call remains at benchmark time.
+5. **Repo scaffolding.** GitHub repo exists (created 2026-07-21 with the name claims);
+   remote wired, nothing pushed — the first release remains the only push. Scaffold work:
+   rlsbl scaffold, Apache 2.0 LICENSE, `todo/` with the deferred SARIF todo in
+   `todo/.defer/`, Go module `github.com/smm-h/strictcode`. First-release distribution is
+   the Go module plus goreleaser binaries on the GitHub Release; PyPI/npm `-bin` wrappers
+   come in a later release when non-Go consumers integrate (placeholders keep the names).
 6. **Extractors.** Import-graph depth for the trio (Python, Go, TS/JS) — required by the seed catalog; then full-graph depth for Python.
+
+**Foundation build execution (2026-08-03).** The foundation — scaffolding, strictspec
+manifest + first toolchain contact over the schemas, the binding benchmark, the relation
+core per `schema/SPEC.md`, and the vocabulary/matrix generator — is built by an autonomous
+builder session with **full decision-making authority inside this repository**. The builder
+may deviate from this document where implementation reality demands, and MUST record every
+material decision and every deviation in a committed `BUILDLOG.md`. It may delegate
+intensive research (e.g. web research) to subagents but does all software design and code
+editing itself. Commits are continuous per work item (safegit; `rlsbl commit` for generated
+files); nothing is pushed; no release happens in the builder session.
 7. **Tier-1 fix mechanics detail.** The whitelist, the transform implementations, and the graph re-verification harness.
 8. **rlsbl adapter coordination.** Once the CLI surface is stable, coordinate the `structured` adapter entry in rlsbl's adapter table.
 
