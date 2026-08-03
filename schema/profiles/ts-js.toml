@@ -78,7 +78,13 @@ notes = "Stage-3 decorators on classes and methods."
 [capabilities.module-enumeration]
 status = "planned"
 
+[capabilities.import-extraction]
+status = "planned"
+
 [capabilities.resolve-imports-internal]
+status = "planned"
+
+[capabilities.resolve-imports-modules]
 status = "planned"
 
 [capabilities.import-attr-guarded]
@@ -125,6 +131,9 @@ status = "planned"
 status = "planned"
 
 [capabilities.decoration-extraction]
+status = "planned"
+
+[capabilities.unreachable-statement-analysis]
 status = "planned"
 
 [capabilities.endpoint-discovery]

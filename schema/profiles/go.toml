@@ -58,7 +58,13 @@ notes = "form=main_package; resolves_to the main function."
 [capabilities.module-enumeration]
 status = "planned"
 
+[capabilities.import-extraction]
+status = "planned"
+
 [capabilities.resolve-imports-internal]
+status = "planned"
+
+[capabilities.resolve-imports-modules]
 status = "planned"
 
 [capabilities.import-attr-guarded]
@@ -109,6 +115,10 @@ status = "planned"
 [capabilities.decoration-extraction]
 status = "not-applicable"
 reason = "Go has no decorator or annotation construct."
+
+[capabilities.unreachable-statement-analysis]
+status = "not-applicable"
+reason = "go vet reports unreachable code natively; strictcode does not reimplement it."
 
 [capabilities.endpoint-discovery]
 status = "planned"

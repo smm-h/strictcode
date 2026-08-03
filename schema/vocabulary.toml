@@ -345,9 +345,19 @@ layer = "import-graph"
 description = "Enumerate modules with logical names, paths, and test-context classification."
 
 [[capabilities]]
+id = "import-extraction"
+layer = "import-graph"
+description = "Extract import statements as imports rows with raw specifiers."
+
+[[capabilities]]
 id = "resolve-imports-internal"
 layer = "import-graph"
 description = "Resolve import statements to workspace members (normalization, overrides, namespace maps)."
+
+[[capabilities]]
+id = "resolve-imports-modules"
+layer = "import-graph"
+description = "Resolve import statements to modules within the same workspace member (the intra-project module import graph)."
 
 [[capabilities]]
 id = "import-attr-guarded"
@@ -423,6 +433,11 @@ description = "Extract references rows with context."
 id = "decoration-extraction"
 layer = "full-semantic-graph"
 description = "Extract decorates rows."
+
+[[capabilities]]
+id = "unreachable-statement-analysis"
+layer = "full-semantic-graph"
+description = "Detect statements following an unconditional terminator within a block (comment-aware, nested scopes independent)."
 
 [[capabilities]]
 id = "endpoint-discovery"
