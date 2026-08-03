@@ -2,3 +2,4 @@ internal/spec/vocabspec/vocabulary_gen.go text eol=lf linguist-generated=true
 internal/spec/profilespec/profile_gen.go text eol=lf linguist-generated=true
 internal/spec/findingsspec/findings_gen.go text eol=lf linguist-generated=true
 internal/spec/registryspec/registry_gen.go text eol=lf linguist-generated=true
+internal/spec/configspec/config_gen.go text eol=lf linguist-generated=true

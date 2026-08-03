@@ -1,0 +1,149 @@
+name = "strictcode-config"
+meta_version = 1
+format_version = 1
+document_syntax = "toml"
+role = "schema"
+root = "Config"
+targets = ["go"]
+description = "Gates strictcode.toml: the single configuration file (DESIGN.md section 12.3) — rule toggles/severities/thresholds, analysis modes, group toggles, and per-rule-shaped suppressions with mandatory reasons. Rule-ID validity (including tombstone rendering) and suppression-shape-vs-rule matching are consumer-native checks against the registry; path staleness is the stale-suppression rule."
+
+[types.Config]
+type = "record"
+
+[types.Config.fields.analysis]
+type = "Analysis"
+required = false
+
+[types.Config.fields.groups]
+type = "map"
+required = false
+key_pattern = "^[a-z][a-z0-9-]*$"
+order = "incidental"
+[types.Config.fields.groups.value]
+type = "GroupConfig"
+
+[types.Config.fields.rules]
+type = "map"
+required = false
+key_pattern = "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
+order = "incidental"
+[types.Config.fields.rules.value]
+type = "RuleConfig"
+
+[types.Analysis]
+type = "record"
+description = "Explicit analysis-mode selection. The presence of a mode key IS the choice; a configured mode that cannot run is a hard error, never a downgrade."
+
+[types.Analysis.fields.python_call_resolution]
+type = "enum"
+required = false
+values = ["syntactic", "type-checker"]
+description = "Python call-resolution layer (DESIGN.md section 8). Absent = the always-on syntactic layer only; type-checker requires python_type_checker."
+
+[types.Analysis.fields.python_type_checker]
+type = "enum"
+required = false
+values = ["pyright", "ty"]
+description = "Which external type checker backs type-checker mode. Mandatory with python_call_resolution = type-checker; forbidden with syntactic."
+
+[[types.Analysis.constraints]]
+form = "conditional-required"
+field = "python_type_checker"
+when = { field = "python_call_resolution", predicate = "equals", value = "type-checker" }
+
+[[types.Analysis.constraints]]
+form = "forbidden-when"
+field = "python_type_checker"
+when = { field = "python_call_resolution", predicate = "equals", value = "syntactic" }
+
+[types.GroupConfig]
+type = "record"
+description = "A group toggle (group:<name>): enable/disable or re-severity every member rule in one stroke."
+
+[types.GroupConfig.fields.enabled]
+type = "boolean"
+required = false
+
+[types.GroupConfig.fields.severity]
+type = "enum"
+required = false
+values = ["error", "warning"]
+
+[[types.GroupConfig.constraints]]
+form = "at-least-one-of"
+fields = ["enabled", "severity"]
+
+[types.RuleConfig]
+type = "record"
+
+[types.RuleConfig.fields.enabled]
+type = "boolean"
+required = false
+
+[types.RuleConfig.fields.severity]
+type = "enum"
+required = false
+values = ["error", "warning"]
+
+[types.RuleConfig.fields.thresholds]
+type = "map"
+required = false
+key_pattern = "^[a-z][a-z0-9_-]*$"
+order = "incidental"
+description = "Named integer thresholds for rules that declare them (wave-two rules; no v1 seed rule has thresholds)."
+[types.RuleConfig.fields.thresholds.value]
+type = "integer"
+
+[types.RuleConfig.fields.suppressions]
+type = "array"
+required = false
+[types.RuleConfig.fields.suppressions.item]
+type = "Suppression"
+
+[types.Suppression]
+type = "record"
+description = "One suppression in the rule's natural target shape: path | (project, dep) | modules (cycle member set) | member. The reason is mandatory and non-empty; shape-vs-rule matching is a consumer-native check against the registry."
+
+[types.Suppression.fields.reason]
+type = "string"
+required = true
+non_empty = true
+
+[types.Suppression.fields.path]
+type = "string"
+required = false
+non_empty = true
+description = "A file path (Python, TS/JS) or package directory (Go), relative to the project root."
+
+[types.Suppression.fields.project]
+type = "string"
+required = false
+non_empty = true
+
+[types.Suppression.fields.dep]
+type = "string"
+required = false
+non_empty = true
+
+[types.Suppression.fields.modules]
+type = "array"
+required = false
+min_len = 2
+description = "The set of modules forming one reported import cycle (an SCC has at least two members)."
+[types.Suppression.fields.modules.item]
+type = "string"
+non_empty = true
+
+[types.Suppression.fields.member]
+type = "string"
+required = false
+non_empty = true
+description = "A workspace member name."
+
+[[types.Suppression.constraints]]
+form = "exactly-one-of"
+fields = ["path", "dep", "modules", "member"]
+
+[[types.Suppression.constraints]]
+form = "co-presence"
+fields = ["project", "dep"]

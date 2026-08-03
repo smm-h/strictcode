@@ -35,3 +35,11 @@ path = "schema/strictspec/registry.schema.toml"
   lang    = "go"
   output  = "internal/spec/registryspec/registry_gen.go"
   package = "registryspec"
+
+[[schemas]]
+path = "schema/strictspec/config.schema.toml"
+
+  [[schemas.targets]]
+  lang    = "go"
+  output  = "internal/spec/configspec/config_gen.go"
+  package = "configspec"
