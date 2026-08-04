@@ -431,8 +431,12 @@ strictcode is consumed by rlsbl through rlsbl's **external-check protocol** — 
    reading, the import-graph extractors for all three languages, config loader, findings
    pipeline, CLI `analyze`, and the eleven import-graph seed rules, with the §6.7 lessons
    register as the acceptance suite (red-green). Profile capabilities flipped
-   planned→supported (py 10, go 7, ts 9); the matrix regenerated. Full-graph Python depth
-   (callables, types, call resolution) remains open — next round.
+   planned→supported (py 10, go 7, ts 9); the matrix regenerated.
+   **PYTHON FULL-SEMANTIC DEPTH LANDED 2026-08-04 (round 3, BUILDLOG.md):** callables,
+   types, containment, decorates, declared conformance (incl. ABC register), instantiation,
+   and syntactic call resolution with honest unresolved/external side data; all fourteen
+   rules implemented; all 32 lessons covered (+5 minted real-corpus regressions). Go/TS
+   full-semantic depth and the Python opt-in type-checker mode remain open.
 
 **Foundation build execution (2026-08-03).** The foundation — scaffolding, strictspec
 manifest + first toolchain contact over the schemas, the binding benchmark, the relation
@@ -444,6 +448,12 @@ intensive research (e.g. web research) to subagents but does all software design
 editing itself. Commits are continuous per work item (safegit; `rlsbl commit` for generated
 files); nothing is pushed; no release happens in the builder session.
 7. **Tier-1 fix mechanics detail.** The whitelist, the transform implementations, and the graph re-verification harness.
+   **LANDED 2026-08-04 (round 3, BUILDLOG.md):** the whitelist architecture with one
+   transform (unreachable-statement removal), the SPEC §7 delta + re-extraction
+   verification with rollback on mismatch, plan-time refusal of ordinal-drifting removals,
+   and the `strictcode fix` CLI with a required apply/preview choice. One recorded
+   deviation: span masking is whole-file for edited files (point-relative masking is
+   unsound for shrunk enclosing spans) — candidate SPEC amendment.
 8. **rlsbl adapter coordination.** Once the CLI surface is stable, coordinate the `structured` adapter entry in rlsbl's adapter table.
 
 ## 13. Non-goals

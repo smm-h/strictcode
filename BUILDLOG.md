@@ -449,3 +449,157 @@ symbol-table resolution layer deserve the same care the import graph got.
 Shipping a print/logging pattern-matcher and flipping
 call-resolution-syntactic to supported would be dishonest about what
 "supported" means. The two library call-graph rules land with that round.
+
+---
+
+# Round 3 (2026-08-04): Python full-semantic depth, the last three rules, tier-1 fixes
+
+## Python full-semantic extractors (internal/extract/python_sem.go, python_resolve.go)
+
+Two passes sharing the import extractor's parse. Pass 1 per file: function/
+closure/type nodes with SPEC 2.3-2.5 identity (anonymous
+`hint~ordinal~fp8` with the fingerprint over whitespace-collapsed signature
+text; overload `#n` per (container, name) in source order — one counter
+across kinds, so a conditional `def f` beside `class f` cannot collide),
+contains rows, and records of bindings/calls/decorators/bases/unreachable
+regions. Pass 2 after every member: resolution via module-level symbol
+tables plus a workspace-global module index.
+
+Decisions where the schema and design left gaps:
+
+- **Calls rows carry only resolved local-to-local calls.** The vocabulary's
+  `calls` row requires both endpoints in the node table; external callees
+  (print, logging.info) and unresolved dynamic dispatch have no node to
+  point at. The full honesty lives in a side table (`Result.Calls`) with
+  three classifications: syntactic (mirrored by a relation row), external
+  (stdlib/builtin/external package — the library-stdout surface), and
+  unresolved (never guessed). The vocabulary's `resolution = unresolved`
+  arm therefore has no relation rows yet — representing unresolved edges
+  in-relation needs a schema mint (an unresolved-sink node kind or an
+  optional dst), deferred to a schema round.
+- **Module/class-level calls produce no relation rows** (calls src_kinds
+  are function|closure); they are still side-table sites, so library-stdout
+  catches module-level print.
+- **Resolution is conservative by construction:** local params/assignments
+  shadow outer names into unresolved; instance method calls (obj.m()) are
+  unresolved; self/cls dispatch chases locally resolvable base chains only
+  and gives up honestly otherwise; star imports leave unknown names
+  unresolved. Alias expansion canonicalizes callee text
+  (`import sys as s; s.stdout.write` → `sys.stdout.write`).
+- **Callee canonicalization powers the library rules textually** — the
+  donor's semantics (print/sys.std*.write/logging.<method>) are matched on
+  the canonical dotted callee, alias-proof.
+- **Instantiation and declared conformance came along:** a call resolving
+  to a local type emits `instantiates`; class bases resolving to local
+  types emit `conforms_to` (declared/nominal/inheritance); the
+  `X.register(C)` ABC pattern emits declared_external/nominal/register.
+  Protocol/enum form classification from base names (typing.Protocol, enum
+  family).
+- **Unresolvable decorators emit no decorates row** (the row's src must
+  exist); resolvable local decorators do. No side table for decorators —
+  nothing consumes one yet.
+- **Nested lambdas:** the ID chain includes closure segments, but contains
+  rows attach to the nearest module/type/function ancestor (the
+  vocabulary's contains src kinds exclude closures).
+
+## The last three rules
+
+- library-stdout (error) and library-direct-logging (warning) over the
+  calls side table: library-only (lesson 22), test-excluded (lesson 23),
+  allow-list ignorable identifiers, severities per lesson 27. Red-green.
+- unreachable-code (error, all projects): terminator analysis in the
+  extractor walker (return/raise/break/continue; if/elif with a present
+  else where every branch terminates; a block whose last statement
+  terminates), comment nodes never statements (lesson 24), nested scopes
+  independent while still descended into (lesson 25). Dead regions are side
+  data consumed by the rule and by the tier-1 transform. Test-context files
+  are included (correctness diagnosis; path suppression is the opt-out).
+
+**Lessons tally: all 32 register items covered** (1-23, 26, 28-32 in round
+2; 24, 25, 27 in round 3), plus five minted real-corpus regressions:
+__main__ implicit entry points, TS entry-point abstention, nested Go
+modules (round 2), case-clash scoping and member-root-as-package (round 3).
+
+## Tier-1 fix machinery (internal/fix)
+
+Whitelist of one transform: unreachable-statement removal. Mechanics per
+SPEC section 7 with three deviations/decisions recorded:
+
+- **Span masking is whole-file for edited files.** SPEC says to ignore span
+  attributes "below the fix point"; a point-relative predicate is
+  unsound — an enclosing def's contains-row span shrinks to END just before
+  the edit point post-fix while its pre-fix span reached beyond it, and the
+  two sides cannot be correlated row-by-row. The sound symmetric rule masks
+  every span in an edited file; structural identity (kinds, IDs,
+  attributes) is verified everywhere and non-edited files keep full span
+  verification. Candidate SPEC amendment.
+- **Plan-time refusals instead of predictable verification failures:** a
+  region whose removal would renumber same-name/same-hint siblings outside
+  it (SPEC 2.4 ordinal drift the pruning delta cannot express) stays
+  detection-only; nested dead regions collapse into the outer removal;
+  CRLF files are refused outright (edits are over LF-normalized bytes;
+  rewriting would renormalize the whole file silently).
+- **The declared delta is computed from the removal range:** rows sited
+  within the range, plus nodes introduced by removed contains rows
+  (transitive) and every row touching them. Verification therefore catches
+  edits whose re-extracted reality diverges from the range-derived
+  expectation (the sabotage test removes a def header only — the naive
+  delta predicts survival, reality disagrees, rollback fires with a TOOL
+  BUG report). A transform that consistently declares its own overreach is
+  the whitelist review's responsibility — proof by construction plus
+  mechanical verification, per DESIGN section 7.
+- Removal is line-snapped (whole lines from the first dead statement's
+  line through the last's, interleaved comments included; trailing
+  comments after the region survive — lesson 24 protects them from being
+  flagged, and the snap never reaches them).
+- CLI: `strictcode fix [dir]` with a REQUIRED --apply/--preview mutex
+  (writing files is never an implicit default), exit 2 on rollback.
+- Registry: unreachable-code now ships FixTier 1 (planned-fix entry
+  removed); findings carry the tier-1 fix descriptor.
+
+## Matrix flips (round 3)
+
+Python: callable-extraction, type-extraction, call-resolution-syntactic,
+decoration-extraction, conformance-declared, instantiation-extraction,
+unreachable-statement-analysis → supported (7 flips). NOT flipped, honest
+scope: conformance-derived (lazy materialization not built),
+reference-extraction, call-resolution-type-informed (opt-in mode not
+built). Rule rows now supported on Python: library-stdout,
+library-direct-logging, unreachable-code — every rule row of the matrix now
+has at least one supported cell.
+
+## Conformance baseline (read-only corpus runs, post-fixes)
+
+| Repo | Findings |
+|---|---|
+| rlsbl | 7 dead-modules, 4 import-cycles (0 errors) |
+| strictspec | 16 dead-modules (0 errors) |
+| strictcli | 10 dead-modules, 5 import-cycles (0 errors) |
+| selfdoc | 22 dead-modules, 1 import-cycle, **12 library-stdout errors** |
+
+The selfdoc errors are true positives (selfdoc-core is `library = true` and
+calls print() in build/deploy/git paths). The remaining dead-modules
+entries are dynamically loaded surfaces (sphinx/selfdoc directives,
+extractor plugins) — exactly the path-suppression use case.
+
+Real-corpus regressions fixed this round (both red-green):
+
+- **Case-only ID clash scoped to module identity.** SPEC 2.2's rule is
+  filesystem safety for path-derived identity; round 1 over-applied it to
+  all nodes, and strictcli's legal `class Outcome` / `def outcome` pair
+  crashed the build. Now only empty-chain (module-level) IDs are checked.
+- **Member-root-as-package layout.** selfdoc's members point their path at
+  the package directory itself (member root contains __init__.py); no
+  package root was discovered, relative imports never resolved, and 68
+  false dead-modules resulted. The root package now anchors at the
+  directory's importable name (selfdoc: 90 → 22 dead-modules, and a real
+  import cycle surfaced once imports resolved).
+
+## Round-3 wrap state
+
+Nothing pushed, nothing released, no registries touched. safegit began
+requiring --yes for non-interactive commits mid-round (tool update);
+adopted. Remaining after round 3: conformance-derived materialization,
+reference-extraction, type-informed resolution mode (explicit opt-in), Go
+and TS full-semantic depth, tier-2 consent flow, SARIF (deferred todo),
+and the rlsbl adapter (main session's coordination, not this build's).
