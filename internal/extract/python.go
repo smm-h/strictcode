@@ -1,6 +1,7 @@
 package extract
 
 import (
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -38,6 +39,10 @@ type pyMemberLayout struct {
 	roots map[string]bool
 	// srcBase is true when roots live under src/.
 	srcBase bool
+	// rootPkg is non-empty when the member root itself is the package
+	// (member path points at a directory containing __init__.py — found on
+	// the real corpus); it is the package's importable name.
+	rootPkg string
 	// modules: logical name -> member-relative path.
 	modules map[string]string
 }
@@ -152,6 +157,12 @@ func discoverPyLayout(ws *workspace.Workspace, m *workspace.Member) (*pyMemberLa
 		if strings.HasSuffix(f, "/__init__.py") {
 			layout.packageDirs[strings.TrimSuffix(f, "/__init__.py")] = true
 		}
+		if f == "__init__.py" {
+			// The member root IS the package: its importable name is the
+			// directory's base name.
+			layout.rootPkg = filepath.Base(filepath.Join(ws.Root, filepath.FromSlash(m.Path)))
+			layout.roots[layout.rootPkg] = true
+		}
 	}
 
 	// Top-level package roots under the member root or src/: a package dir
@@ -196,6 +207,15 @@ func discoverPyLayout(ws *workspace.Workspace, m *workspace.Member) (*pyMemberLa
 // Files outside any package root keep their full dotted relative path
 // (scripts/build.py -> scripts.build).
 func (l *pyMemberLayout) logicalName(file string) string {
+	// Member-root-as-package: anchor at the directory's importable name.
+	if l.rootPkg != "" {
+		if file == "__init__.py" {
+			return l.rootPkg
+		}
+		dotted := strings.ReplaceAll(strings.TrimSuffix(file, ".py"), "/", ".")
+		dotted = strings.TrimSuffix(dotted, ".__init__")
+		return l.rootPkg + "." + dotted
+	}
 	rest := file
 	if strings.HasPrefix(file, "src/") {
 		rest = file[len("src/"):]

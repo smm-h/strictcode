@@ -560,3 +560,34 @@ func TestExternalImportsSideTable(t *testing.T) {
 		t.Fatalf("external orjson site missing: %v", byMember["transport"])
 	}
 }
+
+func TestPyMemberRootIsThePackage(t *testing.T) {
+	// Real-corpus regression (selfdoc): the member's path points at the
+	// package directory itself (member root contains __init__.py). Modules
+	// must get proper dotted logical names anchored at the directory name,
+	// and intra-package imports must resolve.
+	res := run(t, map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"selfblog\"\nname = \"selfblog\"\n",
+		"selfblog/pyproject.toml":        "[project]\nname = \"selfblog\"\n",
+		"selfblog/__init__.py":           "from . import cli\n",
+		"selfblog/cli.py":                "import selfblog.posts\n",
+		"selfblog/posts.py":              "",
+	})
+	mods := nodeSet(res, vocab.NodeKindModule)
+	for _, want := range []string{
+		"py:selfblog:selfblog:",
+		"py:selfblog:selfblog%2Ecli:",
+		"py:selfblog:selfblog%2Eposts:",
+	} {
+		if _, ok := mods[want]; !ok {
+			t.Errorf("missing module %s (have %v)", want, keys(mods))
+		}
+	}
+	imports := rowSet(res, vocab.RowKindImports)
+	if _, ok := imports["py:selfblog:selfblog: -> py:selfblog:selfblog%2Ecli:"]; !ok {
+		t.Errorf("root-package relative import unresolved: %v", keys(imports))
+	}
+	if _, ok := imports["py:selfblog:selfblog%2Ecli: -> py:selfblog:selfblog%2Eposts:"]; !ok {
+		t.Errorf("absolute intra-package import unresolved: %v", keys(imports))
+	}
+}
