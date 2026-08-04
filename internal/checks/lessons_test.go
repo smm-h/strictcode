@@ -723,3 +723,18 @@ func TestPyDunderMainIsImplicitEntryPoint(t *testing.T) {
 		t.Fatalf("pkg/__main__.py flagged dead: %+v", fs)
 	}
 }
+
+func TestTSNoResolvedEntryPointsMeansNoDeadReport(t *testing.T) {
+	// Donor safeguard (found on the real corpus): when no entry point
+	// resolves to a scanned source file (e.g. exports point at built dist/
+	// output), reachability cannot be determined — the BFS abstains instead
+	// of reporting the whole tree dead.
+	fs := analyze(t, map[string]string{
+		"package.json":  "{\n  \"name\": \"app\",\n  \"main\": \"./dist/index.js\",\n  \"exports\": {\".\": \"./dist/index.mjs\"}\n}\n",
+		"src/index.ts":  "import './helper';\n",
+		"src/helper.ts": "export const h = 1;\n",
+	})
+	if got := byRule(fs, "dead-modules"); len(got) != 0 {
+		t.Fatalf("BFS must abstain without resolved entry points: %+v", got)
+	}
+}

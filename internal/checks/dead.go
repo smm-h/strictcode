@@ -166,6 +166,12 @@ func deadTS(ctx *Context, member string, suppressed map[string]bool) []findings.
 	if len(modules) == 0 {
 		return nil
 	}
+	// Donor safeguard: no resolved entry points (e.g. exports pointing at
+	// built dist/ output) means reachability cannot be determined — abstain
+	// rather than report the whole tree dead.
+	if len(ctx.View.EntryTargets[lm]) == 0 {
+		return nil
+	}
 
 	reachable := map[string]bool{}
 	var queue []string
