@@ -31,6 +31,15 @@ type Result struct {
 	// (flask, net/http, express). Side data beside the relation, sorted by
 	// (lang, member, file, span, specifier).
 	ExternalImports []ExternalImport
+	// Calls carries every Python call site: syntactic (mirrored by a
+	// relation row), external (builtins/stdlib/external packages — the
+	// library-stdout surface), and unresolved (honestly unknown). The
+	// relation itself carries only resolved local-to-local rows because
+	// rows demand both endpoints exist as nodes; see BUILDLOG.
+	Calls []CallSite
+	// Unreachable carries dead statement regions (the unreachable-code
+	// rule and the tier-1 removal transform).
+	Unreachable []UnreachableRegion
 }
 
 // ExternalImport is one import site of an external (non-workspace) target.
@@ -85,6 +94,11 @@ type extraction struct {
 
 	// pyIndex is the cross-member Python resolution index (built once).
 	pyIndex *pyResolutionIndex
+	// pySem accumulates per-module semantic records for pass-2 resolution.
+	pySem pySemIndex
+	// callSites and unreachable accumulate side data during pass 2.
+	callSites   []CallSite
+	unreachable []UnreachableRegion
 }
 
 // Extract runs all extractors over the workspace and freezes the relation.
@@ -95,6 +109,7 @@ func Extract(ws *workspace.Workspace) (*Result, error) {
 		lines:       map[string][]uint32{},
 		memberNodes: map[string]relation.NodeID{},
 		entryPoints: map[string]bool{},
+		pySem:       pySemIndex{mods: map[string]map[string]*pyModSem{}},
 	}
 
 	// Python resolution index needs every member's package roots before any
@@ -117,6 +132,12 @@ func Extract(ws *workspace.Workspace) (*Result, error) {
 		}
 	}
 
+	// Python full-semantic pass 2: resolve recorded sites against the
+	// global symbol index (every member's pass 1 is complete).
+	if err := ex.resolvePySemantics(); err != nil {
+		return nil, err
+	}
+
 	rel, err := ex.builder.Build()
 	if err != nil {
 		return nil, err
@@ -137,7 +158,30 @@ func Extract(ws *workspace.Workspace) (*Result, error) {
 		}
 		return a.Specifier < b.Specifier
 	})
-	return &Result{Relation: rel, LineIndex: ex.lines, ExternalImports: ex.external}, nil
+	sort.Slice(ex.callSites, func(i, j int) bool {
+		a, b := ex.callSites[i], ex.callSites[j]
+		if a.File != b.File {
+			return a.File < b.File
+		}
+		if a.Span.Start != b.Span.Start {
+			return a.Span.Start < b.Span.Start
+		}
+		return a.Callee < b.Callee
+	})
+	sort.Slice(ex.unreachable, func(i, j int) bool {
+		a, b := ex.unreachable[i], ex.unreachable[j]
+		if a.File != b.File {
+			return a.File < b.File
+		}
+		return a.Span.Start < b.Span.Start
+	})
+	return &Result{
+		Relation:        rel,
+		LineIndex:       ex.lines,
+		ExternalImports: ex.external,
+		Calls:           ex.callSites,
+		Unreachable:     ex.unreachable,
+	}, nil
 }
 
 // --- member nodes and IDs -------------------------------------------------

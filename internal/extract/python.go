@@ -340,6 +340,19 @@ func (ex *extraction) extractPyFile(m *workspace.Member, layout *pyMemberLayout,
 			return err
 		}
 	}
+
+	// Full-semantic pass 1 (same parse): callables, types, containment,
+	// and the site records pass 2 resolves after every member is walked.
+	sem, err := ex.extractPySemantics(m, layout, file, wsPath, &pyTree{
+		src: tree.Source, root: tree.Root(), isTest: isTest,
+	})
+	if err != nil {
+		return err
+	}
+	if ex.pySem.mods[m.Name] == nil {
+		ex.pySem.mods[m.Name] = map[string]*pyModSem{}
+	}
+	ex.pySem.mods[m.Name][logical] = sem
 	return nil
 }
 
