@@ -218,6 +218,19 @@ func (b *Builder) Build() (*Relation, error) {
 	sort.Slice(rel.Rows, func(i, j int) bool {
 		return rowKey(rel.Rows[i]) < rowKey(rel.Rows[j])
 	})
+	// The relation is an ordered SET of rows (SPEC.md section 1): identical
+	// rows collapse to one element. Extraction can legitimately produce
+	// duplicates (e.g. `import os, os` yields two identical rows).
+	deduped := rel.Rows[:0]
+	var prevKey string
+	for i, r := range rel.Rows {
+		key := rowKey(r)
+		if i == 0 || key != prevKey {
+			deduped = append(deduped, r)
+		}
+		prevKey = key
+	}
+	rel.Rows = deduped
 	return rel, nil
 }
 

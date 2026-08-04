@@ -383,3 +383,28 @@ func TestCanonicalFormShape(t *testing.T) {
 		t.Fatalf("unexpected canonical layout:\n%s", strings.Join(lines, "\n"))
 	}
 }
+
+func TestBuildDeduplicatesIdenticalRows(t *testing.T) {
+	// SPEC.md section 1: the relation is an ordered SET of rows.
+	b := NewBuilder()
+	if err := b.AddNode(moduleNode("a", false)); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.AddNode(moduleNode("b", false)); err != nil {
+		t.Fatal(err)
+	}
+	// The same row twice (e.g. `import os, os` produces identical rows).
+	if err := b.AddRow(importsRow("a", "b", Span{0, 8})); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.AddRow(importsRow("a", "b", Span{0, 8})); err != nil {
+		t.Fatal(err)
+	}
+	rel, err := b.Build()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(rel.Rows) != 1 {
+		t.Fatalf("identical rows not collapsed: %d rows", len(rel.Rows))
+	}
+}
