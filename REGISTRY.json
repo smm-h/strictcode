@@ -124,10 +124,10 @@
         "module-enumeration",
         "import-extraction",
         "resolve-imports-modules",
-        "export-extraction",
         "test-context-classification"
       ],
       "uses": [
+        "export-extraction",
         "entry-point-discovery"
       ],
       "groups": [],
