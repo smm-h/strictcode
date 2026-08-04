@@ -177,11 +177,11 @@ func TestLesson8RuntimeDepImportedOnlyByTestsIsFlagged(t *testing.T) {
 
 func TestLesson9GoTestPackagesNeverDead(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		"go.mod":                       "module example.com/solo\n\ngo 1.22\n",
-		"main.go":                      "package main\n\nfunc main() {}\n",
-		"internal/testdata/x/gen.go":   "package gen\n",
-		"internal/only/only_test.go":   "package only\n",
-		"internal/genuine/dead.go":     "package genuine\n",
+		"go.mod":                     "module example.com/solo\n\ngo 1.22\n",
+		"main.go":                    "package main\n\nfunc main() {}\n",
+		"internal/testdata/x/gen.go": "package gen\n",
+		"internal/only/only_test.go": "package only\n",
+		"internal/genuine/dead.go":   "package genuine\n",
 	})
 	dead := byRule(fs, "dead-modules")
 	if len(dead) != 1 {
@@ -196,10 +196,10 @@ func TestLesson9GoTestPackagesNeverDead(t *testing.T) {
 
 func TestLesson10RegistryNameMismatchNoFalseUndeclared(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"transport\"\nname = \"transport\"\n",
-		"app/pyproject.toml":             "[project]\nname = \"app\"\ndependencies = [\"orxtra-transport\"]\n",
-		"app/app/__init__.py":            "import orxtra_transport\n",
-		"transport/pyproject.toml":       "[project]\nname = \"orxtra-transport\"\n",
+		".rlsbl-monorepo/workspace.toml":         "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"transport\"\nname = \"transport\"\n",
+		"app/pyproject.toml":                     "[project]\nname = \"app\"\ndependencies = [\"orxtra-transport\"]\n",
+		"app/app/__init__.py":                    "import orxtra_transport\n",
+		"transport/pyproject.toml":               "[project]\nname = \"orxtra-transport\"\n",
 		"transport/orxtra_transport/__init__.py": "",
 	})
 	if len(byRule(fs, "deps-undeclared")) != 0 {
@@ -212,10 +212,10 @@ func TestLesson10RegistryNameMismatchNoFalseUndeclared(t *testing.T) {
 
 func TestLesson11NamespaceImportResolves(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"transport\"\nname = \"transport\"\n",
-		"app/pyproject.toml":             "[project]\nname = \"app\"\ndependencies = [\"transport\"]\n",
-		"app/app/__init__.py":            "from orxt.transport import client\n",
-		"transport/pyproject.toml":       "[project]\nname = \"transport\"\n",
+		".rlsbl-monorepo/workspace.toml":           "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"transport\"\nname = \"transport\"\n",
+		"app/pyproject.toml":                       "[project]\nname = \"app\"\ndependencies = [\"transport\"]\n",
+		"app/app/__init__.py":                      "from orxt.transport import client\n",
+		"transport/pyproject.toml":                 "[project]\nname = \"transport\"\n",
 		"transport/src/orxt/transport/__init__.py": "",
 		"transport/src/orxt/transport/client.py":   "",
 	})
@@ -259,14 +259,14 @@ func TestLesson13SiblingSourceNeverTriggersUndeclared(t *testing.T) {
 
 func deadPyWorkspace(cfg string) map[string]string {
 	files := map[string]string{
-		"pyproject.toml":     "[project]\nname = \"solo\"\n",
-		"pkg/__init__.py":    "from . import entry\n",
-		"pkg/entry.py":       "import pkg.mid\n",
-		"pkg/mid.py":         "import pkg.deep\n",
-		"pkg/deep.py":        "",
-		"pkg/orphan.py":      "",
-		"scripts/build.py":   "import pkg.scriptonly\n",
-		"pkg/scriptonly.py":  "",
+		"pyproject.toml":    "[project]\nname = \"solo\"\n",
+		"pkg/__init__.py":   "from . import entry\n",
+		"pkg/entry.py":      "import pkg.mid\n",
+		"pkg/mid.py":        "import pkg.deep\n",
+		"pkg/deep.py":       "",
+		"pkg/orphan.py":     "",
+		"scripts/build.py":  "import pkg.scriptonly\n",
+		"pkg/scriptonly.py": "",
 	}
 	if cfg != "" {
 		files["strictcode.toml"] = cfg
@@ -326,12 +326,12 @@ func TestLesson16InitExportExemption(t *testing.T) {
 
 func TestLesson18TSReachabilityThroughMappedImports(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		"package.json":       "{\n  \"name\": \"app\",\n  \"main\": \"./src/index.ts\"\n}\n",
-		"src/index.ts":       "export { x } from './helper.js';\nimport './sub';\n",
-		"src/helper.ts":      "export const x = 1;\n",
-		"src/sub/index.ts":   "import { orphaned } from '../orphan';\n",
-		"src/orphan.ts":      "export const orphaned = 1;\n",
-		"src/unreached.ts":   "export const u = 1;\n",
+		"package.json":     "{\n  \"name\": \"app\",\n  \"main\": \"./src/index.ts\"\n}\n",
+		"src/index.ts":     "export { x } from './helper.js';\nimport './sub';\n",
+		"src/helper.ts":    "export const x = 1;\n",
+		"src/sub/index.ts": "import { orphaned } from '../orphan';\n",
+		"src/orphan.ts":    "export const orphaned = 1;\n",
+		"src/unreached.ts": "export const u = 1;\n",
 	})
 	dead := byRule(fs, "dead-modules")
 	// helper reached via .js->.ts mapping; sub via directory index; orphan
@@ -344,8 +344,8 @@ func TestLesson18TSReachabilityThroughMappedImports(t *testing.T) {
 func TestTSSuppressedModuleEdgesNotTraversed(t *testing.T) {
 	// Lesson 14, BFS variant: a suppressed unit's edges are never traversed.
 	fs := analyze(t, map[string]string{
-		"package.json": "{\n  \"name\": \"app\",\n  \"main\": \"./src/index.ts\"\n}\n",
-		"src/index.ts": "import './carrier';\n",
+		"package.json":   "{\n  \"name\": \"app\",\n  \"main\": \"./src/index.ts\"\n}\n",
+		"src/index.ts":   "import './carrier';\n",
 		"src/carrier.ts": "import './cargo';\n",
 		"src/cargo.ts":   "export const c = 1;\n",
 		"strictcode.toml": `
@@ -437,9 +437,9 @@ func TestLesson22LibraryLintOnlyOnLibraries(t *testing.T) {
 
 func TestLesson23DefaultTestExcludesApply(t *testing.T) {
 	files := libWorkspace(true, map[string]string{
-		"m/pkg/__init__.py":    "",
-		"m/tests/test_app.py":  "import flask\n",
-		"m/examples/demo.py":   "import flask\n",
+		"m/pkg/__init__.py":   "",
+		"m/tests/test_app.py": "import flask\n",
+		"m/examples/demo.py":  "import flask\n",
 	})
 	if got := byRule(analyze(t, files), "library-forbidden-imports"); len(got) != 0 {
 		t.Fatalf("test/example files must be excluded (lesson 23): %+v", got)
@@ -527,20 +527,20 @@ dev_only = true
 path = "app"
 name = "app"
 `,
-		"used/pyproject.toml":         "[project]\nname = \"used\"\n",
-		"used/used/__init__.py":       "import used.sub\n",
-		"used/used/sub.py":            "",
-		"unused/pyproject.toml":       "[project]\nname = \"unused\"\n",
-		"unused/unused/__init__.py":   "",
-		"testonly/pyproject.toml":     "[project]\nname = \"testonly\"\n",
-		"testonly/testonly/__init__.py": "",
-		"published/pyproject.toml":    "[project]\nname = \"published\"\n",
+		"used/pyproject.toml":             "[project]\nname = \"used\"\n",
+		"used/used/__init__.py":           "import used.sub\n",
+		"used/used/sub.py":                "",
+		"unused/pyproject.toml":           "[project]\nname = \"unused\"\n",
+		"unused/unused/__init__.py":       "",
+		"testonly/pyproject.toml":         "[project]\nname = \"testonly\"\n",
+		"testonly/testonly/__init__.py":   "",
+		"published/pyproject.toml":        "[project]\nname = \"published\"\n",
 		"published/published/__init__.py": "",
-		"devtool/pyproject.toml":      "[project]\nname = \"devtool\"\n",
-		"devtool/devtool/__init__.py": "",
-		"app/pyproject.toml":          "[project]\nname = \"app\"\ndependencies = [\"used\", \"testonly\"]\n",
-		"app/app/__init__.py":         "import used\n",
-		"app/tests/test_t.py":         "import testonly\n",
+		"devtool/pyproject.toml":          "[project]\nname = \"devtool\"\n",
+		"devtool/devtool/__init__.py":     "",
+		"app/pyproject.toml":              "[project]\nname = \"app\"\ndependencies = [\"used\", \"testonly\"]\n",
+		"app/app/__init__.py":             "import used\n",
+		"app/tests/test_t.py":             "import testonly\n",
 	})
 	dead := byRule(fs, "dead-workspace-packages")
 	msgs := map[string]string{}
@@ -702,7 +702,7 @@ func TestDepsDevInProduction(t *testing.T) {
 func TestSelfImportsAreExempt(t *testing.T) {
 	// A package importing its own submodules is never deps-undeclared.
 	fs := analyze(t, map[string]string{
-		"pyproject.toml":  "[project]\nname = \"solo\"\n",
+		"pyproject.toml":   "[project]\nname = \"solo\"\n",
 		"solo/__init__.py": "import solo.core\n",
 		"solo/core.py":     "",
 	})
