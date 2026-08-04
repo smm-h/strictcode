@@ -100,6 +100,30 @@ required = false
 [types.RuleConfig.fields.suppressions.item]
 type = "Suppression"
 
+[types.RuleConfig.fields.allow]
+type = "map"
+required = false
+key_pattern = "^(py|go|ts)$"
+order = "incidental"
+description = "Per-language allow lists (library-forbidden-imports): entries subtracted from the effective forbidden set, merged with the workspace-level lint_allow list."
+[types.RuleConfig.fields.allow.value]
+type = "array"
+[types.RuleConfig.fields.allow.value.item]
+type = "string"
+non_empty = true
+
+[types.RuleConfig.fields.forbidden]
+type = "map"
+required = false
+key_pattern = "^(py|go|ts)$"
+order = "incidental"
+description = "Per-language replacement of the default forbidden-imports list."
+[types.RuleConfig.fields.forbidden.value]
+type = "array"
+[types.RuleConfig.fields.forbidden.value.item]
+type = "string"
+non_empty = true
+
 [types.Suppression]
 type = "record"
 description = "One suppression in the rule's natural target shape: path | (project, dep) | modules (cycle member set) | member. The reason is mandatory and non-empty; shape-vs-rule matching is a consumer-native check against the registry."

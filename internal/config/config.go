@@ -50,6 +50,12 @@ type RuleSetting struct {
 	Severity     rules.Severity
 	Thresholds   map[string]int64
 	Suppressions []Suppression
+	// Allow holds per-language allow lists (library-forbidden-imports:
+	// subtracted from the effective forbidden set; lesson 26).
+	Allow map[string][]string
+	// Forbidden holds per-language replacements of the default
+	// forbidden-imports list.
+	Forbidden map[string][]string
 }
 
 // Analysis is the effective analysis-mode selection.
@@ -172,6 +178,26 @@ func Parse(raw []byte, name string) (*Effective, error) {
 			for _, tkv := range thresholds.Entries() {
 				n, _ := tkv.Value.Int()
 				s.Thresholds[tkv.Key] = n
+			}
+		}
+		for _, listField := range []string{"allow", "forbidden"} {
+			lists, ok := kv.Value.Field(listField)
+			if !ok {
+				continue
+			}
+			m := map[string][]string{}
+			for _, lkv := range lists.Entries() {
+				var vals []string
+				for _, item := range lkv.Value.Items() {
+					s, _ := item.AsString()
+					vals = append(vals, s)
+				}
+				m[lkv.Key] = vals
+			}
+			if listField == "allow" {
+				s.Allow = m
+			} else {
+				s.Forbidden = m
 			}
 		}
 		if sups, ok := kv.Value.Field("suppressions"); ok {
