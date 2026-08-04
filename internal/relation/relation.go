@@ -284,10 +284,31 @@ const canonicalVersion = "strictcode-relation-canonical v1"
 // the sorted node table, then the sorted rows, one record per line, every
 // free-form field percent-escaped. Equal relations produce equal bytes.
 func (rel *Relation) CanonicalForm() []byte {
+	return CanonicalFormOf(rel.Nodes, rel.Rows)
+}
+
+// CanonicalFormOf renders an arbitrary node/row set canonically, sorting
+// both (the inputs are not modified). The fix verifier uses this to compare
+// span-masked variants, where masking changes the sort order.
+func CanonicalFormOf(nodes []Node, rows []Row) []byte {
+	ns := make([]Node, len(nodes))
+	copy(ns, nodes)
+	sort.Slice(ns, func(i, j int) bool {
+		if ns[i].Kind != ns[j].Kind {
+			return ns[i].Kind < ns[j].Kind
+		}
+		return ns[i].ID.String() < ns[j].ID.String()
+	})
+	rs := make([]Row, len(rows))
+	copy(rs, rows)
+	sort.Slice(rs, func(i, j int) bool {
+		return rowKey(rs[i]) < rowKey(rs[j])
+	})
+
 	var b strings.Builder
 	b.WriteString(canonicalVersion)
 	b.WriteByte('\n')
-	for _, n := range rel.Nodes {
+	for _, n := range ns {
 		b.WriteString("node ")
 		b.WriteString(string(n.Kind))
 		b.WriteByte(' ')
@@ -298,7 +319,7 @@ func (rel *Relation) CanonicalForm() []byte {
 		}
 		b.WriteByte('\n')
 	}
-	for _, r := range rel.Rows {
+	for _, r := range rs {
 		b.WriteString("row ")
 		b.WriteString(rowKey(r))
 		b.WriteByte('\n')

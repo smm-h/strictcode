@@ -13,9 +13,13 @@ import (
 
 	"github.com/smm-h/strictcli/go/strictcli"
 	strictcode "github.com/smm-h/strictcode"
+	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/engine"
+	"github.com/smm-h/strictcode/internal/extract"
 	"github.com/smm-h/strictcode/internal/findings"
+	"github.com/smm-h/strictcode/internal/fix"
 	"github.com/smm-h/strictcode/internal/registrydump"
+	"github.com/smm-h/strictcode/internal/workspace"
 )
 
 func main() {
@@ -38,6 +42,24 @@ func newApp() *strictcli.App {
 		strictcli.WithFlags(
 			strictcli.StringFlag("format", "Output format: text or json",
 				strictcli.Default("text"), strictcli.Choices("text", "json")),
+			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
+				strictcli.Default("strictcode.toml")),
+		),
+	)
+
+	app.Command("fix", "Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification",
+		fixHandler,
+		strictcli.WithArgs(
+			strictcli.NewArg("dir", "Project or workspace root",
+				strictcli.ArgRequired(false), strictcli.ArgDefault(".")),
+		),
+		// The apply-vs-preview choice is a required mutex: writing files is
+		// never an implicit default.
+		strictcli.WithMutex(strictcli.MutexGroup{Flags: []strictcli.Flag{
+			strictcli.BoolFlag("apply", "Apply the planned fixes (files are rewritten, then verified; mismatches roll back)"),
+			strictcli.BoolFlag("preview", "List the planned fixes without touching any file"),
+		}}),
+		strictcli.WithFlags(
 			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
 				strictcli.Default("strictcode.toml")),
 		),
@@ -91,6 +113,50 @@ func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) stric
 	if findings.FailRun(res.Findings) {
 		return strictcli.Exit(1)
 	}
+	return strictcli.Exit(0)
+}
+
+// fixHandler plans the whitelisted tier-1 transforms and either previews
+// or applies+verifies them. Exit 0 = success (or nothing to fix); exit 2 =
+// tool/config error, including a verification rollback.
+func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
+	dir := strictcli.Get[string](kwargs, "dir")
+	cfgName := strictcli.Get[string](kwargs, "config")
+	apply, _ := strictcli.GetOpt[bool](kwargs, "apply")
+
+	ws, err := workspace.Load(dir)
+	if err != nil {
+		ctx.Error(err.Error())
+		return strictcli.Exit(2)
+	}
+	cfg, err := config.Load(filepath.Join(ws.Root, filepath.FromSlash(cfgName)))
+	if err != nil {
+		ctx.Error(err.Error())
+		return strictcli.Exit(2)
+	}
+	res, err := extract.Extract(ws)
+	if err != nil {
+		ctx.Error(err.Error())
+		return strictcli.Exit(2)
+	}
+	plans := fix.PlanUnreachableRemovals(res, cfg)
+	if len(plans) == 0 {
+		fmt.Println("no tier-1 fixes to apply")
+		return strictcli.Exit(0)
+	}
+	for _, p := range plans {
+		fmt.Printf("%s: %s [%s] (bytes %d..%d)\n", p.File, p.Description, p.Rule, p.Start, p.End)
+	}
+	if !apply {
+		fmt.Printf("%d fix(es) planned (preview; pass --apply to write)\n", len(plans))
+		return strictcli.Exit(0)
+	}
+	report, err := fix.Apply(ws, res, plans)
+	if err != nil {
+		ctx.Error(err.Error())
+		return strictcli.Exit(2)
+	}
+	fmt.Printf("applied %d fix(es) across %d file(s); post-fix graph verified\n", len(report.Applied), report.FilesEdited)
 	return strictcli.Exit(0)
 }
 
