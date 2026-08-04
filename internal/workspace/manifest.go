@@ -147,10 +147,17 @@ func collectExports(mf *Manifest, path string, v strictspec.Value) {
 	// subpath, and array fallbacks are a legacy npm form.
 }
 
-// loadGoMod parses a go.mod: module path and require directives (all
-// runtime scope — Go has no dev-dependency concept in go.mod).
+// loadGoMod parses a member's root go.mod.
 func loadGoMod(ws *Workspace, m *Member, relPath string) (*Manifest, error) {
-	raw, err := os.ReadFile(filepath.Join(ws.Root, filepath.FromSlash(relPath)))
+	return ParseGoMod(ws.Root, relPath)
+}
+
+// ParseGoMod parses a go.mod at relPath (workspace-root-relative): module
+// path and require directives (all runtime scope — Go has no
+// dev-dependency concept in go.mod). Also used by the Go extractor for
+// nested modules within a member.
+func ParseGoMod(wsRoot, relPath string) (*Manifest, error) {
+	raw, err := os.ReadFile(filepath.Join(wsRoot, filepath.FromSlash(relPath)))
 	if err != nil {
 		return nil, fmt.Errorf("workspace: %w", err)
 	}

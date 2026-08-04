@@ -34,14 +34,36 @@ func initGoQueries() {
 	goQueries.mainFunc = mustCompile(`(source_file (function_declaration name: (identifier) @fn (#eq? @fn "main")))`)
 }
 
+// goDepMatches matches a go.mod require path against a candidate member's
+// module path.
+func goDepMatches(dep string, cand *workspace.Member) bool {
+	cmf := cand.Manifests[vocab.LangGo]
+	return cmf != nil && cmf.GoModulePath != "" && dep == cmf.GoModulePath
+}
+
 // extractGo extracts a member's Go surface: package-granular modules
 // (the import-addressable unit is the package directory), imports rows, and
-// package-main entry points.
+// package-main entry points. Nested Go modules within the member (e.g.
+// conformance harnesses with their own go.mod) contribute their requires as
+// the member's declared deps, and their module paths scope intra-member
+// package resolution for files beneath them.
 func (ex *extraction) extractGo(m *workspace.Member) error {
 	mf := m.Manifests[vocab.LangGo]
-	files, err := walkMember(ex.ws, m, func(name string) bool { return strings.HasSuffix(name, ".go") })
+	all, err := walkMember(ex.ws, m, func(name string) bool {
+		return strings.HasSuffix(name, ".go") || name == "go.mod"
+	})
 	if err != nil {
 		return err
+	}
+	var files, nestedMods []string
+	for _, f := range all {
+		if strings.HasSuffix(f, "go.mod") {
+			if f != "go.mod" { // the root manifest is loaded by workspace
+				nestedMods = append(nestedMods, f)
+			}
+			continue
+		}
+		files = append(files, f)
 	}
 	if len(files) == 0 && mf == nil {
 		return nil
@@ -51,16 +73,40 @@ func (ex *extraction) extractGo(m *workspace.Member) error {
 	if _, err := ex.memberNodeID(vocab.LangGo, m); err != nil {
 		return err
 	}
-	if err := ex.emitDeclaredDeps(vocab.LangGo, m, func(dep string, cand *workspace.Member) bool {
-		cmf := cand.Manifests[vocab.LangGo]
-		return cmf != nil && cmf.GoModulePath != "" && dep == cmf.GoModulePath
-	}); err != nil {
+	if err := ex.emitDeclaredDeps(vocab.LangGo, m, m.Manifests[vocab.LangGo], goDepMatches); err != nil {
 		return err
+	}
+
+	// Nested modules: dir (member-relative) -> module path.
+	nested := map[string]string{}
+	for _, nm := range nestedMods {
+		nmf, err := loadNestedGoMod(ex.ws, m, nm)
+		if err != nil {
+			return err
+		}
+		if err := ex.emitDeclaredDeps(vocab.LangGo, m, nmf, goDepMatches); err != nil {
+			return err
+		}
+		nested[path.Dir(nm)] = nmf.GoModulePath
 	}
 
 	modPath := ""
 	if mf != nil {
 		modPath = mf.GoModulePath
+	}
+	// modPathFor returns the nearest enclosing module path for a package
+	// dir, and the module-root dir it is anchored at ("" for the member
+	// root module).
+	modPathFor := func(pkgDir string) (string, string) {
+		best, bestPath := "", modPath
+		for dir, mp := range nested {
+			if pkgDir == dir || strings.HasPrefix(pkgDir, dir+"/") {
+				if len(dir) > len(best) {
+					best, bestPath = dir, mp
+				}
+			}
+		}
+		return bestPath, best
 	}
 
 	// Package directories (member-relative; "." for the root package).
@@ -102,8 +148,28 @@ func (ex *extraction) extractGo(m *workspace.Member) error {
 	}
 
 	for _, dir := range pkgDirs {
+		// resolveIntra maps an import path to a member-relative package dir
+		// under the nearest enclosing module of this package's dir.
+		mp, anchor := modPathFor(dir)
+		resolveIntra := func(importPath string) (string, bool) {
+			if mp == "" {
+				return "", false
+			}
+			rel, ok := goRelPackage(mp, importPath)
+			if !ok {
+				return "", false
+			}
+			switch {
+			case anchor == "":
+				return rel, true
+			case rel == ".":
+				return anchor, true
+			default:
+				return anchor + "/" + rel, true
+			}
+		}
 		for _, file := range pkgFiles[dir] {
-			if err := ex.extractGoFile(m, modPath, pkgFiles, dir, file); err != nil {
+			if err := ex.extractGoFile(m, resolveIntra, pkgFiles, dir, file); err != nil {
 				return err
 			}
 		}
@@ -111,7 +177,7 @@ func (ex *extraction) extractGo(m *workspace.Member) error {
 	return nil
 }
 
-func (ex *extraction) extractGoFile(m *workspace.Member, modPath string, pkgFiles map[string][]string, pkgDir, file string) error {
+func (ex *extraction) extractGoFile(m *workspace.Member, resolveIntra func(string) (string, bool), pkgFiles map[string][]string, pkgDir, file string) error {
 	wsPath := wsRelPath(m, file)
 	src, err := ex.readNormalized(wsPath)
 	if err != nil {
@@ -140,19 +206,17 @@ func (ex *extraction) extractGoFile(m *workspace.Member, modPath string, pkgFile
 			span := spanOf(&cap.Node)
 			resolvedToMember := false
 
-			// Intra-member package resolution.
-			if modPath != "" {
-				if rel, ok := goRelPackage(modPath, p); ok {
-					if _, known := pkgFiles[rel]; known {
-						row := relation.Row{
-							Kind: vocab.RowKindImports,
-							Src:  srcID,
-							Dst:  moduleNodeID(vocab.LangGo, m.Name, rel),
-							File: wsPath, Span: span, Attrs: attrs(),
-						}
-						if err := ex.builder.AddRow(row); err != nil {
-							return err
-						}
+			// Intra-member package resolution (nearest enclosing module).
+			if rel, ok := resolveIntra(p); ok {
+				if _, known := pkgFiles[rel]; known {
+					row := relation.Row{
+						Kind: vocab.RowKindImports,
+						Src:  srcID,
+						Dst:  moduleNodeID(vocab.LangGo, m.Name, rel),
+						File: wsPath, Span: span, Attrs: attrs(),
+					}
+					if err := ex.builder.AddRow(row); err != nil {
+						return err
 					}
 				}
 			}
@@ -227,6 +291,11 @@ func (ex *extraction) extractGoFile(m *workspace.Member, modPath string, pkgFile
 		}
 	}
 	return nil
+}
+
+// loadNestedGoMod parses a nested go.mod within a member.
+func loadNestedGoMod(ws *workspace.Workspace, m *workspace.Member, memberRel string) (*workspace.Manifest, error) {
+	return workspace.ParseGoMod(ws.Root, wsRelPath(m, memberRel))
 }
 
 // goRelPackage returns the member-relative package dir for an import path

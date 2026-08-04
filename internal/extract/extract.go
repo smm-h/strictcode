@@ -223,10 +223,10 @@ func (ex *extraction) locate(relPath, needle string) relation.Span {
 // member, per-ecosystem.
 type depResolver func(depName string, candidate *workspace.Member) bool
 
-// emitDeclaredDeps adds declares_dependency rows for every manifest dep
-// that resolves to a sibling (or self) workspace member.
-func (ex *extraction) emitDeclaredDeps(lang vocab.Lang, m *workspace.Member, matches depResolver) error {
-	mf := m.Manifests[lang]
+// emitDeclaredDeps adds declares_dependency rows for every dep of the
+// given manifest that resolves to a sibling workspace member. mf may be a
+// member's root manifest or a nested one (Go nested modules).
+func (ex *extraction) emitDeclaredDeps(lang vocab.Lang, m *workspace.Member, mf *workspace.Manifest, matches depResolver) error {
 	if mf == nil {
 		return nil
 	}

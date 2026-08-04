@@ -268,7 +268,7 @@ func (ex *extraction) extractPython(m *workspace.Member) error {
 	if _, err := ex.memberNodeID(vocab.LangPy, m); err != nil {
 		return err
 	}
-	if err := ex.emitDeclaredDeps(vocab.LangPy, m, func(dep string, cand *workspace.Member) bool {
+	if err := ex.emitDeclaredDeps(vocab.LangPy, m, m.Manifests[vocab.LangPy], func(dep string, cand *workspace.Member) bool {
 		n := pyNorm(dep)
 		return n == pyNorm(cand.Name) || (cand.RegistryName(vocab.LangPy) != "" && n == pyNorm(cand.RegistryName(vocab.LangPy)))
 	}); err != nil {

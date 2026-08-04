@@ -738,3 +738,22 @@ func TestTSNoResolvedEntryPointsMeansNoDeadReport(t *testing.T) {
 		t.Fatalf("BFS must abstain without resolved entry points: %+v", got)
 	}
 }
+
+func TestGoNestedModuleDeclaredDeps(t *testing.T) {
+	// Found on the real corpus: a member whose Go code lives in nested
+	// modules (conformance harnesses). The nested go.mod's requires are the
+	// member's declared deps — no false deps-undeclared.
+	fs := analyze(t, map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"conf\"\nname = \"conf\"\n\n[[projects]]\npath = \"lib\"\nname = \"lib\"\n",
+		"conf/harness/go.mod":            "module example.com/conf/harness\n\ngo 1.22\n\nrequire example.com/lib v0.1.0\n",
+		"conf/harness/main.go":           "package main\n\nimport \"example.com/lib\"\n\nfunc main() { _ = lib.V }\n",
+		"lib/go.mod":                     "module example.com/lib\n\ngo 1.22\n",
+		"lib/lib.go":                     "package lib\n\nvar V = 1\n",
+	})
+	if got := byRule(fs, "deps-undeclared"); len(got) != 0 {
+		t.Fatalf("nested go.mod requires must count as declared: %+v", got)
+	}
+	if got := byRule(fs, "deps-unused"); len(got) != 0 {
+		t.Fatalf("the declared dep is used: %+v", got)
+	}
+}
