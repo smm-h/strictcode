@@ -757,3 +757,152 @@ func TestGoNestedModuleDeclaredDeps(t *testing.T) {
 		t.Fatalf("the declared dep is used: %+v", got)
 	}
 }
+
+// --- Round 3: lessons 24-25, 27 and the last three rules ------------------
+
+func TestLibraryStdout(t *testing.T) {
+	files := map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n\n[[projects]]\npath = \"app\"\nname = \"app\"\n",
+		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":              "",
+		"m/pkg/core.py": `import sys
+
+def work():
+    print("progress")
+    sys.stdout.write("raw")
+    sys.stderr.write("err")
+`,
+		"m/tests/test_core.py": "def test_x():\n    print(\"fine in tests\")\n",
+		"app/pyproject.toml":   "[project]\nname = \"app\"\n",
+		"app/cli/__init__.py":  "def main():\n    print(\"apps may print\")\n",
+	}
+	got := byRule(analyze(t, files), "library-stdout")
+	// Three sites in m/pkg/core.py; none from tests (lesson 23) or the app
+	// member (lesson 22).
+	if len(got) != 3 {
+		t.Fatalf("want 3 library-stdout findings, got %+v", got)
+	}
+	for _, f := range got {
+		if f.Severity != "error" {
+			t.Errorf("library-stdout severity = %s, want error (lesson 27)", f.Severity)
+		}
+		if !strings.Contains(f.Target.File, "m/pkg/core.py") {
+			t.Errorf("finding outside the library production file: %+v", f)
+		}
+	}
+}
+
+func TestLibraryStdoutAllowList(t *testing.T) {
+	files := map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":              "def f():\n    print(\"allowed\")\n",
+		"strictcode.toml": `
+format_version = 1
+[rules.library-stdout.allow]
+py = ["print"]
+`,
+	}
+	if got := byRule(analyze(t, files), "library-stdout"); len(got) != 0 {
+		t.Fatalf("allow-listed stream identifier still flagged: %+v", got)
+	}
+}
+
+func TestLesson27DirectLoggingIsWarning(t *testing.T) {
+	files := map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py": `import logging
+
+def f():
+    logging.info("direct root logger")
+    logging.getLogger(__name__).info("proper logger use")
+`,
+	}
+	got := byRule(analyze(t, files), "library-direct-logging")
+	if len(got) != 1 {
+		t.Fatalf("want exactly the direct logging.info call: %+v", got)
+	}
+	if got[0].Severity != "warning" {
+		t.Fatalf("direct logging must be a warning (lesson 27), got %s", got[0].Severity)
+	}
+}
+
+func TestLesson24CommentsAreNotStatements(t *testing.T) {
+	files := map[string]string{
+		"pyproject.toml":  "[project]\nname = \"solo\"\n",
+		"pkg/__init__.py": "",
+		// A trailing comment after return: no false positive; a real
+		// unreachable statement AFTER the comment must still be found.
+		"pkg/clean.py":  "def f():\n    return 1\n    # just a trailing comment\n",
+		"pkg/masked.py": "def g():\n    return 1\n    # comment between\n    dead = 2\n",
+	}
+	got := byRule(analyze(t, files), "unreachable-code")
+	if len(got) != 1 {
+		t.Fatalf("want exactly one finding (masked.py): %+v", got)
+	}
+	if !strings.Contains(got[0].Target.File, "masked.py") {
+		t.Fatalf("comment-only trailer flagged or real dead code missed: %+v", got)
+	}
+	if got[0].Severity != "error" {
+		t.Fatalf("unreachable-code severity = %s", got[0].Severity)
+	}
+}
+
+func TestLesson25NestedScopesIndependent(t *testing.T) {
+	files := map[string]string{
+		"pyproject.toml":  "[project]\nname = \"solo\"\n",
+		"pkg/__init__.py": "",
+		// The nested def's return must not mark the enclosing block's
+		// following code unreachable...
+		"pkg/outer.py": `def outer():
+    def inner():
+        return 1
+    still_alive = inner()
+    return still_alive
+`,
+		// ...while the walker still descends into nested scopes to find
+		// unreachable code within them.
+		"pkg/nested_dead.py": `def outer2():
+    def inner2():
+        return 1
+        dead_in_nested = 2
+    return inner2()
+`,
+	}
+	got := byRule(analyze(t, files), "unreachable-code")
+	if len(got) != 1 {
+		t.Fatalf("want exactly the nested dead statement: %+v", got)
+	}
+	if !strings.Contains(got[0].Target.File, "nested_dead.py") {
+		t.Fatalf("wrong file flagged: %+v", got)
+	}
+}
+
+func TestUnreachableCodeRunsOnAllProjects(t *testing.T) {
+	// The approved departure: not library-gated.
+	files := map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"app\"\nname = \"app\"\n",
+		"app/pyproject.toml":             "[project]\nname = \"app\"\n",
+		"app/cli/__init__.py":            "def main():\n    return 0\n    print(\"never\")\n",
+	}
+	if got := byRule(analyze(t, files), "unreachable-code"); len(got) != 1 {
+		t.Fatalf("unreachable-code must run on non-library projects: %+v", got)
+	}
+}
+
+func TestUnreachableCodePathSuppression(t *testing.T) {
+	files := map[string]string{
+		"pyproject.toml":  "[project]\nname = \"solo\"\n",
+		"pkg/__init__.py": "def f():\n    return 1\n    dead = 2\n",
+		"strictcode.toml": `
+format_version = 1
+[[rules.unreachable-code.suppressions]]
+path = "pkg/__init__.py"
+reason = "generated file with intentional trailing statements"
+`,
+	}
+	if got := byRule(analyze(t, files), "unreachable-code"); len(got) != 0 {
+		t.Fatalf("path suppression not honored: %+v", got)
+	}
+}

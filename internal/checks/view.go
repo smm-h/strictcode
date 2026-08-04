@@ -77,6 +77,8 @@ type View struct {
 	EntryPoints map[langMember][]EntryPointInfo
 	// memberNodeIDs: (lang, member) -> serialized member node ID.
 	memberNodeIDs map[langMember]string
+	// NodeKinds: serialized node ID -> kind (finding-target labeling).
+	NodeKinds map[string]vocab.NodeKind
 }
 
 func buildView(ws *workspace.Workspace, res *extract.Result) *View {
@@ -91,6 +93,7 @@ func buildView(ws *workspace.Workspace, res *extract.Result) *View {
 		EntryTargets:  map[langMember][]string{},
 		EntryPoints:   map[langMember][]EntryPointInfo{},
 		memberNodeIDs: map[langMember]string{},
+		NodeKinds:     map[string]vocab.NodeKind{},
 	}
 
 	epByID := map[string]*EntryPointInfo{}
@@ -98,6 +101,7 @@ func buildView(ws *workspace.Workspace, res *extract.Result) *View {
 	for i := range res.Relation.Nodes {
 		n := &res.Relation.Nodes[i]
 		lm := langMember{vocab.Lang(n.ID.Lang), n.ID.Member}
+		v.NodeKinds[n.ID.String()] = n.Kind
 		switch n.Kind {
 		case vocab.NodeKindModule:
 			logical, _ := n.Attrs["logical_name"].AsString()

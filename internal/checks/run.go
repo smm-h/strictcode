@@ -24,9 +24,8 @@ type Context struct {
 // checkFn implements one rule over the view.
 type checkFn func(ctx *Context) []findings.Finding
 
-// implemented maps rule IDs to their implementations. Rules of later rounds
-// (library-stdout, library-direct-logging, unreachable-code) are absent —
-// their profile capabilities are still planned.
+// implemented maps rule IDs to their implementations — all fourteen minted
+// rules as of round 3.
 var implemented = map[string]checkFn{
 	"deps-unused":               checkDepsUnused,
 	"deps-hard-guarded-only":    checkDepsHardGuardedOnly,
@@ -39,6 +38,9 @@ var implemented = map[string]checkFn{
 	"stale-suppression":         checkStaleSuppression,
 	"library-forbidden-imports": checkLibraryForbiddenImports,
 	"library-entry-point":       checkLibraryEntryPoint,
+	"library-stdout":            checkLibraryStdout,
+	"library-direct-logging":    checkLibraryDirectLogging,
+	"unreachable-code":          checkUnreachableCode,
 }
 
 // Run executes every enabled, implemented check over the one shared
