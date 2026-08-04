@@ -29,6 +29,47 @@
       ],
       "help": "Analyze a project or workspace directory and report findings",
       "name": "analyze"
+    },
+    "fix": {
+      "args": [
+        {
+          "default": ".",
+          "help": "Project or workspace root",
+          "name": "dir",
+          "required": false
+        }
+      ],
+      "constraints": [
+        {
+          "flags": [
+            "apply",
+            "preview"
+          ],
+          "type": "mutex"
+        }
+      ],
+      "flags": [
+        {
+          "default": "strictcode.toml",
+          "help": "Config file name, resolved relative to the analyzed directory",
+          "name": "config",
+          "type": "str"
+        },
+        {
+          "help": "Apply the planned fixes (files are rewritten, then verified; mismatches roll back)",
+          "name": "apply",
+          "negatable": true,
+          "type": "bool"
+        },
+        {
+          "help": "List the planned fixes without touching any file",
+          "name": "preview",
+          "negatable": true,
+          "type": "bool"
+        }
+      ],
+      "help": "Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification",
+      "name": "fix"
     }
   },
   "defaults": {
