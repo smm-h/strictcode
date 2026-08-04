@@ -211,10 +211,13 @@ var Rules = []Rule{
 			vocab.CapModuleEnumeration,
 			vocab.CapImportExtraction,
 			vocab.CapResolveImportsModules,
-			vocab.CapExportExtraction,
 			vocab.CapTestContextClassification,
 		},
-		Uses:        []vocab.Capability{vocab.CapEntryPointDiscovery},
+		// export-extraction is a uses-capability (moved from requires,
+		// BUILDLOG 2026-08-04): the export-exemption facet (lesson 16) is
+		// Python-only; the Go and TS algorithms need no export surface for
+		// the rule to hold.
+		Uses:        []vocab.Capability{vocab.CapExportExtraction, vocab.CapEntryPointDiscovery},
 		Suppression: SuppressPath,
 		FixTier:     Tier3,
 		PlannedFixes: []PlannedFix{

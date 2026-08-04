@@ -113,8 +113,11 @@ Planned tier 2: rescope the declaration.
 Source units unreachable/unreferenced, per-language algorithms as pinned in DESIGN.md §6.2
 (Python/Go union-of-imports with export and scripts/ handling; TS/JS BFS from entry points).
 Requires: `module-enumeration`, `import-extraction`, `resolve-imports-modules`,
-`export-extraction`, `test-context-classification`. Uses: `entry-point-discovery` (BFS
-languages). Suppression semantics: no entry-point laundering (lesson 14).
+`test-context-classification`. Uses: `export-extraction` (AMENDED 2026-08-04, was in
+requires: the export-exemption facet — lesson 16 — is Python-only; Go's package-granular
+algorithm needs no export surface, and requires would wrongly force the Go cell through a
+capability the diagnosis does not need there), `entry-point-discovery` (BFS languages).
+Suppression semantics: no entry-point laundering (lesson 14).
 Planned tier 2: delete the dead unit (consent-gated — deletion is behavior-relevant).
 
 **`dead-workspace-packages`** — warning. Lineage: dead-workspace-packages (kept).
