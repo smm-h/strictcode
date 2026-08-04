@@ -19,3 +19,6 @@ target/
 
 # benchmark harness binary
 benchmark/binding-eval/binding-eval
+
+# local build output
+/strictcode
