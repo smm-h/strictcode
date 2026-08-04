@@ -80,12 +80,18 @@ func (b *Builder) AddNode(n Node) error {
 	if _, exists := b.nodes[id]; exists {
 		return fmt.Errorf("relation: node ID collision: two distinct nodes serialize to %q", id)
 	}
-	lower := strings.ToLower(id)
-	if prior, exists := b.caseIndex[lower]; exists {
-		return fmt.Errorf("relation: case-only ID clash between %q and %q (case-insensitive filesystem safety)", prior, id)
+	// The case-only-clash hard error is scoped to MODULE identity (SPEC
+	// 2.2: filesystem safety — module identity is path-derived). Code
+	// identifiers differing only by case (class Outcome / def outcome) are
+	// legal in every trio language.
+	if len(n.ID.Chain) == 0 {
+		lower := strings.ToLower(id)
+		if prior, exists := b.caseIndex[lower]; exists {
+			return fmt.Errorf("relation: case-only ID clash between %q and %q (case-insensitive filesystem safety)", prior, id)
+		}
+		b.caseIndex[lower] = id
 	}
 	b.nodes[id] = n
-	b.caseIndex[lower] = id
 	return nil
 }
 

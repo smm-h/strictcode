@@ -408,3 +408,30 @@ func TestBuildDeduplicatesIdenticalRows(t *testing.T) {
 		t.Fatalf("identical rows not collapsed: %d rows", len(rel.Rows))
 	}
 }
+
+func TestCaseOnlyClashScopedToModuleIdentity(t *testing.T) {
+	// SPEC 2.2 scopes the case-only-clash hard error to module identity
+	// (filesystem safety). Code identifiers differing only by case — class
+	// Outcome beside def outcome — are legal in every trio language and
+	// must coexist (found on the real corpus: strictcli).
+	b := NewBuilder()
+	if err := b.AddNode(moduleNode("strictcli", false)); err != nil {
+		t.Fatal(err)
+	}
+	classNode := Node{
+		Kind: vocab.NodeKindType,
+		ID: NodeID{Lang: "py", Member: "core", Module: "strictcli",
+			Chain: []Segment{{Name: "Outcome"}}},
+		Attrs: map[string]Value{
+			"form":       StringValue("class"),
+			"visibility": StringValue("public"),
+		},
+	}
+	funcNode := functionNode("strictcli", "outcome")
+	if err := b.AddNode(classNode); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.AddNode(funcNode); err != nil {
+		t.Fatalf("case-differing code identifiers must coexist: %v", err)
+	}
+}
