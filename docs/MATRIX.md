@@ -12,18 +12,18 @@ profiles.
 
 | Rule | Python | Go | TypeScript/JavaScript |
 |---|---|---|---|
-| `deps-unused` | planned | planned | planned |
-| `deps-hard-guarded-only` | planned | n/a — Go has no optional-import construct; every import is unconditional and required at compile time. | n/a — No declared optional-dependency import construct; a try/catch around dynamic import() is control flow, not an optionality declaration. |
-| `deps-undeclared` | planned | planned | planned |
-| `deps-runtime-test-only` | planned | planned | planned |
-| `deps-dev-in-production` | planned | planned | planned |
-| `dead-modules` | planned | planned | planned |
-| `dead-workspace-packages` | planned | planned | planned |
-| `import-cycles` | planned | n/a — the Go compiler rejects import cycles; re-checking is noise | planned |
-| `library-forbidden-imports` | planned | planned | planned |
+| `deps-unused` | supported | supported | supported |
+| `deps-hard-guarded-only` | supported | n/a — Go has no optional-import construct; every import is unconditional and required at compile time. | n/a — No declared optional-dependency import construct; a try/catch around dynamic import() is control flow, not an optionality declaration. |
+| `deps-undeclared` | supported | supported | supported |
+| `deps-runtime-test-only` | supported | supported | supported |
+| `deps-dev-in-production` | supported | supported | supported |
+| `dead-modules` | supported | supported | supported |
+| `dead-workspace-packages` | supported | supported | supported |
+| `import-cycles` | supported | n/a — the Go compiler rejects import cycles; re-checking is noise | supported |
+| `library-forbidden-imports` | supported | supported | supported |
 | `library-stdout` | planned | planned | planned |
 | `library-direct-logging` | planned | n/a — the diagnosis is specific to Python's root-logger idiom | n/a — the diagnosis is specific to Python's root-logger idiom |
-| `library-entry-point` | planned | planned | planned |
+| `library-entry-point` | supported | supported | supported |
 | `unreachable-code` | planned | n/a — go vet reports unreachable code natively | planned |
 
 ### Language-independent rules
@@ -37,16 +37,16 @@ regardless of language.
 
 | Capability | Layer | Python | Go | TypeScript/JavaScript |
 |---|---|---|---|---|
-| `module-enumeration` | import-graph | planned | planned | planned |
-| `import-extraction` | import-graph | planned | planned | planned |
-| `resolve-imports-internal` | import-graph | planned | planned | planned |
-| `resolve-imports-modules` | import-graph | planned | planned | planned |
-| `import-attr-guarded` | import-graph | planned | n/a — Go has no optional-import construct; every import is unconditional and required at compile time. | n/a — No declared optional-dependency import construct; a try/catch around dynamic import() is control flow, not an optionality declaration. |
-| `import-attr-type-checking` | import-graph | planned | n/a — Go has no type-only import form; all imports are ordinary compile-time dependencies. | planned |
-| `test-context-classification` | import-graph | planned | planned | planned |
-| `entry-point-discovery` | import-graph | planned | planned | planned |
-| `declared-dependency-extraction` | import-graph | planned | planned | planned |
-| `export-extraction` | import-graph | planned | planned | planned |
+| `module-enumeration` | import-graph | supported | supported | supported |
+| `import-extraction` | import-graph | supported | supported | supported |
+| `resolve-imports-internal` | import-graph | supported | supported | supported |
+| `resolve-imports-modules` | import-graph | supported | supported | supported |
+| `import-attr-guarded` | import-graph | supported | n/a — Go has no optional-import construct; every import is unconditional and required at compile time. | n/a — No declared optional-dependency import construct; a try/catch around dynamic import() is control flow, not an optionality declaration. |
+| `import-attr-type-checking` | import-graph | supported | n/a — Go has no type-only import form; all imports are ordinary compile-time dependencies. | supported |
+| `test-context-classification` | import-graph | supported | supported | supported |
+| `entry-point-discovery` | import-graph | supported | supported | supported |
+| `declared-dependency-extraction` | import-graph | supported | supported | supported |
+| `export-extraction` | import-graph | supported | planned | supported |
 | `callable-extraction` | full-semantic-graph | planned | planned | planned |
 | `type-extraction` | full-semantic-graph | planned | planned | planned |
 | `call-resolution-syntactic` | full-semantic-graph | planned | planned | planned |
