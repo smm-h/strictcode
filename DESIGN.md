@@ -335,11 +335,17 @@ tree-sitter is the parsing foundation: MIT-licensed, 300+ language grammars, inc
 | Project | `github.com/odvcencio/gotreesitter` | `github.com/tree-sitter/go-tree-sitter` |
 | Nature | Ground-up pure Go reimplementation of the tree-sitter runtime | CGo wrapper maintained by the tree-sitter org |
 | Grammars | 205 embedded (204 fully functional), lazy-loaded | Loaded at runtime, guaranteed upstream compatibility |
-| Performance | ~1.15x faster full parse; ~158x faster incremental edits | FFI cost per call; slower incremental |
+| Performance | ~~"~1.15x faster full parse; ~158x faster incremental edits"~~ **CORRECTED 2026-08-04: withdrawn upstream claims** (source benchmark built no tree, never exercised GLR forking, mismatched grammar tables); upstream's own current attested number is ~5.5x slower than C; our corpus measurement: 7x slower (BUILDLOG.md) | FFI cost per call; measured 4.24 MB/s on the benchmark corpus |
 | Cross-compilation | Any GOOS/GOARCH incl. WASM, no C toolchain | Broken by CGo unless using `zig cc` as cross-compiler |
 | Tooling | Race detector and fuzzing work normally | `go test -race` problematic across CGo boundary |
 | Memory | GC-managed | Manual `Close()` on every Parser/Tree/Cursor/Query or C memory leaks |
-| Risk | Young (v0.15.x), single author, bus factor of one | Org-backed, stable |
+| Risk | Young (v0.15.x at evaluation-criteria time; v0.48.0 at benchmark), single author, bus factor of one; deliberate per-language tree normalization away from C output, plus a v0.48.0 field-misattribution regression (reported upstream as odvcencio/gotreesitter#660) | Org-backed, stable |
+
+**RESOLVED 2026-08-03 (benchmark, BUILDLOG.md): the official CGo bindings won** — the
+byte-identical-trees and query-results criteria both failed for gotreesitter and its
+throughput was 14% of CGo's (threshold: 75%). A 2026-08-04 fresh-eyes investigation
+confirmed the verdict is robust across a seven-version bisect (no gotreesitter version
+passes either absolute criterion) and corrected this table's performance row.
 
 ### Build-vs-depend policy
 

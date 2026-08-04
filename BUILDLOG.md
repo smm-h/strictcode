@@ -125,6 +125,26 @@ the FFI boundary. Grammar version pinning is now explicit in go.mod per
 grammar (`tree-sitter-python` et al.), which is an upside: the C grammar and
 the runtime are upstream-official.
 
+## 2026-08-04 — Benchmark corrections (independent investigation)
+
+A fresh-eyes investigation into the gotreesitter result (reported by the
+coordinator at round-2 start) corrected three points; the CGo verdict stands:
+
+1. **The design table's performance figures were withdrawn upstream claims.**
+   The "~1.15x faster full parse / ~158x faster incremental" numbers came
+   from a source benchmark that built no tree, never exercised GLR forking,
+   and used mismatched grammar tables. Upstream's own current attested number
+   is ~5.5x slower than C — corroborating our 7x-slower corpus measurement.
+   DESIGN.md §9's binding table now carries the correction.
+2. **The tree divergence is broader than the expression_statement
+   normalization** documented in the 2026-08-03 entry: ~70% of mismatched
+   files diverge for other reasons, the largest being a v0.48.0
+   field-misattribution regression (the `name` field stamped on separator
+   commas), reported upstream as odvcencio/gotreesitter#660.
+3. **The verdict is bisect-robust.** Across a seven-version bisect, no
+   gotreesitter version passes either absolute criterion (byte-identical
+   trees, equal query results).
+
 ## 2026-08-03 — tree-sitter integration layer
 
 `internal/treesitter`: the single parsing path. Owns grammar selection for
