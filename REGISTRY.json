@@ -269,13 +269,8 @@
       "uses": [],
       "groups": [],
       "suppression": "path",
-      "fix_tier": 3,
-      "planned_fixes": [
-        {
-          "tier": 1,
-          "description": "Remove the unreachable statements (the flagship whitelisted transform)."
-        }
-      ],
+      "fix_tier": 1,
+      "planned_fixes": [],
       "not_applicable": {
         "go": "go vet reports unreachable code natively"
       }

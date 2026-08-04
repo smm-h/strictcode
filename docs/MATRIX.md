@@ -21,10 +21,10 @@ profiles.
 | `dead-workspace-packages` | supported | supported | supported |
 | `import-cycles` | supported | n/a — the Go compiler rejects import cycles; re-checking is noise | supported |
 | `library-forbidden-imports` | supported | supported | supported |
-| `library-stdout` | planned | planned | planned |
-| `library-direct-logging` | planned | n/a — the diagnosis is specific to Python's root-logger idiom | n/a — the diagnosis is specific to Python's root-logger idiom |
+| `library-stdout` | supported | planned | planned |
+| `library-direct-logging` | supported | n/a — the diagnosis is specific to Python's root-logger idiom | n/a — the diagnosis is specific to Python's root-logger idiom |
 | `library-entry-point` | supported | supported | supported |
-| `unreachable-code` | planned | n/a — go vet reports unreachable code natively | planned |
+| `unreachable-code` | supported | n/a — go vet reports unreachable code natively | planned |
 
 ### Language-independent rules
 
@@ -47,15 +47,15 @@ regardless of language.
 | `entry-point-discovery` | import-graph | supported | supported | supported |
 | `declared-dependency-extraction` | import-graph | supported | supported | supported |
 | `export-extraction` | import-graph | supported | planned | supported |
-| `callable-extraction` | full-semantic-graph | planned | planned | planned |
-| `type-extraction` | full-semantic-graph | planned | planned | planned |
-| `call-resolution-syntactic` | full-semantic-graph | planned | planned | planned |
+| `callable-extraction` | full-semantic-graph | supported | planned | planned |
+| `type-extraction` | full-semantic-graph | supported | planned | planned |
+| `call-resolution-syntactic` | full-semantic-graph | supported | planned | planned |
 | `call-resolution-type-informed` | full-semantic-graph | planned | n/a — Go is statically typed; syntactic resolution over the package symbol table already has type information — there is no external-type-checker mode to opt into. | planned |
-| `conformance-declared` | full-semantic-graph | planned | planned | planned |
+| `conformance-declared` | full-semantic-graph | supported | planned | planned |
 | `conformance-derived` | full-semantic-graph | planned | planned | planned |
-| `instantiation-extraction` | full-semantic-graph | planned | planned | planned |
+| `instantiation-extraction` | full-semantic-graph | supported | planned | planned |
 | `reference-extraction` | full-semantic-graph | planned | planned | planned |
-| `decoration-extraction` | full-semantic-graph | planned | n/a — Go has no decorator or annotation construct. | planned |
-| `unreachable-statement-analysis` | full-semantic-graph | planned | n/a — go vet reports unreachable code natively; strictcode does not reimplement it. | planned |
+| `decoration-extraction` | full-semantic-graph | supported | n/a — Go has no decorator or annotation construct. | planned |
+| `unreachable-statement-analysis` | full-semantic-graph | supported | n/a — go vet reports unreachable code natively; strictcode does not reimplement it. | planned |
 | `endpoint-discovery` | boundary-graph | planned | planned | planned |
 | `db-entity-discovery` | boundary-graph | planned | planned | planned |
