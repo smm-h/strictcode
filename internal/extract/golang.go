@@ -138,6 +138,7 @@ func (ex *extraction) extractGoFile(m *workspace.Member, modPath string, pkgFile
 			lit := nodeText(&cap.Node, tree.Source)
 			p := strings.Trim(lit, "`\"")
 			span := spanOf(&cap.Node)
+			resolvedToMember := false
 
 			// Intra-member package resolution.
 			if modPath != "" {
@@ -178,7 +179,19 @@ func (ex *extraction) extractGoFile(m *workspace.Member, modPath string, pkgFile
 				if err := ex.builder.AddRow(row); err != nil {
 					return err
 				}
+				resolvedToMember = true
 				break
+			}
+			if !resolvedToMember {
+				ex.external = append(ex.external, ExternalImport{
+					Lang:        vocab.LangGo,
+					Member:      m.Name,
+					SrcModule:   pkgDir,
+					Specifier:   p,
+					File:        wsPath,
+					Span:        span,
+					TestContext: isTest,
+				})
 			}
 		}
 	}

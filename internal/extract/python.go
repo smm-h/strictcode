@@ -375,8 +375,10 @@ func (ex *extraction) emitPyImportRows(m *workspace.Member, layout *pyMemberLayo
 	if imp.relative {
 		return nil
 	}
+	resolvedToMember := false
 	for _, dotted := range imp.dotted {
 		if target := ex.pyIndex.resolveMember(dotted); target != nil {
+			resolvedToMember = true
 			dstID, err := ex.memberNodeID(vocab.LangPy, target)
 			if err != nil {
 				return err
@@ -392,6 +394,20 @@ func (ex *extraction) emitPyImportRows(m *workspace.Member, layout *pyMemberLayo
 			}
 			break
 		}
+	}
+	// External import: record the site for specifier-based checks
+	// (library-forbidden-imports). The most specific candidate is the raw
+	// dotted name as written.
+	if !resolvedToMember && len(imp.dotted) > 0 {
+		ex.external = append(ex.external, ExternalImport{
+			Lang:        vocab.LangPy,
+			Member:      m.Name,
+			SrcModule:   srcID.Module,
+			Specifier:   imp.dotted[0],
+			File:        wsPath,
+			Span:        imp.span,
+			TestContext: isTest,
+		})
 	}
 	return nil
 }

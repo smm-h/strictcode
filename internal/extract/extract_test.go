@@ -534,3 +534,29 @@ func keys[V any](m map[string]V) []string {
 	}
 	return out
 }
+
+func TestExternalImportsSideTable(t *testing.T) {
+	res := run(t, pyWorkspace())
+	byMember := map[string][]string{}
+	for _, e := range res.ExternalImports {
+		byMember[e.Member] = append(byMember[e.Member], e.Specifier)
+	}
+	// core_lib/main.py imports os; util.py imports json — externals of core.
+	found := map[string]bool{}
+	for _, s := range byMember["core"] {
+		found[s] = true
+	}
+	if !found["os"] || !found["json"] {
+		t.Fatalf("stdlib externals not recorded: %v", byMember["core"])
+	}
+	// transport's guarded orjson import is external with the site recorded.
+	guarded := false
+	for _, e := range res.ExternalImports {
+		if e.Member == "transport" && e.Specifier == "orjson" {
+			guarded = true
+		}
+	}
+	if !guarded {
+		t.Fatalf("external orjson site missing: %v", byMember["transport"])
+	}
+}

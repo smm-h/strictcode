@@ -266,27 +266,38 @@ func (ex *extraction) extractTSFile(m *workspace.Member, layout *tsLayout, file 
 
 		// Bare specifier: reduce to the package name and match members
 		// case-insensitively (DESIGN.md 6.3 TS/JS).
-		pkg, ok := tsBarePackage(spec)
-		if !ok {
-			continue
+		resolvedToMember := false
+		if pkg, ok := tsBarePackage(spec); ok {
+			for _, other := range ex.ws.Members {
+				if !tsMemberMatches(pkg, other) {
+					continue
+				}
+				dstID, err := ex.memberNodeID(vocab.LangTS, other)
+				if err != nil {
+					return err
+				}
+				row := relation.Row{
+					Kind: vocab.RowKindImports,
+					Src:  srcID, Dst: dstID,
+					File: wsPath, Span: span, Attrs: attrs(),
+				}
+				if err := ex.builder.AddRow(row); err != nil {
+					return err
+				}
+				resolvedToMember = true
+				break
+			}
 		}
-		for _, other := range ex.ws.Members {
-			if !tsMemberMatches(pkg, other) {
-				continue
-			}
-			dstID, err := ex.memberNodeID(vocab.LangTS, other)
-			if err != nil {
-				return err
-			}
-			row := relation.Row{
-				Kind: vocab.RowKindImports,
-				Src:  srcID, Dst: dstID,
-				File: wsPath, Span: span, Attrs: attrs(),
-			}
-			if err := ex.builder.AddRow(row); err != nil {
-				return err
-			}
-			break
+		if !resolvedToMember {
+			ex.external = append(ex.external, ExternalImport{
+				Lang:        vocab.LangTS,
+				Member:      m.Name,
+				SrcModule:   srcID.Module,
+				Specifier:   spec,
+				File:        wsPath,
+				Span:        span,
+				TestContext: isTest,
+			})
 		}
 	}
 	return nil

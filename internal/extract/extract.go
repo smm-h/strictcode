@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/smm-h/strictcode/internal/relation"
@@ -24,6 +25,29 @@ type Result struct {
 	// offsets at which its lines start (offset 0 is always present), over
 	// the LF-normalized content.
 	LineIndex map[string][]uint32
+	// ExternalImports carries import sites whose specifier resolves to no
+	// workspace member: the relation's node set covers only workspace
+	// units, and library-forbidden-imports needs external specifiers
+	// (flask, net/http, express). Side data beside the relation, sorted by
+	// (lang, member, file, span, specifier).
+	ExternalImports []ExternalImport
+}
+
+// ExternalImport is one import site of an external (non-workspace) target.
+type ExternalImport struct {
+	Lang vocab.Lang
+	// Member is the importing member's name.
+	Member string
+	// SrcModule is the importing module's logical name.
+	SrcModule string
+	// Specifier: Python — the full dotted import (matching uses the
+	// top-level segment); Go — the full import path; TS/JS — the raw bare
+	// specifier.
+	Specifier string
+	// File is the workspace-root-relative importing file.
+	File        string
+	Span        relation.Span
+	TestContext bool
 }
 
 // Line converts a byte offset in file to a 1-based line number. Files
@@ -56,6 +80,8 @@ type extraction struct {
 	// entryPoints tracks emitted entry-point nodes (dedup for multi-file
 	// Go main packages).
 	entryPoints map[string]bool
+	// external accumulates external-import sites (see ExternalImport).
+	external []ExternalImport
 
 	// pyIndex is the cross-member Python resolution index (built once).
 	pyIndex *pyResolutionIndex
@@ -95,7 +121,23 @@ func Extract(ws *workspace.Workspace) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Result{Relation: rel, LineIndex: ex.lines}, nil
+	sort.Slice(ex.external, func(i, j int) bool {
+		a, b := ex.external[i], ex.external[j]
+		if a.Lang != b.Lang {
+			return a.Lang < b.Lang
+		}
+		if a.Member != b.Member {
+			return a.Member < b.Member
+		}
+		if a.File != b.File {
+			return a.File < b.File
+		}
+		if a.Span.Start != b.Span.Start {
+			return a.Span.Start < b.Span.Start
+		}
+		return a.Specifier < b.Specifier
+	})
+	return &Result{Relation: rel, LineIndex: ex.lines, ExternalImports: ex.external}, nil
 }
 
 // --- member nodes and IDs -------------------------------------------------
