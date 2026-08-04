@@ -97,34 +97,34 @@ status = "supported"
 status = "supported"
 
 [capabilities.callable-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.type-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.call-resolution-syntactic]
-status = "planned"
+status = "supported"
 
 [capabilities.call-resolution-type-informed]
 status = "planned"
 
 [capabilities.conformance-declared]
-status = "planned"
+status = "supported"
 
 [capabilities.conformance-derived]
 status = "planned"
 
 [capabilities.instantiation-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.reference-extraction]
 status = "planned"
 
 [capabilities.decoration-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.unreachable-statement-analysis]
-status = "planned"
+status = "supported"
 
 [capabilities.endpoint-discovery]
 status = "planned"

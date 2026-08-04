@@ -49,8 +49,16 @@ func TestRuleDeclarationsAreComplete(t *testing.T) {
 		if !validShape[r.Suppression] {
 			t.Errorf("%s: invalid suppression shape %q", r.ID, r.Suppression)
 		}
-		if r.FixTier != Tier3 {
-			t.Errorf("%s: ships at tier %d; v1 is detection-first (tier 3) for every rule", r.ID, r.FixTier)
+		switch r.FixTier {
+		case Tier1, Tier3:
+			// Tier 3 = detection-first; tier 1 = a whitelisted transform
+			// shipped (unreachable-code as of round 3). Tier 2 requires the
+			// consent flow, which has not shipped.
+		default:
+			t.Errorf("%s: ships at tier %d; only 1 (whitelisted transform) and 3 (detection) exist today", r.ID, r.FixTier)
+		}
+		if r.ID == "unreachable-code" && r.FixTier != Tier1 {
+			t.Errorf("unreachable-code must offer the tier-1 removal transform")
 		}
 		for _, pf := range r.PlannedFixes {
 			if pf.Tier < Tier1 || pf.Tier > Tier2 {
@@ -203,8 +211,8 @@ func TestMatrixUnreachableCode(t *testing.T) {
 	if c := MatrixCell(r, vocab.LangGo); c.Status != CellNotApplicable {
 		t.Errorf("unreachable-code on go = %q, want n/a (go vet owns it)", c.Status)
 	}
-	if c := MatrixCell(r, vocab.LangPy); c.Status != CellPlanned {
-		t.Errorf("unreachable-code on py = %q, want planned", c.Status)
+	if c := MatrixCell(r, vocab.LangPy); c.Status != CellSupported {
+		t.Errorf("unreachable-code on py = %q, want supported (round 3)", c.Status)
 	}
 	// TS has no explicit override; the profile capability is planned.
 	if c := MatrixCell(r, vocab.LangTS); c.Status != CellPlanned {
@@ -220,8 +228,8 @@ func TestMatrixLibraryDirectLoggingPythonOnly(t *testing.T) {
 	if c := MatrixCell(r, vocab.LangTS); c.Status != CellNotApplicable {
 		t.Errorf("library-direct-logging on ts = %q, want n/a", c.Status)
 	}
-	if c := MatrixCell(r, vocab.LangPy); c.Status != CellPlanned {
-		t.Errorf("library-direct-logging on py = %q, want planned", c.Status)
+	if c := MatrixCell(r, vocab.LangPy); c.Status != CellSupported {
+		t.Errorf("library-direct-logging on py = %q, want supported (round 3)", c.Status)
 	}
 }
 

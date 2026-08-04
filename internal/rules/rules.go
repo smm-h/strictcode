@@ -320,10 +320,9 @@ var Rules = []Rule{
 		Description: "Statements following an unconditional terminator in the same block (comment-aware; nested scopes independent). All projects, not only libraries.",
 		Requires:    []vocab.Capability{vocab.CapUnreachableStatementAnalysis},
 		Suppression: SuppressPath,
-		FixTier:     Tier3,
-		PlannedFixes: []PlannedFix{
-			{Tier: Tier1, Description: "Remove the unreachable statements (the flagship whitelisted transform)."},
-		},
+		// The flagship whitelisted transform shipped in round 3: removal of
+		// the unreachable statements, verified by post-fix re-extraction.
+		FixTier: Tier1,
 		NotApplicable: map[vocab.Lang]string{
 			vocab.LangGo: "go vet reports unreachable code natively",
 		},
