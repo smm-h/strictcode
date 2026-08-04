@@ -2,11 +2,11 @@
 format_version = 1
 # Version bump type: patch, minor, major, infra, or prerelease
 #   prerelease: advance an existing pre-release (0.6.0-beta.0 -> -beta.1)
-bump = ""
+bump = "minor"
 # Short description of this release (required)
-description = ""
+description = "First release: architecture linter with a working seed catalog (dependency hygiene, dead code, cycles, library boundaries) across Python, Go, and TypeScript/JavaScript at import-graph depth, Python full-semantic depth, and tier-1 guaranteed-safe auto-fixes with graph re-verification."
 # Optional context explaining why these changes were made
-context = ""
+context = "strictcode absorbs the source-analysis duties rlsbl is shedding (rlsbl never parses source). The graph model is an interaction relation with qualified node identity; rules are built-in Go code with mint-once IDs and a generated language-by-feature support matrix; all schema artifacts are strictspec-gated documents. The 32-item lessons register from the donor implementation is fully covered by red-green regression tests, plus five new lessons minted from real-corpus contact."
 # Pre-release channel: alpha, beta, rc, or stable (ordered;
 # demotion is an error). With patch/minor/major it ENTERS the
 # channel (0.5.2 + minor + alpha -> 0.6.0-alpha.0); with
