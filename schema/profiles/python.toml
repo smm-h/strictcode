@@ -67,34 +67,34 @@ notes = "form=script or gui_script; resolves_to the named callable."
 # --- Capability statuses (every vocabulary capability, explicitly) ---
 
 [capabilities.module-enumeration]
-status = "planned"
+status = "supported"
 
 [capabilities.import-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.resolve-imports-internal]
-status = "planned"
+status = "supported"
 
 [capabilities.resolve-imports-modules]
-status = "planned"
+status = "supported"
 
 [capabilities.import-attr-guarded]
-status = "planned"
+status = "supported"
 
 [capabilities.import-attr-type-checking]
-status = "planned"
+status = "supported"
 
 [capabilities.test-context-classification]
-status = "planned"
+status = "supported"
 
 [capabilities.entry-point-discovery]
-status = "planned"
+status = "supported"
 
 [capabilities.declared-dependency-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.export-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.callable-extraction]
 status = "planned"

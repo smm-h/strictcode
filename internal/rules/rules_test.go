@@ -192,8 +192,8 @@ func TestMatrixImportCyclesGoNotApplicable(t *testing.T) {
 		t.Fatal("n/a cell without reason")
 	}
 	for _, lang := range []vocab.Lang{vocab.LangPy, vocab.LangTS} {
-		if c := MatrixCell(r, lang); c.Status != CellPlanned {
-			t.Errorf("import-cycles on %s = %q, want planned (extractors not landed)", lang, c.Status)
+		if c := MatrixCell(r, lang); c.Status != CellSupported {
+			t.Errorf("import-cycles on %s = %q, want supported (import-graph extractors landed)", lang, c.Status)
 		}
 	}
 }
@@ -227,10 +227,10 @@ func TestMatrixLibraryDirectLoggingPythonOnly(t *testing.T) {
 
 func TestMatrixUsesNeverBlocks(t *testing.T) {
 	// deps-unused uses import-attr-guarded, which is not-applicable on Go —
-	// the cell must still be planned (not n/a): uses never blocks.
+	// the cell must still be supported (not n/a): uses never blocks.
 	r, _ := ByID("deps-unused")
-	if c := MatrixCell(r, vocab.LangGo); c.Status != CellPlanned {
-		t.Errorf("deps-unused on go = %q, want planned (uses-capability n/a must not block)", c.Status)
+	if c := MatrixCell(r, vocab.LangGo); c.Status != CellSupported {
+		t.Errorf("deps-unused on go = %q, want supported (uses-capability n/a must not block)", c.Status)
 	}
 }
 

@@ -76,35 +76,35 @@ notes = "Stage-3 decorators on classes and methods."
 # --- Capability statuses ---
 
 [capabilities.module-enumeration]
-status = "planned"
+status = "supported"
 
 [capabilities.import-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.resolve-imports-internal]
-status = "planned"
+status = "supported"
 
 [capabilities.resolve-imports-modules]
-status = "planned"
+status = "supported"
 
 [capabilities.import-attr-guarded]
 status = "not-applicable"
 reason = "No declared optional-dependency import construct; a try/catch around dynamic import() is control flow, not an optionality declaration."
 
 [capabilities.import-attr-type-checking]
-status = "planned"
+status = "supported"
 
 [capabilities.test-context-classification]
-status = "planned"
+status = "supported"
 
 [capabilities.entry-point-discovery]
-status = "planned"
+status = "supported"
 
 [capabilities.declared-dependency-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.export-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.callable-extraction]
 status = "planned"

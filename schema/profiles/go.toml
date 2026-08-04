@@ -56,16 +56,16 @@ notes = "form=main_package; resolves_to the main function."
 # --- Capability statuses ---
 
 [capabilities.module-enumeration]
-status = "planned"
+status = "supported"
 
 [capabilities.import-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.resolve-imports-internal]
-status = "planned"
+status = "supported"
 
 [capabilities.resolve-imports-modules]
-status = "planned"
+status = "supported"
 
 [capabilities.import-attr-guarded]
 status = "not-applicable"
@@ -76,13 +76,13 @@ status = "not-applicable"
 reason = "Go has no type-only import form; all imports are ordinary compile-time dependencies."
 
 [capabilities.test-context-classification]
-status = "planned"
+status = "supported"
 
 [capabilities.entry-point-discovery]
-status = "planned"
+status = "supported"
 
 [capabilities.declared-dependency-extraction]
-status = "planned"
+status = "supported"
 
 [capabilities.export-extraction]
 status = "planned"
