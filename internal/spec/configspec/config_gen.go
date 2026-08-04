@@ -122,6 +122,30 @@ required = false
 [types.RuleConfig.fields.suppressions.item]
 type = "Suppression"
 
+[types.RuleConfig.fields.allow]
+type = "map"
+required = false
+key_pattern = "^(py|go|ts)$"
+order = "incidental"
+description = "Per-language allow lists (library-forbidden-imports): entries subtracted from the effective forbidden set, merged with the workspace-level lint_allow list."
+[types.RuleConfig.fields.allow.value]
+type = "array"
+[types.RuleConfig.fields.allow.value.item]
+type = "string"
+non_empty = true
+
+[types.RuleConfig.fields.forbidden]
+type = "map"
+required = false
+key_pattern = "^(py|go|ts)$"
+order = "incidental"
+description = "Per-language replacement of the default forbidden-imports list."
+[types.RuleConfig.fields.forbidden.value]
+type = "array"
+[types.RuleConfig.fields.forbidden.value.item]
+type = "string"
+non_empty = true
+
 [types.Suppression]
 type = "record"
 description = "One suppression in the rule's natural target shape: path | (project, dep) | modules (cycle member set) | member. The reason is mandatory and non-empty; shape-vs-rule matching is a consumer-native check against the registry."
@@ -348,6 +372,8 @@ type RuleConfig struct {
 	Severity     string
 	Thresholds   strictspec.Value
 	Suppressions []*Suppression
+	Allow        strictspec.Value
+	Forbidden    strictspec.Value
 }
 
 func bindRuleConfig(v strictspec.Value) *RuleConfig {
@@ -366,6 +392,12 @@ func bindRuleConfig(v strictspec.Value) *RuleConfig {
 	}
 	if fv, ok := v.Field("suppressions"); ok {
 		out.Suppressions = bindSlice(fv, func(e strictspec.Value) *Suppression { return bindSuppression(e) })
+	}
+	if fv, ok := v.Field("allow"); ok {
+		out.Allow = fv
+	}
+	if fv, ok := v.Field("forbidden"); ok {
+		out.Forbidden = fv
 	}
 	return out
 }
@@ -395,6 +427,20 @@ func (x *RuleConfig) WithThresholds(v strictspec.Value) *RuleConfig {
 func (x *RuleConfig) WithSuppressions(v []*Suppression) *RuleConfig {
 	c := *x
 	c.Suppressions = v
+	return &c
+}
+
+// WithAllow returns a copy of RuleConfig with Allow set to the given value.
+func (x *RuleConfig) WithAllow(v strictspec.Value) *RuleConfig {
+	c := *x
+	c.Allow = v
+	return &c
+}
+
+// WithForbidden returns a copy of RuleConfig with Forbidden set to the given value.
+func (x *RuleConfig) WithForbidden(v strictspec.Value) *RuleConfig {
+	c := *x
+	c.Forbidden = v
 	return &c
 }
 
