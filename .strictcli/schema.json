@@ -1,4 +1,36 @@
 {
+  "commands": {
+    "analyze": {
+      "args": [
+        {
+          "default": ".",
+          "help": "Project or workspace root to analyze",
+          "name": "dir",
+          "required": false
+        }
+      ],
+      "flags": [
+        {
+          "choices": [
+            "text",
+            "json"
+          ],
+          "default": "text",
+          "help": "Output format: text or json",
+          "name": "format",
+          "type": "str"
+        },
+        {
+          "default": "strictcode.toml",
+          "help": "Config file name, resolved relative to the analyzed directory",
+          "name": "config",
+          "type": "str"
+        }
+      ],
+      "help": "Analyze a project or workspace directory and report findings",
+      "name": "analyze"
+    }
+  },
   "defaults": {
     "app": {
       "commands": {},
