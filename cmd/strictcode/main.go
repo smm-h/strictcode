@@ -1,9 +1,9 @@
 // Command strictcode is the strictcode CLI, built on strictcli (flag
 // conventions enforced at registration; --dump-schema auto-injected).
 //
-// Foundation-build surface: the registry dump and the support matrix — the
-// two committed artifacts CI diffs. Analysis commands land with the
-// extractors round.
+// Surface: analyze (the batch pipeline — extract, check, report, exit
+// code), registry dump, and matrix gen (the two committed artifacts CI
+// diffs).
 package main
 
 import (

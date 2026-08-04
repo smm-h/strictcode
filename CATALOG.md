@@ -75,8 +75,13 @@ planned tiers noted. "Lineage" records the donor name for provenance only.
 A workspace-internal dependency declared in the manifest that no source file imports.
 Requires: `import-extraction`, `resolve-imports-internal`, `declared-dependency-extraction`,
 `test-context-classification`. Uses: `import-attr-guarded`.
-Query: declared runtime/dev/peer/explicit edges (workspace-internal dst) minus deps with any
-qualifying `imports` row; guarded rows qualify only for dev/peer-scoped deps.
+Query (AMENDED 2026-08-04): declared runtime/dev/peer/explicit edges (workspace-internal
+dst) minus deps with any `imports` row that is not type-checking-only. ANY import — guarded
+or test-context included — marks the dep used (lessons 1 and 8); only `type_checking` rows
+never count (lesson 5). The earlier sketch ("guarded rows qualify only for dev/peer-scoped
+deps") contradicted lesson 1 for the hard-dep-guarded-only case and would have
+double-reported it with a false "never imported" message beside deps-hard-guarded-only's
+correct one; the lessons register is the acceptance suite and wins.
 Planned tier 2: remove the declaration from the manifest.
 
 **`deps-hard-guarded-only`** — error. Lineage: part of deps-unused's special-case messaging

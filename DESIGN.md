@@ -427,6 +427,12 @@ strictcode is consumed by rlsbl through rlsbl's **external-check protocol** — 
    the Go module plus goreleaser binaries on the GitHub Release; PyPI/npm `-bin` wrappers
    come in a later release when non-Go consumers integrate (placeholders keep the names).
 6. **Extractors.** Import-graph depth for the trio (Python, Go, TS/JS) — required by the seed catalog; then full-graph depth for Python.
+   **IMPORT-GRAPH DEPTH LANDED 2026-08-04 (round 2, BUILDLOG.md):** workspace/manifest
+   reading, the import-graph extractors for all three languages, config loader, findings
+   pipeline, CLI `analyze`, and the eleven import-graph seed rules, with the §6.7 lessons
+   register as the acceptance suite (red-green). Profile capabilities flipped
+   planned→supported (py 10, go 7, ts 9); the matrix regenerated. Full-graph Python depth
+   (callables, types, call resolution) remains open — next round.
 
 **Foundation build execution (2026-08-03).** The foundation — scaffolding, strictspec
 manifest + first toolchain contact over the schemas, the binding benchmark, the relation

@@ -278,3 +278,174 @@ thresholds; wave-two rules will use them.
   staleness), the findings pipeline wiring (findingsspec is generated and
   ready), and the extractors themselves (import-graph depth for the trio),
   which will flip profile capability statuses to `supported` as they land.
+
+---
+
+# Round 2 (2026-08-04): the seed catalog end-to-end on all three languages
+
+## Workspace reading (internal/workspace)
+
+- **Format fidelity over spelling purity.** rlsbl workspaces in the wild
+  carry BOTH `dev_only` and the older `dev_node` as the dev marker (the
+  donor reads either); strictcode reads either too. This is reading other
+  projects' committed files as they exist — input fidelity, not a
+  backward-compat surface of strictcode's own.
+- **Dependency scope mapping:** pyproject `project.dependencies` → runtime,
+  `project.optional-dependencies` (extras) → peer, `dependency-groups` →
+  dev; package.json dependencies/devDependencies/peerDependencies as named,
+  `optionalDependencies` → peer; go.mod requires → runtime (Go has no dev
+  scope in go.mod). The `explicit` scope is reserved for workspace-declared
+  edges (none observed in current workspace.toml files; the enum arm stays).
+- **Single-project scans cannot be libraries.** Without workspace.toml there
+  is no `library = true` marker, so the synthesized `_` member is
+  non-library and the library rules never run on single projects. A config
+  surface for it can be minted when a consumer needs one.
+- **Manifest reading via `strictspec.LoadValue`** (already a dependency —
+  lossless TOML/JSON) and `golang.org/x/mod/modfile` for go.mod. No new
+  TOML library.
+
+## Config loader (internal/config)
+
+- Registry checks implemented as load-time hard errors: unknown rule
+  (tombstoned IDs render retired_in/reason/replaced_by/migration — the
+  rendering is tested by injection since the tombstone set is empty),
+  unknown group, suppression-shape-vs-rule mismatch, suppressions on a
+  shape-`none` rule. Group toggles apply before per-rule overrides;
+  per-rule wins.
+- Disk/registry staleness is NOT a load error: it is the stale-suppression
+  RULE (error severity), evaluated with the workspace in hand. Split per
+  the round-2 charter.
+- Config schema gained per-language `allow` / `forbidden` maps on rule
+  config (lesson 26 needs the per-language allow list; `forbidden` is the
+  replaceable default list). Migration-cheap by design.
+
+## Extractors (internal/extract) — decisions where the spec left gaps
+
+- **Python module identity:** files under a discovered package root get the
+  dotted path from the base (src/ stripped); files OUTSIDE any package root
+  (scripts/, conftest.py, tests without __init__) get their full
+  member-relative dotted path (scripts/build.py → scripts.build). Package
+  root discovery: member root and src/, one namespace level deep
+  (ns/pkg — the donor's shape); discovery feeds both module naming and the
+  cross-member namespace map.
+- **Go module identity:** package dir relative to the member root; the root
+  package is `.` (SPEC 2.2 gives the relative-path rule but no root
+  spelling).
+- **TS module identity:** extension stripped, index collapsed to its
+  directory; a root-level index file is `.`. Known sharp edge (recorded
+  round 1): `util.ts` + `util/index.ts` in one member is an ID collision
+  hard error per SPEC 2.6.
+- **Entry-point node IDs:** module segment `_`, single chain segment
+  `<form>/<declared-name>` — SPEC section 2 does not pin entry-point IDs;
+  this is deterministic and collision-free per (form, name).
+- **Manifest-declared rows carry located sites:** declares_dependency and
+  resolves_to rows get the span of the first occurrence of the dep/entry
+  name in the manifest text (real file:line in findings instead of line 1).
+- **Relative imports never member-resolve** (6.3 step 1 drops them); they
+  are pre-resolved to absolute names from the file's package position for
+  intra-member module rows only.
+- **External imports are side data, not relation rows.** The vocabulary's
+  imports row targets module/member nodes; external targets (flask,
+  net/http, express) have no node kind. library-forbidden-imports needs the
+  specifiers, so extraction carries an ExternalImports side table (lang,
+  member, src module, specifier, site, test context). If a future round
+  needs external deps in the graph proper, that is a vocabulary mint, not a
+  silent extension.
+- **Nested Go modules** (found on the real corpus: conformance harnesses
+  with their own go.mod): nested requires aggregate into the member's
+  declared edges, and intra-member package resolution uses the nearest
+  enclosing module path. Red-green regression test.
+- Python stdlib table baked from CPython 3.14.5 `sys.stdlib_module_names`
+  (297 names); regenerate command: the python3 one-liner in git history of
+  `internal/extract/pystdlib.go`.
+
+## Checks (internal/checks) — decisions and conflicts resolved
+
+- **deps-unused vs lesson 1 (CATALOG amended).** The CATALOG query sketch
+  ("guarded rows qualify only for dev/peer") contradicted lesson 1 ("a
+  guarded import MUST count as used for deps-unused") in the
+  hard-dep-guarded-only case and would have double-reported it beside
+  deps-hard-guarded-only with a false "never imported" message. Resolution:
+  the lessons register is the acceptance suite and wins — ANY
+  non-type-checking import marks the dep used; deps-hard-guarded-only alone
+  owns the contradictory-guard diagnosis.
+- **deps-dev-in-production exempts guarded imports.** A guarded production
+  import of a dev-scoped dep is THE legitimate optional-dependency pattern
+  (guards satisfy dev/peer, lessons 1-2); flagging it would criminalize the
+  pattern the guard semantics exist for. The rule's declared uses of
+  import-attr-guarded is exactly this refinement.
+- **Suppression path semantics:** workspace-root-relative (the config file
+  lives at the workspace root; one convention, no per-member ambiguity).
+  import-cycles member-set suppressions match the reported SCC's sorted
+  logical-name set exactly.
+- **stale-suppression finding targets:** the config file is the site
+  (file = strictcode.toml, line 1); the node is the named member's node
+  when resolvable, else the first member. The findings schema requires a
+  node-shaped target; the config file itself has no node kind. Good enough
+  and honest; revisit if findings ever need config-file spans.
+- **Exit-code rule:** exit 1 iff at least one error-severity finding;
+  warnings alone exit 0; tool/config errors exit 2. DESIGN section 10 says
+  "nonzero when findings exceed configured severity" — the configured
+  per-rule severities ARE the threshold mechanism (set a rule to warning
+  and it stops failing runs).
+- **TS dead-modules abstains without resolved entry points** (donor
+  safeguard, verified in the donor source: "No entry points declared —
+  cannot determine reachability"): exports pointing at built dist/ output
+  resolve to no scanned source, and reporting the whole tree dead would be
+  the worst false-positive class in the catalog. When an entry DOES resolve
+  (e.g. a bin script) but imports through a build step, unreachable source
+  files are reported — donor-equal behavior, suppressions are the remedy.
+- **`pkg/__main__.py` is an implicit entry point** (found on the real
+  corpus: rlsbl's `python -m rlsbl` runner was flagged dead): never a
+  dead-module candidate; its imports still count. Red-green regression.
+- **TS dead-module candidates are production files only**; test files are
+  neither candidates nor entry points (a module used only by tests is dead
+  — consistent with the union-of-imports languages).
+- Rules whose matrix cell is n/a for a language never run there (lesson 20
+  mechanically: the check consults the same MatrixCell calculus the matrix
+  renders).
+
+## Lessons register coverage
+
+Implemented as red-green tests (suite failed before the checks existed):
+lessons 1-16, 18-23, 26, 28-32 in `internal/checks/lessons_test.go` (6-8
+and 17-19 additionally at their home packages testctx/extract). Lessons
+24-25 (unreachable-code) and 27 (library-direct-logging) belong to rules
+whose capabilities are not in this round. Three real-corpus regressions
+were added beyond the register: __main__ entry points, TS entry-point
+abstention, nested Go modules.
+
+## Real-corpus verification (read-only)
+
+- rlsbl (561 py files): 12 findings in 2.4 s — real import cycles, dead
+  docs directives (dynamically loaded — the path-suppression use case),
+  zero false errors after the __main__ fix.
+- strictspec (py+go+ts monorepo): runs clean end-to-end; TS source flagged
+  unreachable behind the dist/ build step via the resolving bin entry
+  (donor-equal; see abstention note).
+- strictcli monorepo: 15 warnings, 0 errors after the nested-go.mod fix
+  (the one error finding it surfaced was the real blind spot, now fixed).
+
+## Matrix cells flipped planned→supported
+
+- Python: all 10 import-graph capabilities.
+- Go: 7 (guarded/type-checking are n/a; export-extraction stays planned —
+  no Go export surface needed at import-graph depth).
+- TS/JS: 9 (guarded is n/a).
+- Rule rows now supported on their applicable languages: deps-unused,
+  deps-undeclared, deps-runtime-test-only, deps-dev-in-production,
+  dead-modules, dead-workspace-packages, library-forbidden-imports,
+  library-entry-point (all three languages); deps-hard-guarded-only and
+  import-cycles per their n/a overrides; stale-suppression
+  (language-independent). Still planned: library-stdout,
+  library-direct-logging, unreachable-code (full-semantic round).
+
+## Stretch declined (deliberately)
+
+Python full-semantic extraction (callables, types, syntactic call
+resolution) is a design round of its own: SPEC 2.3-2.5 identity mechanics
+(anonymous fingerprints, overload indexes, receiver normalization) and the
+symbol-table resolution layer deserve the same care the import graph got.
+Shipping a print/logging pattern-matcher and flipping
+call-resolution-syntactic to supported would be dishonest about what
+"supported" means. The two library call-graph rules land with that round.
