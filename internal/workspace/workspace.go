@@ -74,7 +74,7 @@ type Member struct {
 	// Name is the workspace member name ("_" for single-project scans).
 	Name string
 	// Path is the member root relative to the workspace root ("." allowed).
-	Path string
+	Path       string
 	Library    bool
 	DevOnly    bool
 	Releasable bool // belongs to a releasable group (published externally)

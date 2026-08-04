@@ -9,7 +9,7 @@ import (
 
 func TestSingleProjectMode(t *testing.T) {
 	root := fixture.Write(t, map[string]string{
-		"pyproject.toml": "[project]\nname = \"solo\"\ndependencies = [\"requests>=2\"]\n",
+		"pyproject.toml":       "[project]\nname = \"solo\"\ndependencies = [\"requests>=2\"]\n",
 		"src/solo/__init__.py": "",
 	})
 	ws, err := Load(root)
