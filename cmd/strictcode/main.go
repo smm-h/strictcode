@@ -7,12 +7,15 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/smm-h/strictcli/go/strictcli"
 	strictcode "github.com/smm-h/strictcode"
+	"github.com/smm-h/strictcode/internal/engine"
+	"github.com/smm-h/strictcode/internal/findings"
 	"github.com/smm-h/strictcode/internal/registrydump"
+	"github.com/smm-h/strictcli/go/strictcli"
 )
 
 func main() {
@@ -25,6 +28,20 @@ func main() {
 func newApp() *strictcli.App {
 	app := strictcli.NewApp("strictcode", strictcode.Version,
 		"strictcode: a deterministic linter for architecture, with tiered auto-fixes")
+
+	app.Command("analyze", "Analyze a project or workspace directory and report findings",
+		analyzeHandler,
+		strictcli.WithArgs(
+			strictcli.NewArg("dir", "Project or workspace root to analyze",
+				strictcli.ArgRequired(false), strictcli.ArgDefault(".")),
+		),
+		strictcli.WithFlags(
+			strictcli.StringFlag("format", "Output format: text or json",
+				strictcli.Default("text"), strictcli.Choices("text", "json")),
+			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
+				strictcli.Default("strictcode.toml")),
+		),
+	)
 
 	registry := app.Group("registry", "Rule registry artifacts (mint-once IDs, tombstones)")
 	registry.Command("dump", "Write the committed registry dump (rules, groups, tombstones) as JSON",
@@ -45,6 +62,36 @@ func newApp() *strictcli.App {
 	)
 
 	return app
+}
+
+// analyzeHandler: exit 0 = clean or warnings only; exit 1 = at least one
+// error-severity finding (the CI hard gate rlsbl keys on); exit 2 = tool or
+// config error.
+func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
+	dir := strictcli.Get[string](kwargs, "dir")
+	format := strictcli.Get[string](kwargs, "format")
+	cfgName := strictcli.Get[string](kwargs, "config")
+
+	res, err := engine.Analyze(dir, cfgName)
+	if err != nil {
+		ctx.Error(err.Error())
+		return strictcli.Exit(2)
+	}
+	switch format {
+	case "json":
+		out, err := findings.RenderJSON(strictcode.Version, res.WorkspaceRoot, res.Findings)
+		if err != nil {
+			ctx.Error(err.Error())
+			return strictcli.Exit(2)
+		}
+		fmt.Print(string(out))
+	default:
+		fmt.Print(findings.RenderText(res.Findings))
+	}
+	if findings.FailRun(res.Findings) {
+		return strictcli.Exit(1)
+	}
+	return strictcli.Exit(0)
 }
 
 func registryDumpHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {

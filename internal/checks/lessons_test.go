@@ -710,3 +710,16 @@ func TestSelfImportsAreExempt(t *testing.T) {
 		t.Fatalf("self-import flagged as undeclared: %+v", got)
 	}
 }
+
+func TestPyDunderMainIsImplicitEntryPoint(t *testing.T) {
+	// Found on the real corpus (rlsbl): pkg/__main__.py is the `python -m
+	// pkg` entry point — an implicit entry, never a dead-module candidate.
+	fs := analyze(t, map[string]string{
+		"pyproject.toml":  "[project]\nname = \"solo\"\n",
+		"pkg/__init__.py": "",
+		"pkg/__main__.py": "import pkg\n",
+	})
+	if messagesContain(byRule(fs, "dead-modules"), "__main__") {
+		t.Fatalf("pkg/__main__.py flagged dead: %+v", fs)
+	}
+}

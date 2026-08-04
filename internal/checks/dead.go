@@ -45,6 +45,12 @@ func deadPy(ctx *Context, member string, suppressed map[string]bool) []findings.
 	eligible := func(mi *ModuleInfo) bool {
 		return !mi.Test && !pyScriptFile(mi) && !suppressed[mi.Path]
 	}
+	// pkg/__main__.py is the `python -m pkg` entry point: an implicit
+	// entry, never a candidate (its imports still count — it is production
+	// code that keeps its imports alive).
+	implicitEntry := func(mi *ModuleInfo) bool {
+		return strings.HasSuffix(mi.MemberRel, "/__main__.py") || mi.MemberRel == "__main__.py"
+	}
 
 	// aliveRefs: logical -> set of referencing source logicals.
 	aliveRefs := map[string]map[string]bool{}
@@ -84,7 +90,7 @@ func deadPy(ctx *Context, member string, suppressed map[string]bool) []findings.
 	var out []findings.Finding
 	for _, logical := range sortedKeys(modules) {
 		mi := modules[logical]
-		if !eligible(mi) {
+		if !eligible(mi) || implicitEntry(mi) {
 			continue
 		}
 		alive := exported[logical]
