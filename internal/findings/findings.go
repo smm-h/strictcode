@@ -1,7 +1,8 @@
 // Package findings is the output layer: the findings model, the
-// schema-valid JSON rendering (self-validated through the strictspec
-// findings reader before being emitted), the human-readable text rendering,
-// and the exit-code rule.
+// schema-valid machine document (self-validated through the strictspec
+// findings reader before it is handed to the framework, which validates it
+// again against the declared payload schema), the human-readable text
+// rendering, and the exit-code rule.
 package findings
 
 import (
@@ -10,6 +11,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/smm-h/strictcli/go/strictcli"
 	"github.com/smm-h/strictcode/internal/rules"
 	"github.com/smm-h/strictcode/internal/spec/findingsspec"
 	"github.com/smm-h/strictcode/internal/vocab"
@@ -74,7 +76,7 @@ func FailRun(fs []Finding) bool {
 	return false
 }
 
-// --- JSON rendering -------------------------------------------------------
+// --- The machine document -------------------------------------------------
 
 type targetJSON struct {
 	ID   string `json:"id"`
@@ -96,7 +98,12 @@ type findingJSON struct {
 	Fix      *fixJSON   `json:"fix,omitempty"`
 }
 
-type documentJSON struct {
+// Document is the strictcode findings document: the analyze command's
+// machine payload, carried as the envelope's payload member under --json.
+// Its shape is owned by schema/strictspec/findings.schema.toml, which is why
+// it keeps its own format_version and version stamps rather than deferring to
+// the envelope's framing.
+type Document struct {
 	// FormatVersion is the strictspec document version stamp, exact-match
 	// checked by the findings schema.
 	FormatVersion     int           `json:"format_version"`
@@ -105,12 +112,14 @@ type documentJSON struct {
 	Findings          []findingJSON `json:"findings"`
 }
 
-// RenderJSON renders the strictcode findings document (sorted, indented,
-// trailing newline) and self-validates it against the findings schema — an
-// invalid document is a bug and a hard error, never emitted output.
-func RenderJSON(version, workspaceRoot string, fs []Finding) ([]byte, error) {
+// Build assembles the findings document (sorted) and self-validates it
+// against the findings schema — an invalid document is a bug and a hard
+// error, never emitted output. The framework validates the same value again
+// against Schema where it writes the envelope; the two duties are different
+// authorities over the same document and both are kept.
+func Build(version, workspaceRoot string, fs []Finding) (Document, error) {
 	Sort(fs)
-	doc := documentJSON{
+	doc := Document{
 		FormatVersion:     1,
 		StrictcodeVersion: version,
 		WorkspaceRoot:     workspaceRoot,
@@ -135,13 +144,69 @@ func RenderJSON(version, workspaceRoot string, fs []Finding) ([]byte, error) {
 	}
 	out, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
-		return nil, fmt.Errorf("findings: %w", err)
+		return Document{}, fmt.Errorf("findings: %w", err)
 	}
 	out = append(out, '\n')
 	if _, diags := findingsspec.ValidateBytes(out, "json"); len(diags) != 0 {
-		return nil, fmt.Errorf("findings: generated output fails the findings schema (tool bug): %v", diags)
+		return Document{}, fmt.Errorf("findings: generated document fails the findings schema (tool bug): %v", diags)
 	}
-	return out, nil
+	return doc, nil
+}
+
+// Schema is the analyze command's declared payload schema (strictcli §19.5),
+// the closed-subset statement of the same document
+// schema/strictspec/findings.schema.toml governs. The framework enforces it
+// where it writes the envelope and --dump-schema publishes it, so a consumer
+// has something to generate against without reading the strictspec document.
+//
+// The target-kind enum is derived from the vocabulary rather than written
+// out, because the vocabulary is where node kinds are declared and a second
+// hand-kept list could only drift from it.
+var Schema = strictcli.SchemaObject(
+	map[string]interface{}{
+		"format_version":     strictcli.SchemaConst(1),
+		"strictcode_version": strictcli.SchemaType("string"),
+		"workspace_root":     strictcli.SchemaType("string"),
+		"findings": strictcli.SchemaArray(strictcli.SchemaObject(
+			map[string]interface{}{
+				"rule":     strictcli.SchemaType("string"),
+				"severity": strictcli.SchemaEnum("error", "warning"),
+				"message":  strictcli.SchemaType("string"),
+				"target": strictcli.SchemaObject(
+					map[string]interface{}{
+						"id":   strictcli.SchemaType("string"),
+						"kind": strictcli.SchemaEnum(nodeKindValues()...),
+						"file": strictcli.SchemaType("string"),
+						"line": strictcli.SchemaType("integer"),
+					},
+					[]string{"id", "kind", "file", "line"},
+					false,
+				),
+				// Omitted entirely for a finding with no known fix.
+				"fix": strictcli.SchemaObject(
+					map[string]interface{}{
+						"tier":        strictcli.SchemaType("integer"),
+						"description": strictcli.SchemaType("string"),
+					},
+					[]string{"tier", "description"},
+					false,
+				),
+			},
+			[]string{"rule", "severity", "message", "target"},
+			false,
+		)),
+	},
+	[]string{"format_version", "strictcode_version", "workspace_root", "findings"},
+	false,
+)
+
+// nodeKindValues is the vocabulary's node kinds as schema enum values.
+func nodeKindValues() []interface{} {
+	out := make([]interface{}, 0, len(vocab.NodeKinds))
+	for _, k := range vocab.NodeKinds {
+		out = append(out, string(k))
+	}
+	return out
 }
 
 // RenderText renders the human-readable report: one line per finding

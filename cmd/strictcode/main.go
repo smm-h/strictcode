@@ -35,20 +35,34 @@ func newApp() *strictcli.App {
 
 	app.Command("analyze", "Analyze a project or workspace directory and report findings",
 		analyzeHandler,
+		// read_only: analyze reads the workspace and its config and writes
+		// only to stdout/stderr. It creates, modifies and deletes nothing.
+		strictcli.WithEffect(strictcli.EffectReadOnly),
 		strictcli.WithArgs(
 			strictcli.NewArg("dir", "Project or workspace root to analyze",
 				strictcli.ArgRequired(false), strictcli.ArgDefault(".")),
 		),
 		strictcli.WithFlags(
-			strictcli.StringFlag("format", "Output format: text or json",
-				strictcli.Default("text"), strictcli.Choices("text", "json")),
 			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
 				strictcli.Default("strictcode.toml")),
 		),
+		// Machine output is the framework's --json, and the findings document
+		// is this command's payload. strictcode declares no output-format flag
+		// of its own: the enum's other value was the human report, which is
+		// what the command prints when it is not asked for a document.
+		strictcli.PayloadSchema(findings.Schema),
 	)
 
 	app.Command("fix", "Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification",
 		fixHandler,
+		// mutating: --apply rewrites source files in place.
+		strictcli.WithEffect(strictcli.EffectMutating),
+		// The rewrites go through the fix package's own apply-and-verify
+		// path, not through the effects handle, so the framework has nothing
+		// to record and a preview would show an empty plan while the real run
+		// edits files. --preview is this command's honest preview.
+		strictcli.WithDryRunUnsupported(
+			"the file rewrites happen inside the fix package's apply-and-verify path, outside the effects handle; pass --preview to list the planned fixes without touching a file"),
 		strictcli.WithArgs(
 			strictcli.NewArg("dir", "Project or workspace root",
 				strictcli.ArgRequired(false), strictcli.ArgDefault(".")),
@@ -68,6 +82,10 @@ func newApp() *strictcli.App {
 	registry := app.Group("registry", "Rule registry artifacts (mint-once IDs, tombstones)")
 	registry.Command("dump", "Write the committed registry dump (rules, groups, tombstones) as JSON",
 		registryDumpHandler,
+		// mutating: it writes the dump file named by --out.
+		strictcli.WithEffect(strictcli.EffectMutating),
+		strictcli.WithDryRunUnsupported(
+			"the dump is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file"),
 		strictcli.WithFlags(
 			strictcli.StringFlag("out", "Output path for the registry dump",
 				strictcli.Default("REGISTRY.json")),
@@ -77,6 +95,10 @@ func newApp() *strictcli.App {
 	matrix := app.Group("matrix", "Language x feature support matrix")
 	matrix.Command("gen", "Write the generated support matrix (rules and capabilities per language)",
 		matrixGenHandler,
+		// mutating: it writes the matrix file named by --out.
+		strictcli.WithEffect(strictcli.EffectMutating),
+		strictcli.WithDryRunUnsupported(
+			"the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file"),
 		strictcli.WithFlags(
 			strictcli.StringFlag("out", "Output path for the matrix",
 				strictcli.Default("docs/MATRIX.md")),
@@ -91,7 +113,6 @@ func newApp() *strictcli.App {
 // config error.
 func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
 	dir := strictcli.Get[string](kwargs, "dir")
-	format := strictcli.Get[string](kwargs, "format")
 	cfgName := strictcli.Get[string](kwargs, "config")
 
 	res, err := engine.Analyze(dir, cfgName)
@@ -99,15 +120,17 @@ func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) stric
 		ctx.Error(err.Error())
 		return strictcli.Exit(2)
 	}
-	switch format {
-	case "json":
-		out, err := findings.RenderJSON(strictcode.Version, res.WorkspaceRoot, res.Findings)
-		if err != nil {
-			ctx.Error(err.Error())
-			return strictcli.Exit(2)
-		}
-		fmt.Print(string(out))
-	default:
+	// The document is built in both modes -- the framework decides what to do
+	// with the payload -- and the text report is the human mode's rendering,
+	// which is the one thing machine mode must not print: stdout carries the
+	// envelope alone.
+	doc, err := findings.Build(strictcode.Version, res.WorkspaceRoot, res.Findings)
+	if err != nil {
+		ctx.Error(err.Error())
+		return strictcli.Exit(2)
+	}
+	ctx.Payload(doc)
+	if !ctx.JSON() {
 		fmt.Print(findings.RenderText(res.Findings))
 	}
 	if findings.FailRun(res.Findings) {

@@ -22,3 +22,5 @@ benchmark/binding-eval/binding-eval
 
 # local build output
 /strictcode
+go.work
+go.work.sum

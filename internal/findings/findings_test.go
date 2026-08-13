@@ -1,6 +1,7 @@
 package findings
 
 import (
+	"encoding/json"
 	"strings"
 	"testing"
 
@@ -24,26 +25,54 @@ func sample() []Finding {
 	}
 }
 
-func TestRenderJSONIsSchemaValid(t *testing.T) {
-	out, err := RenderJSON("0.0.0", "/ws", sample())
+func TestBuildIsSchemaValid(t *testing.T) {
+	doc, err := Build("0.0.0", "/ws", sample())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.FormatVersion != 1 || doc.StrictcodeVersion != "0.0.0" || doc.WorkspaceRoot != "/ws" {
+		t.Errorf("document stamps wrong: %+v", doc)
+	}
+	out, err := json.Marshal(doc)
 	if err != nil {
 		t.Fatal(err)
 	}
 	s := string(out)
-	for _, want := range []string{`"strictcode_version": "0.0.0"`, `"rule": "deps-unused"`, `"tier": 3`} {
+	for _, want := range []string{`"strictcode_version":"0.0.0"`, `"rule":"deps-unused"`, `"tier":3`} {
 		if !strings.Contains(s, want) {
-			t.Errorf("JSON missing %q", want)
+			t.Errorf("document missing %q", want)
 		}
 	}
 }
 
-func TestRenderJSONEmptyFindings(t *testing.T) {
-	out, err := RenderJSON("0.0.0", "/ws", nil)
+func TestBuildEmptyFindings(t *testing.T) {
+	doc, err := Build("0.0.0", "/ws", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(out), `"findings": []`) {
+	out, err := json.Marshal(doc)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(out), `"findings":[]`) {
 		t.Fatalf("empty findings must render as []: %s", out)
+	}
+}
+
+func TestSchemaCoversEveryVocabularyNodeKind(t *testing.T) {
+	// The declared payload schema's target-kind enum is derived from the
+	// vocabulary, so a kind added there is admitted without an edit here.
+	props := Schema["properties"].(map[string]interface{})
+	item := props["findings"].(map[string]interface{})["items"].(map[string]interface{})
+	target := item["properties"].(map[string]interface{})["target"].(map[string]interface{})
+	enum := target["properties"].(map[string]interface{})["kind"].(map[string]interface{})["enum"].([]interface{})
+	if len(enum) != len(vocab.NodeKinds) {
+		t.Fatalf("enum has %d values, vocabulary has %d", len(enum), len(vocab.NodeKinds))
+	}
+	for i, k := range vocab.NodeKinds {
+		if enum[i] != string(k) {
+			t.Errorf("enum[%d] = %v, want %s", i, enum[i], k)
+		}
 	}
 }
 
