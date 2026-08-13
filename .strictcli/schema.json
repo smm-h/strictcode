@@ -9,17 +9,8 @@
           "required": false
         }
       ],
+      "effect": "read_only",
       "flags": [
-        {
-          "choices": [
-            "text",
-            "json"
-          ],
-          "default": "text",
-          "help": "Output format: text or json",
-          "name": "format",
-          "type": "str"
-        },
         {
           "default": "strictcode.toml",
           "help": "Config file name, resolved relative to the analyzed directory",
@@ -28,7 +19,106 @@
         }
       ],
       "help": "Analyze a project or workspace directory and report findings",
-      "name": "analyze"
+      "name": "analyze",
+      "payload_schema": {
+        "additionalProperties": false,
+        "properties": {
+          "findings": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "fix": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "tier": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "tier",
+                    "description"
+                  ],
+                  "type": "object"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "rule": {
+                  "type": "string"
+                },
+                "severity": {
+                  "enum": [
+                    "error",
+                    "warning"
+                  ]
+                },
+                "target": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "file": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "kind": {
+                      "enum": [
+                        "workspace_member",
+                        "module",
+                        "entry_point",
+                        "function",
+                        "closure",
+                        "type",
+                        "type_param",
+                        "variable",
+                        "endpoint",
+                        "db_entity"
+                      ]
+                    },
+                    "line": {
+                      "type": "integer"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "kind",
+                    "file",
+                    "line"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "rule",
+                "severity",
+                "message",
+                "target"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "format_version": {
+            "const": 1
+          },
+          "strictcode_version": {
+            "type": "string"
+          },
+          "workspace_root": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "format_version",
+          "strictcode_version",
+          "workspace_root",
+          "findings"
+        ],
+        "type": "object"
+      }
     },
     "fix": {
       "args": [
@@ -48,6 +138,9 @@
           "type": "mutex"
         }
       ],
+      "dry_run_supported": false,
+      "dry_run_unsupported_reason": "the file rewrites happen inside the fix package's apply-and-verify path, outside the effects handle; pass --preview to list the planned fixes without touching a file",
+      "effect": "mutating",
       "flags": [
         {
           "default": "strictcode.toml",
@@ -122,6 +215,9 @@
     "matrix": {
       "commands": {
         "gen": {
+          "dry_run_supported": false,
+          "dry_run_unsupported_reason": "the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
+          "effect": "mutating",
           "flags": [
             {
               "default": "docs/MATRIX.md",
@@ -140,6 +236,9 @@
     "registry": {
       "commands": {
         "dump": {
+          "dry_run_supported": false,
+          "dry_run_unsupported_reason": "the dump is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
+          "effect": "mutating",
           "flags": [
             {
               "default": "REGISTRY.json",
