@@ -603,3 +603,67 @@ adopted. Remaining after round 3: conformance-derived materialization,
 reference-extraction, type-informed resolution mode (explicit opt-in), Go
 and TS full-semantic depth, tier-2 consent flow, SARIF (deferred todo),
 and the rlsbl adapter (main session's coordination, not this build's).
+
+# Round 4 (2026-08-17): the strictcli v0.33.0 declaration regime
+
+Dependency migration, not a feature round. `go-strictcli` moved to v0.33.0 and
+three of its registration rules reach this CLI. Recorded here because two of
+them required a judgment the framework cannot make.
+
+## Presence is declared, never derived
+
+`ArgRequired(bool)` is gone; presence is one of `ArgRequired()` / `ArgOptional()`
+/ `ArgDefault(v)` and declaring two is a registration error. Both `dir` args had
+been declaring `ArgRequired(false)` *and* `ArgDefault(".")`; the pair collapsed
+to a single declaration at each site.
+
+## The mutating-default ban, and where the fallbacks went
+
+On a `mutating` command no flag and no positional arg may declare a value
+default: absence must never resolve to a value the invocation did not state.
+Four sites were refused — `fix`'s `dir` and `--config`, `registry dump`'s
+`--out`, `matrix gen`'s `--out`.
+
+The ban names three remedies (required / optional / a handler-side fallback
+stated in the help) and all four sites took the third, through one helper
+(`optOr`). **The judgment:** the third remedy is only honest where the
+substituted value is not itself written, and every one of these four is a path —
+a search root or a destination — never a value that lands inside an artifact.
+`analyze` is `read_only`, so its two declared defaults are untouched by the ban
+and stayed declarations.
+
+## The apply/preview mutex became a member-spelled selector
+
+`MutexGroup` no longer exists anywhere in strictcli; exactly-one selection is a
+choice flag. Round 3 built `fix` on a required bool-only `MutexGroup`.
+
+**The judgment:** member spelling, not token spelling. The site's truth is that
+the two options are already spelled as their own flags — an operator types
+`strictcode fix --preview`, and a token selector would have made that
+`--disposition preview`, a surface change the framework rule never asked for.
+The selector is named `disposition` ("what to do with the planned fixes") and
+declares `Required()`; each member declares `Required()`, read as required once
+elected. The handler reads one elected record instead of a bool.
+
+Beyond preserving the spelling, this closes a real hole: under the bool mutex
+`--no-apply` engaged the group while electing nothing, so a negation could be
+read as "do the other thing". A member is elected by presence, so `--no-apply`
+now elects nothing and the run is refused. Pinned by
+`TestFixNegatedMemberDoesNotElect`.
+
+## update_of: declared nowhere, deliberately
+
+Contract §27 needs a resource, a write mode, identity members and **at least one
+property** — a flag naming what changes. **The judgment: no strictcode command
+has one.** `fix`'s edits are computed by the tier-1 planner from the extracted
+graph, not carried by flags, and its only non-path flag is a selector, which
+§27 forbids as a property. `registry dump` and `matrix gen` regenerate a whole
+artifact from in-tree state; `--out` is a destination, not a property. Declaring
+an update record at any of the three would have had to invent a property that
+does not exist. The reasoning is recorded at each of the three registration
+sites so a later reader does not re-open it as an oversight.
+
+## Deviation
+
+None from the design corpus. `DESIGN.md` §12.7's "required apply/preview choice"
+still describes the surface exactly; only its mechanism changed.

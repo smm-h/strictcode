@@ -2,8 +2,9 @@
 // conventions enforced at registration; --dump-schema auto-injected).
 //
 // Surface: analyze (the batch pipeline — extract, check, report, exit
-// code), registry dump, and matrix gen (the two committed artifacts CI
-// diffs).
+// code), fix (the tier-1 transforms, under a required apply/preview
+// selector), registry dump, and matrix gen (the two committed artifacts
+// CI diffs).
 package main
 
 import (
@@ -26,6 +27,37 @@ func main() {
 	newApp().Run()
 }
 
+// Defaults the mutating commands apply in their handlers rather than in their
+// declarations. On a mutating command strictcli refuses a value default --
+// absence must never resolve to a value the invocation did not state -- so each
+// of these is declared Optional() and substituted here, and every one of them
+// names a DESTINATION or a SEARCH ROOT, never a value that gets written into
+// anything. Each flag's help states the fallback.
+const (
+	defaultConfigName  = "strictcode.toml"
+	defaultRoot        = "."
+	defaultRegistryOut = "REGISTRY.json"
+	defaultMatrixOut   = "docs/MATRIX.md"
+)
+
+// The `fix` command's write decision is a member-spelled selector: the operator
+// still types `--apply` or `--preview` exactly as before, and the selector -- not
+// a hand-written guard -- is what makes exactly one of them mandatory. "Neither
+// elected" is unrepresentable rather than a state the handler has to refuse, and
+// `--no-apply` can no longer be read as "preview".
+var (
+	fixApplyChoice = strictcli.MemberChoice(
+		strictcli.BoolFlag("apply",
+			"Apply the planned fixes (files are rewritten, then verified; mismatches roll back)",
+			strictcli.Required()),
+		"rewrite the files and verify the result against the declared delta")
+	fixPreviewChoice = strictcli.MemberChoice(
+		strictcli.BoolFlag("preview",
+			"List the planned fixes without touching any file",
+			strictcli.Required()),
+		"list the planned fixes and touch nothing")
+)
+
 // newApp builds the CLI. strictcli validates every flag and command at
 // registration time, so building the app is itself a conformance check
 // (exercised by the tests).
@@ -40,11 +72,11 @@ func newApp() *strictcli.App {
 		strictcli.WithEffect(strictcli.EffectReadOnly),
 		strictcli.WithArgs(
 			strictcli.NewArg("dir", "Project or workspace root to analyze",
-				strictcli.ArgRequired(false), strictcli.ArgDefault(".")),
+				strictcli.ArgDefault(defaultRoot)),
 		),
 		strictcli.WithFlags(
 			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
-				strictcli.Default("strictcode.toml")),
+				strictcli.Default(defaultConfigName)),
 		),
 		// Machine output is the framework's --json, and the findings document
 		// is this command's payload. strictcode declares no output-format flag
@@ -63,19 +95,25 @@ func newApp() *strictcli.App {
 		// edits files. --preview is this command's honest preview.
 		strictcli.WithDryRunUnsupported(
 			"the file rewrites happen inside the fix package's apply-and-verify path, outside the effects handle; pass --preview to list the planned fixes without touching a file"),
+		// No update_of: `fix` names no properties. The edits are computed by
+		// the tier-1 planner from the extracted graph, not carried by flags, so
+		// there is no property set to declare and no sparse-vs-full-replace
+		// question to answer (contract §27 requires at least one property).
 		strictcli.WithArgs(
-			strictcli.NewArg("dir", "Project or workspace root",
-				strictcli.ArgRequired(false), strictcli.ArgDefault(".")),
+			// Optional, not defaulted: this command is mutating, so the
+			// fallback is applied in the handler and stated here.
+			strictcli.NewArg("dir", "Project or workspace root; omitted means the current directory",
+				strictcli.ArgOptional()),
 		),
-		// The apply-vs-preview choice is a required mutex: writing files is
-		// never an implicit default.
-		strictcli.WithMutex(strictcli.MutexGroup{Flags: []strictcli.Flag{
-			strictcli.BoolFlag("apply", "Apply the planned fixes (files are rewritten, then verified; mismatches roll back)"),
-			strictcli.BoolFlag("preview", "List the planned fixes without touching any file"),
-		}}),
 		strictcli.WithFlags(
-			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
-				strictcli.Default("strictcode.toml")),
+			strictcli.StringFlag("config",
+				"Config file name, resolved relative to the analyzed directory; omitted means "+defaultConfigName,
+				strictcli.Optional()),
+			// The apply-vs-preview choice is a required member-spelled
+			// selector: writing files is never an implicit default, and
+			// exactly one member is elected by construction.
+			strictcli.MemberChoiceFlag("disposition", "What to do with the planned fixes",
+				strictcli.Required(), fixApplyChoice, fixPreviewChoice),
 		),
 	)
 
@@ -86,9 +124,14 @@ func newApp() *strictcli.App {
 		strictcli.WithEffect(strictcli.EffectMutating),
 		strictcli.WithDryRunUnsupported(
 			"the dump is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file"),
+		// No update_of: the dump is regenerated whole from the built-in
+		// registry, and --out names where it lands, not what it contains.
 		strictcli.WithFlags(
-			strictcli.StringFlag("out", "Output path for the registry dump",
-				strictcli.Default("REGISTRY.json")),
+			// Optional, not defaulted: mutating commands may not declare a
+			// value default, and --out is a destination the handler falls back
+			// on, never a value written into the artifact.
+			strictcli.StringFlag("out", "Output path for the registry dump; omitted means "+defaultRegistryOut,
+				strictcli.Optional()),
 		),
 	)
 
@@ -99,9 +142,11 @@ func newApp() *strictcli.App {
 		strictcli.WithEffect(strictcli.EffectMutating),
 		strictcli.WithDryRunUnsupported(
 			"the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file"),
+		// No update_of: the matrix is regenerated whole from the registry and
+		// the capability profiles; --out names where it lands.
 		strictcli.WithFlags(
-			strictcli.StringFlag("out", "Output path for the matrix",
-				strictcli.Default("docs/MATRIX.md")),
+			strictcli.StringFlag("out", "Output path for the matrix; omitted means "+defaultMatrixOut,
+				strictcli.Optional()),
 		),
 	)
 
@@ -143,9 +188,11 @@ func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) stric
 // or applies+verifies them. Exit 0 = success (or nothing to fix); exit 2 =
 // tool/config error, including a verification rollback.
 func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
-	dir := strictcli.Get[string](kwargs, "dir")
-	cfgName := strictcli.Get[string](kwargs, "config")
-	apply, _ := strictcli.GetOpt[bool](kwargs, "apply")
+	dir := optOr(kwargs, "dir", defaultRoot)
+	cfgName := optOr(kwargs, "config", defaultConfigName)
+	// The selector is required and elects exactly one member, so "neither
+	// elected" is unrepresentable rather than a state this handler refuses.
+	apply := strictcli.GetElected(kwargs, "disposition").Is(fixApplyChoice)
 
 	ws, err := workspace.Load(dir)
 	if err != nil {
@@ -184,7 +231,7 @@ func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli
 }
 
 func registryDumpHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
-	out := strictcli.Get[string](kwargs, "out")
+	out := optOr(kwargs, "out", defaultRegistryOut)
 	data, err := registrydump.RegistryJSON()
 	if err != nil {
 		ctx.Error(err.Error())
@@ -199,13 +246,25 @@ func registryDumpHandler(ctx *strictcli.Context, kwargs map[string]interface{}) 
 }
 
 func matrixGenHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
-	out := strictcli.Get[string](kwargs, "out")
+	out := optOr(kwargs, "out", defaultMatrixOut)
 	if err := writeFile(out, registrydump.MatrixMarkdown()); err != nil {
 		ctx.Error(err.Error())
 		return strictcli.Exit(1)
 	}
 	ctx.Info("wrote " + out)
 	return strictcli.Exit(0)
+}
+
+// optOr reads an optional string flag or arg, substituting the handler-side
+// fallback when the invocation did not state one. This is the third remedy the
+// mutating-default ban names, and it is legal here because every value that
+// travels through it is a path -- where a command reads or writes -- never a
+// value the command writes into an artifact.
+func optOr(kwargs map[string]interface{}, name, fallback string) string {
+	if v, ok := strictcli.GetOpt[string](kwargs, name); ok {
+		return v
+	}
+	return fallback
 }
 
 func writeFile(path string, data []byte) error {
