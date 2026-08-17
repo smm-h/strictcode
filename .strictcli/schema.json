@@ -82,7 +82,7 @@
   },
   "project_id": "github.com/smm-h/strictcode",
   "name": "strictcode",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "help": "strictcode: a deterministic linter for architecture, with tiered auto-fixes",
   "commands": {
     "analyze": {
