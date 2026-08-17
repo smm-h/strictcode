@@ -1,25 +1,94 @@
 {
+  "schema_version": 2,
+  "defaults": {
+    "schema_version": 2,
+    "app": {
+      "env_prefix": null,
+      "config": false,
+      "config_format": "json",
+      "config_path": null,
+      "config_conflict_mode": "cli-wins",
+      "proc_observe_allowlist": [],
+      "global_flags": [],
+      "commands": {},
+      "groups": {},
+      "deprecated": {},
+      "tag_contracts": {},
+      "checks": {},
+      "config_fields": {},
+      "infra": {}
+    },
+    "flag": {
+      "short": null,
+      "env": null,
+      "env_separator": null,
+      "prefixed": true,
+      "choices": null,
+      "elect_by": null,
+      "unique": false,
+      "conflict_mode": null,
+      "negatable": null,
+      "nullable": false
+    },
+    "arg": {
+      "variadic": false,
+      "choices": null
+    },
+    "choice": {
+      "flags": []
+    },
+    "choice_record": {
+      "help": null
+    },
+    "command": {
+      "consequential": false,
+      "dry_run_supported": true,
+      "dry_run_unsupported_reason": null,
+      "update_of": null,
+      "write_mode": null,
+      "payload_schema": null,
+      "owns_stdout": false,
+      "passthrough": false,
+      "flags": [],
+      "flag_sets": [],
+      "args": [],
+      "tags": [],
+      "constraints": [],
+      "hidden": false,
+      "interactive": false,
+      "config_fields": [],
+      "grants": [],
+      "forwarding": null
+    },
+    "group": {
+      "commands": {},
+      "groups": {},
+      "deprecated": {},
+      "tags": [],
+      "hidden": false
+    },
+    "config_field": {
+      "default": null,
+      "bound_commands": []
+    },
+    "check": {
+      "scope": null
+    },
+    "infra": {
+      "roots": [],
+      "handshakes": [],
+      "connections": []
+    }
+  },
+  "project_id": "github.com/smm-h/strictcode",
+  "name": "strictcode",
+  "version": "0.1.0",
+  "help": "strictcode: a deterministic linter for architecture, with tiered auto-fixes",
   "commands": {
     "analyze": {
-      "args": [
-        {
-          "default": ".",
-          "help": "Project or workspace root to analyze",
-          "name": "dir",
-          "required": false
-        }
-      ],
-      "effect": "read_only",
-      "flags": [
-        {
-          "default": "strictcode.toml",
-          "help": "Config file name, resolved relative to the analyzed directory",
-          "name": "config",
-          "type": "str"
-        }
-      ],
-      "help": "Analyze a project or workspace directory and report findings",
       "name": "analyze",
+      "help": "Analyze a project or workspace directory and report findings",
+      "effect": "read_only",
       "payload_schema": {
         "additionalProperties": false,
         "properties": {
@@ -118,146 +187,120 @@
           "findings"
         ],
         "type": "object"
-      }
-    },
-    "fix": {
-      "args": [
-        {
-          "default": ".",
-          "help": "Project or workspace root",
-          "name": "dir",
-          "required": false
-        }
-      ],
-      "constraints": [
-        {
-          "flags": [
-            "apply",
-            "preview"
-          ],
-          "type": "mutex"
-        }
-      ],
-      "dry_run_supported": false,
-      "dry_run_unsupported_reason": "the file rewrites happen inside the fix package's apply-and-verify path, outside the effects handle; pass --preview to list the planned fixes without touching a file",
-      "effect": "mutating",
+      },
       "flags": [
         {
-          "default": "strictcode.toml",
-          "help": "Config file name, resolved relative to the analyzed directory",
           "name": "config",
-          "type": "str"
-        },
-        {
-          "help": "Apply the planned fixes (files are rewritten, then verified; mismatches roll back)",
-          "name": "apply",
-          "negatable": true,
-          "type": "bool"
-        },
-        {
-          "help": "List the planned fixes without touching any file",
-          "name": "preview",
-          "negatable": true,
-          "type": "bool"
+          "help": "Config file name, resolved relative to the analyzed directory",
+          "value_schema": {
+            "type": "string"
+          },
+          "presence": "default",
+          "default": "strictcode.toml"
         }
       ],
+      "args": [
+        {
+          "name": "dir",
+          "help": "Project or workspace root to analyze",
+          "value_schema": {
+            "type": "string"
+          },
+          "presence": "default",
+          "default": "."
+        }
+      ]
+    },
+    "fix": {
+      "name": "fix",
       "help": "Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification",
-      "name": "fix"
+      "effect": "mutating",
+      "dry_run_supported": false,
+      "dry_run_unsupported_reason": "the file rewrites happen inside the fix package's apply-and-verify path, outside the effects handle; pass --preview to list the planned fixes without touching a file",
+      "flags": [
+        {
+          "name": "config",
+          "help": "Config file name, resolved relative to the analyzed directory; omitted means strictcode.toml",
+          "value_schema": {
+            "type": "string"
+          },
+          "presence": "optional"
+        },
+        {
+          "name": "disposition",
+          "help": "What to do with the planned fixes",
+          "presence": "required",
+          "choices": [
+            {
+              "name": "apply",
+              "help": "rewrite the files and verify the result against the declared delta"
+            },
+            {
+              "name": "preview",
+              "help": "list the planned fixes and touch nothing"
+            }
+          ],
+          "elect_by": "member-flags"
+        }
+      ],
+      "args": [
+        {
+          "name": "dir",
+          "help": "Project or workspace root; omitted means the current directory",
+          "value_schema": {
+            "type": "string"
+          },
+          "presence": "optional"
+        }
+      ]
     }
-  },
-  "defaults": {
-    "app": {
-      "commands": {},
-      "config": false,
-      "deprecated": {},
-      "env_prefix": null,
-      "global_flags": [],
-      "groups": {},
-      "tag_contracts": {}
-    },
-    "arg": {
-      "choices": null,
-      "default": null,
-      "required": true,
-      "type": "str",
-      "variadic": false
-    },
-    "command": {
-      "args": [],
-      "constraints": [],
-      "flags": [],
-      "hidden": false,
-      "interactive": false,
-      "passthrough": false,
-      "tags": []
-    },
-    "flag": {
-      "choices": null,
-      "default": null,
-      "env": null,
-      "env_separator": null,
-      "hidden": false,
-      "negatable": null,
-      "repeatable": false,
-      "short": null,
-      "unique": false
-    },
-    "group": {
-      "commands": {},
-      "deprecated": {},
-      "groups": {},
-      "hidden": false,
-      "tags": []
-    },
-    "schema_version": 1
   },
   "groups": {
-    "matrix": {
-      "commands": {
-        "gen": {
-          "dry_run_supported": false,
-          "dry_run_unsupported_reason": "the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
-          "effect": "mutating",
-          "flags": [
-            {
-              "default": "docs/MATRIX.md",
-              "help": "Output path for the matrix",
-              "name": "out",
-              "type": "str"
-            }
-          ],
-          "help": "Write the generated support matrix (rules and capabilities per language)",
-          "name": "gen"
-        }
-      },
-      "help": "Language x feature support matrix",
-      "name": "matrix"
-    },
     "registry": {
+      "name": "registry",
+      "help": "Rule registry artifacts (mint-once IDs, tombstones)",
       "commands": {
         "dump": {
+          "name": "dump",
+          "help": "Write the committed registry dump (rules, groups, tombstones) as JSON",
+          "effect": "mutating",
           "dry_run_supported": false,
           "dry_run_unsupported_reason": "the dump is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
-          "effect": "mutating",
           "flags": [
             {
-              "default": "REGISTRY.json",
-              "help": "Output path for the registry dump",
               "name": "out",
-              "type": "str"
+              "help": "Output path for the registry dump; omitted means REGISTRY.json",
+              "value_schema": {
+                "type": "string"
+              },
+              "presence": "optional"
             }
-          ],
-          "help": "Write the committed registry dump (rules, groups, tombstones) as JSON",
-          "name": "dump"
+          ]
         }
-      },
-      "help": "Rule registry artifacts (mint-once IDs, tombstones)",
-      "name": "registry"
+      }
+    },
+    "matrix": {
+      "name": "matrix",
+      "help": "Language x feature support matrix",
+      "commands": {
+        "gen": {
+          "name": "gen",
+          "help": "Write the generated support matrix (rules and capabilities per language)",
+          "effect": "mutating",
+          "dry_run_supported": false,
+          "dry_run_unsupported_reason": "the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
+          "flags": [
+            {
+              "name": "out",
+              "help": "Output path for the matrix; omitted means docs/MATRIX.md",
+              "value_schema": {
+                "type": "string"
+              },
+              "presence": "optional"
+            }
+          ]
+        }
+      }
     }
-  },
-  "help": "strictcode: a deterministic linter for architecture, with tiered auto-fixes",
-  "name": "strictcode",
-  "project_id": "github.com/smm-h/strictcode",
-  "schema_version": 1,
-  "version": "0.1.0"
+  }
 }
