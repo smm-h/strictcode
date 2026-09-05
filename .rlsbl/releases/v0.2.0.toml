@@ -25,3 +25,7 @@ No command declares an update record. Each of the three would have had to invent
 # blog = false
 include = ["go"]
 exclude = []
+candidate_sha = "ceadd314040580c9fa45ee2896b9240548a230fd"
+
+[tree_hashes]
+"." = "f47d069e22820ea11de4bac07ef0bb32daab3ad8"

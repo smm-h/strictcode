@@ -17,3 +17,7 @@ context = "strictcode absorbs the source-analysis duties rlsbl is shedding (rlsb
 # blog = false
 include = ["go"]
 exclude = []
+candidate_sha = "fffaa555280259600cf1fc0f9d2f0d80c1eb6f86"
+
+[tree_hashes]
+"." = "0276ffb71d9f8d3540360ab7ce9f677f4c82116a"
