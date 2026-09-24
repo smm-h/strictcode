@@ -10,6 +10,14 @@ description = "Validates schema/registry.json: the committed rule-registry dump 
 [types.Registry]
 type = "record"
 
+[types.Registry.fields.languages]
+type = "array"
+required = true
+min_len = 1
+description = "The languages of the support matrix, in column order, with the display names from their profiles."
+[types.Registry.fields.languages.item]
+type = "LanguageDecl"
+
 [types.Registry.fields.rules]
 type = "array"
 required = true
@@ -44,6 +52,19 @@ form = "unique-by"
 collection = "tombstones"
 field = "id"
 normalization = "none"
+
+[types.LanguageDecl]
+type = "record"
+
+[types.LanguageDecl.fields.id]
+type = "enum"
+required = true
+values = ["py", "go", "ts"]
+
+[types.LanguageDecl.fields.display_name]
+type = "string"
+required = true
+non_empty = true
 
 [types.RuleId]
 type = "string"

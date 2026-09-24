@@ -57,8 +57,14 @@ type tombstoneJSON struct {
 	Migration  string   `json:"migration"`
 }
 
+type languageJSON struct {
+	ID          string `json:"id"`
+	DisplayName string `json:"display_name"`
+}
+
 type registryJSON struct {
 	FormatVersion int                 `json:"format_version"`
+	Languages     []languageJSON      `json:"languages"`
 	Rules         []ruleJSON          `json:"rules"`
 	Groups        map[string][]string `json:"groups"`
 	Tombstones    []tombstoneJSON     `json:"tombstones"`
@@ -69,21 +75,25 @@ type registryJSON struct {
 func RegistryJSON() ([]byte, error) {
 	doc := registryJSON{
 		FormatVersion: FormatVersion,
+		Languages:     make([]languageJSON, 0, len(vocab.Langs)),
 		Rules:         make([]ruleJSON, 0, len(rules.Rules)),
 		Groups:        map[string][]string{},
 		Tombstones:    make([]tombstoneJSON, 0, len(rules.Tombstones)),
 	}
+	for _, lang := range vocab.Langs {
+		doc.Languages = append(doc.Languages, languageJSON{ID: string(lang), DisplayName: vocab.Profiles[lang].DisplayName})
+	}
 	for _, r := range rules.Rules {
 		rj := ruleJSON{
-			ID:            r.ID,
-			Severity:      string(r.Severity),
-			Description:   r.Description,
-			Requires:      capStrings(r.Requires),
-			Uses:          capStrings(r.Uses),
-			Groups:        emptyNotNil(r.Groups),
-			Suppression:   string(r.Suppression),
-			FixTier:       int(r.FixTier),
-			PlannedFixes:  make([]plannedFixJSON, 0, len(r.PlannedFixes)),
+			ID:                  r.ID,
+			Severity:            string(r.Severity),
+			Description:         r.Description,
+			Requires:            capStrings(r.Requires),
+			Uses:                capStrings(r.Uses),
+			Groups:              emptyNotNil(r.Groups),
+			Suppression:         string(r.Suppression),
+			FixTier:             int(r.FixTier),
+			PlannedFixes:        make([]plannedFixJSON, 0, len(r.PlannedFixes)),
 			NotApplicable:       map[string]string{},
 			LanguageIndependent: r.LanguageIndependent(),
 			Support:             map[string]cellJSON{},
