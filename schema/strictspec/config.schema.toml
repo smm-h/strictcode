@@ -90,7 +90,7 @@ type = "map"
 required = false
 key_pattern = "^[a-z][a-z0-9_-]*$"
 order = "incidental"
-description = "Named integer thresholds for rules that declare them (wave-two rules; no v1 seed rule has thresholds)."
+description = "Named integer thresholds for rules that declare them; no current rule declares one."
 [types.RuleConfig.fields.thresholds.value]
 type = "integer"
 
