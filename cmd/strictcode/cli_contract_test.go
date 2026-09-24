@@ -134,14 +134,12 @@ func TestRegistryDumpFallsBackToItsDefaultPath(t *testing.T) {
 	}
 }
 
-func TestMatrixGenFallsBackToItsDefaultPath(t *testing.T) {
-	t.Chdir(t.TempDir())
+// The support matrix is rendered by the docs site from the registry dump's
+// per-rule support cells, so there is no command that writes it.
+func TestMatrixGenIsGone(t *testing.T) {
 	res := newApp().Test([]string{"matrix", "gen"})
-	if res.ExitCode != 0 {
-		t.Fatalf("matrix gen exited %d: %s", res.ExitCode, res.Stderr)
-	}
-	if _, err := os.Stat(defaultMatrixOut); err != nil {
-		t.Errorf("no matrix at the documented fallback path %s: %v", defaultMatrixOut, err)
+	if res.ExitCode == 0 {
+		t.Fatalf("matrix gen still runs; the matrix is rendered from schema/registry.json:\n%s", res.Stdout)
 	}
 }
 
@@ -162,7 +160,6 @@ func TestMutatingFallbacksAreDocumented(t *testing.T) {
 	for _, tc := range []struct{ argv, want string }{
 		{"fix", defaultConfigName},
 		{"registry dump", defaultRegistryOut},
-		{"matrix gen", defaultMatrixOut},
 	} {
 		res := newApp().Test(append(strings.Fields(tc.argv), "--help"))
 		if !strings.Contains(res.Stdout, "omitted means "+tc.want) {

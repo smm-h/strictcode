@@ -16,7 +16,7 @@ import (
 
 	"github.com/smm-h/strictcode/internal/spec/profilespec"
 	"github.com/smm-h/strictcode/internal/spec/vocabspec"
-	"github.com/smm-h/strictspec/go/strictspec"
+	"github.com/stricttools/strictspec/go/strictspec"
 )
 
 // profileFiles maps the profile language code to its document path, in

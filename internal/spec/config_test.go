@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/smm-h/strictcode/internal/spec/configspec"
-	"github.com/smm-h/strictspec/go/strictspec"
+	"github.com/stricttools/strictspec/go/strictspec"
 )
 
 // validConfig exercises every configuration surface the pinned decisions

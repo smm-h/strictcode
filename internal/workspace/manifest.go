@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/smm-h/strictcode/internal/vocab"
-	"github.com/smm-h/strictspec/go/strictspec"
+	"github.com/stricttools/strictspec/go/strictspec"
 	"golang.org/x/mod/modfile"
 )
 

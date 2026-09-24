@@ -2,15 +2,15 @@ package registrydump
 
 import (
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/smm-h/strictcode/internal/rules"
 	"github.com/smm-h/strictcode/internal/spec/registryspec"
+	"github.com/smm-h/strictcode/internal/vocab"
 )
 
 // TestRegistryJSONIsFresh compares the rendered registry dump to the
-// committed REGISTRY.json. A mismatch means the registry declarations
+// committed schema/registry.json. A mismatch means the registry declarations
 // changed without regenerating: run `go run ./cmd/strictcode registry dump`
 // and commit with rlsbl commit.
 func TestRegistryJSONIsFresh(t *testing.T) {
@@ -18,25 +18,12 @@ func TestRegistryJSONIsFresh(t *testing.T) {
 	if err != nil {
 		t.Fatalf("RegistryJSON: %v", err)
 	}
-	got, err := os.ReadFile("../../REGISTRY.json")
+	got, err := os.ReadFile("../../schema/registry.json")
 	if err != nil {
-		t.Fatalf("read committed REGISTRY.json: %v", err)
+		t.Fatalf("read committed schema/registry.json: %v", err)
 	}
 	if string(got) != string(want) {
-		t.Fatal("REGISTRY.json is stale — run `go run ./cmd/strictcode registry dump` and commit with rlsbl commit")
-	}
-}
-
-// TestMatrixMarkdownIsFresh compares the rendered matrix to the committed
-// docs/MATRIX.md.
-func TestMatrixMarkdownIsFresh(t *testing.T) {
-	want := MatrixMarkdown()
-	got, err := os.ReadFile("../../docs/MATRIX.md")
-	if err != nil {
-		t.Fatalf("read committed docs/MATRIX.md: %v", err)
-	}
-	if string(got) != string(want) {
-		t.Fatal("docs/MATRIX.md is stale — run `go run ./cmd/strictcode matrix gen` and commit with rlsbl commit")
+		t.Fatal("schema/registry.json is stale — run `go run ./cmd/strictcode registry dump` and commit with rlsbl commit")
 	}
 }
 
@@ -44,13 +31,13 @@ func TestMatrixMarkdownIsFresh(t *testing.T) {
 // through the strictspec-generated reader and cross-checks the typed binding
 // against the registry declarations.
 func TestCommittedRegistryValidatesAndBinds(t *testing.T) {
-	raw, err := os.ReadFile("../../REGISTRY.json")
+	raw, err := os.ReadFile("../../schema/registry.json")
 	if err != nil {
 		t.Fatalf("read: %v", err)
 	}
 	doc, diags := registryspec.ValidateBytes(raw, "json")
 	if doc == nil {
-		t.Fatalf("REGISTRY.json fails its schema: %v", diags)
+		t.Fatalf("schema/registry.json fails its schema: %v", diags)
 	}
 	if len(doc.Rules) != len(rules.Rules) {
 		t.Fatalf("bound %d rules, registry declares %d", len(doc.Rules), len(rules.Rules))
@@ -65,13 +52,41 @@ func TestCommittedRegistryValidatesAndBinds(t *testing.T) {
 	}
 }
 
-// TestMatrixCoversEveryRuleAndCapability guards against a rendering bug
-// silently dropping rows.
-func TestMatrixCoversEveryRuleAndCapability(t *testing.T) {
-	matrix := string(MatrixMarkdown())
-	for _, r := range rules.Rules {
-		if !strings.Contains(matrix, "`"+r.ID+"`") {
-			t.Errorf("matrix does not mention rule %q", r.ID)
+// TestSupportCellsCoverEveryLanguage checks the committed support cells the
+// docs site renders the matrix from: every rule that engages a language
+// capability carries one cell per language, equal to the Go calculus, and a
+// language-independent rule carries none.
+func TestSupportCellsCoverEveryLanguage(t *testing.T) {
+	raw, err := os.ReadFile("../../schema/registry.json")
+	if err != nil {
+		t.Fatalf("read: %v", err)
+	}
+	doc, diags := registryspec.ValidateBytes(raw, "json")
+	if doc == nil {
+		t.Fatalf("schema/registry.json fails its schema: %v", diags)
+	}
+	for i, r := range doc.Rules {
+		decl := rules.Rules[i]
+		cells := map[string]string{}
+		for _, kv := range r.Support.Entries() {
+			status, _ := kv.Value.Field("status")
+			s, _ := status.AsString()
+			cells[kv.Key] = s
+		}
+		if r.LanguageIndependent != decl.LanguageIndependent() {
+			t.Errorf("%s: language_independent is %v, declared %v", r.Id, r.LanguageIndependent, decl.LanguageIndependent())
+		}
+		if decl.LanguageIndependent() {
+			if len(cells) != 0 {
+				t.Errorf("%s: language-independent rule carries %d support cells", r.Id, len(cells))
+			}
+			continue
+		}
+		for _, lang := range vocab.Langs {
+			want := string(rules.MatrixCell(decl, lang).Status)
+			if cells[string(lang)] != want {
+				t.Errorf("%s/%s: support cell %q, calculus says %q", r.Id, lang, cells[string(lang)], want)
+			}
 		}
 	}
 }

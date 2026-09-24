@@ -17,7 +17,7 @@ import (
 	"strings"
 
 	"github.com/smm-h/strictcode/internal/vocab"
-	"github.com/smm-h/strictspec/go/strictspec"
+	"github.com/stricttools/strictspec/go/strictspec"
 )
 
 // DepScope is a declared dependency's scope (vocabulary enum

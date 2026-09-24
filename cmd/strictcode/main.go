@@ -3,8 +3,8 @@
 //
 // Surface: analyze (the batch pipeline — extract, check, report, exit
 // code), fix (the tier-1 transforms, under a required apply/preview
-// selector), registry dump, and matrix gen (the two committed artifacts
-// CI diffs).
+// selector), and registry dump (the committed schema/registry.json, which
+// carries the computed support-matrix cells the docs site renders).
 package main
 
 import (
@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/smm-h/strictcli/go/strictcli"
+	"github.com/stricttools/strictcli/go/strictcli"
 	strictcode "github.com/smm-h/strictcode"
 	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/engine"
@@ -36,8 +36,7 @@ func main() {
 const (
 	defaultConfigName  = "strictcode.toml"
 	defaultRoot        = "."
-	defaultRegistryOut = "REGISTRY.json"
-	defaultMatrixOut   = "docs/MATRIX.md"
+	defaultRegistryOut = "schema/registry.json"
 )
 
 // The `fix` command's write decision is a member-spelled selector: the operator
@@ -118,7 +117,7 @@ func newApp() *strictcli.App {
 	)
 
 	registry := app.Group("registry", "Rule registry artifacts (mint-once IDs, tombstones)")
-	registry.Command("dump", "Write the committed registry dump (rules, groups, tombstones) as JSON",
+	registry.Command("dump", "Write the committed registry dump (rules with their per-language support cells, groups, tombstones) as JSON",
 		registryDumpHandler,
 		// mutating: it writes the dump file named by --out.
 		strictcli.WithEffect(strictcli.EffectMutating),
@@ -131,21 +130,6 @@ func newApp() *strictcli.App {
 			// value default, and --out is a destination the handler falls back
 			// on, never a value written into the artifact.
 			strictcli.StringFlag("out", "Output path for the registry dump; omitted means "+defaultRegistryOut,
-				strictcli.Optional()),
-		),
-	)
-
-	matrix := app.Group("matrix", "Language x feature support matrix")
-	matrix.Command("gen", "Write the generated support matrix (rules and capabilities per language)",
-		matrixGenHandler,
-		// mutating: it writes the matrix file named by --out.
-		strictcli.WithEffect(strictcli.EffectMutating),
-		strictcli.WithDryRunUnsupported(
-			"the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file"),
-		// No update_of: the matrix is regenerated whole from the registry and
-		// the capability profiles; --out names where it lands.
-		strictcli.WithFlags(
-			strictcli.StringFlag("out", "Output path for the matrix; omitted means "+defaultMatrixOut,
 				strictcli.Optional()),
 		),
 	)
@@ -238,16 +222,6 @@ func registryDumpHandler(ctx *strictcli.Context, kwargs map[string]interface{}) 
 		return strictcli.Exit(1)
 	}
 	if err := writeFile(out, data); err != nil {
-		ctx.Error(err.Error())
-		return strictcli.Exit(1)
-	}
-	ctx.Info("wrote " + out)
-	return strictcli.Exit(0)
-}
-
-func matrixGenHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
-	out := optOr(kwargs, "out", defaultMatrixOut)
-	if err := writeFile(out, registrydump.MatrixMarkdown()); err != nil {
 		ctx.Error(err.Error())
 		return strictcli.Exit(1)
 	}

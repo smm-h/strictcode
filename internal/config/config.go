@@ -27,7 +27,7 @@ import (
 
 	"github.com/smm-h/strictcode/internal/rules"
 	"github.com/smm-h/strictcode/internal/spec/configspec"
-	"github.com/smm-h/strictspec/go/strictspec"
+	"github.com/stricttools/strictspec/go/strictspec"
 )
 
 // Suppression is one configured suppression in its rule's natural shape.
