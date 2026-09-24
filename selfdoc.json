@@ -1,0 +1,57 @@
+{
+  "version": "0.2.0",
+  "description": "A deterministic linter for architecture, with tiered auto-fixes: strictcode builds a graph of a codebase's modules, callables, and types, and enforces dependency hygiene, dead-code, cycle, and library-boundary rules across Python, Go, and TypeScript/JavaScript",
+  "repo": "https://github.com/smm-h/strictcode",
+  "base_url": "https://smmh.dev/strictcode",
+  "search_engine": "pagefind",
+  "author": {
+    "name": "SMMH",
+    "url": "https://smmh.dev",
+    "same_as": [
+      "https://github.com/smm-h"
+    ]
+  },
+  "source": [
+    {"path": "internal/", "language": "go"},
+    {"path": "cmd/", "language": "go"}
+  ],
+  "docs": ".stricttools/docs/",
+  "output": ".stricttools/docs-cache/build/",
+  "root_files": [
+    ".stricttools/docs/_README.md"
+  ],
+  "directives": {
+    "rule-table": "scripts/directives/rule_table.py",
+    "group-table": "scripts/directives/group_table.py",
+    "rule-facts": "scripts/directives/rule_facts.py",
+    "support-matrix": "scripts/directives/support_matrix.py",
+    "capability-status": "scripts/directives/capability_status.py",
+    "vocab-kinds": "scripts/directives/vocab_kinds.py",
+    "vocab-enums": "scripts/directives/vocab_enums.py",
+    "profile-constructs": "scripts/directives/profile_constructs.py",
+    "retired-rules": "scripts/directives/retired_rules.py",
+    "schema-fields": "scripts/directives/schema_fields.py",
+    "cli-command": "scripts/directives/cli_command.py"
+  },
+  "versions": [
+    {
+      "version": "0.2.0"
+    }
+  ],
+  "locales": [
+    {
+      "code": "en",
+      "label": "English",
+      "default": true
+    }
+  ],
+  "topology": {
+    "slug": "strictcode",
+    "docs_base": "https://smmh.dev",
+    "posts_base": "https://smmh.dev/blog"
+  },
+  "assembly": {
+    "repo": "smm-h/selfdoc-cache",
+    "pages_project": "smmh"
+  }
+}
