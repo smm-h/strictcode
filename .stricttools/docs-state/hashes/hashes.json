@@ -12,9 +12,39 @@
     "content": "1b311dc811c85f3cce96f591581b89b0b56360588b587a1fdfbde709515965dd",
     "description": "366ed8ebac6244c3f84a79825f9d72a3a1eca91299779c2d78526556f2b3b4b4"
   },
+  "en/cli-analyze.md": {
+    "content": "3fe4468dedc340074d7c67e91731ee7d12a2ad7b4f346de84d9e7e5b9222ecd2",
+    "description": "80aabc19e290e514bd930e494398e4a363fc58cf93b34bd984f70eac8e429575",
+    "seed_hash": "80aabc19e290e514bd930e494398e4a363fc58cf93b34bd984f70eac8e429575"
+  },
   "en/cli-and-output.md": {
     "content": "762ace7949223f38c2a090401671cc39fd2b3e57d4f03d3211817f88bfdb52b7",
     "description": "82493f67b0e5954adfa1657239ff43506996973974687f8599fa63b676019ebb"
+  },
+  "en/cli-fix.md": {
+    "content": "a01c9cd95619880d3c82499c94a16f1750df336238ceaa61b52f8d0662cfa52f",
+    "description": "5ff4c5c29f5a6f70f684a32b5f2e96d21f5b908c976399f24c541e970ad6fea3",
+    "seed_hash": "5ff4c5c29f5a6f70f684a32b5f2e96d21f5b908c976399f24c541e970ad6fea3"
+  },
+  "en/cli-index.md": {
+    "content": "f8c00281a4275ca03f70fdc2807c55a064f6f1f30a8ea14c1b8e703d0b8f24fd",
+    "description": "b731dca90c6557ab6d8176b3379fd322c5b741809c288ba543b4c2f70d391862",
+    "seed_hash": "b731dca90c6557ab6d8176b3379fd322c5b741809c288ba543b4c2f70d391862"
+  },
+  "en/cli-registry.md": {
+    "content": "97942231605aa823997d20758e6559c62146d95d66249972c150c608cd564136",
+    "description": "6ade887dd1702d4c542d8383ae55cf9b47d8f3f2115ed37829bb3ebcd13c12de",
+    "seed_hash": "6ade887dd1702d4c542d8383ae55cf9b47d8f3f2115ed37829bb3ebcd13c12de"
+  },
+  "en/cmd-strictcode.md": {
+    "content": "ef2ad2374f5276bf75d2f82ce8fe94f2f80e16125b7ee1499640588bf5889aab",
+    "description": "7d13d97561ed909e239607b3367d098923f66e5f104010f8e03d24bc7f5260d7",
+    "seed_hash": "7d13d97561ed909e239607b3367d098923f66e5f104010f8e03d24bc7f5260d7"
+  },
+  "en/cmd-vocabgen.md": {
+    "content": "44e7d77602881ddc5d674f663aff993c70b4a1b33701b7d36c7270f62bcbb76e",
+    "description": "2b8bbaabe7078e09a04a57438093f9b5926c879437930dfef32e8a048d298fec",
+    "seed_hash": "2b8bbaabe7078e09a04a57438093f9b5926c879437930dfef32e8a048d298fec"
   },
   "en/config.md": {
     "content": "920560c43da8f8d4382fb61314abd8a3058dd9a8ac08232c8dbc8b61cd6d0e16",
@@ -31,6 +61,11 @@
   "en/fixes.md": {
     "content": "de51fd517abac80ad2f68c0a82a9188b4e3c5d5444f90d8bef30336d8289b88a",
     "description": "a2b575cdee0715ec7c53fd39b90e06870cb8d9812fa6ce9af844b4722e9b1d3c"
+  },
+  "en/gen-index.md": {
+    "content": "e87da548e46b5c00253ce37d1c909526e8e9f11bec72c1c000f77d16d7ff82a4",
+    "description": "b51cf05392cf0addbf3bfcb422e6a7df4052ce25395f43a6fd5a3614ce776c79",
+    "seed_hash": "b51cf05392cf0addbf3bfcb422e6a7df4052ce25395f43a6fd5a3614ce776c79"
   },
   "en/glossary.md": {
     "content": "ee5f6b54918fea24d8dcb56ef5cafcf9f8d3c0515f23c2b60bc8b7169df6ab49",
@@ -51,6 +86,106 @@
   "en/installation.md": {
     "content": "7b0769277c4d6257502d3a83bd7b9e50bef80c51641fb2a5212e2f8057a1d8f9",
     "description": "27d87fcfb050fd8cb86e6d3ee4d2eb87c2741ca8fb7248368b24ebd8118b56aa"
+  },
+  "en/internal-checks.md": {
+    "content": "a2c0d923d58841ed065cdf2746408af0eca51fc557e1b351e370035c31b7e9fa",
+    "description": "76cc264d95f94f9f2089374829214903fabcb57e4dfa7bac0be9e24bf1f2eccb",
+    "seed_hash": "76cc264d95f94f9f2089374829214903fabcb57e4dfa7bac0be9e24bf1f2eccb"
+  },
+  "en/internal-config.md": {
+    "content": "e2fc71f9686720d45a6044595aa30dc771f721f2b519a2c4e57a83e9fec47f04",
+    "description": "9d7a602b2fb1713b6c64b12ef6e569e80047f00855b3fafc51ce804b283367f7",
+    "seed_hash": "9d7a602b2fb1713b6c64b12ef6e569e80047f00855b3fafc51ce804b283367f7"
+  },
+  "en/internal-engine.md": {
+    "content": "c2d57943746c90cb16fa38eeab58ee1dd9e669eed654c1465970d7582923bfd7",
+    "description": "725ab4614462baf3becc024a8576b4c0647e2aee6eb344424a8cd1aa4f8c8094",
+    "seed_hash": "725ab4614462baf3becc024a8576b4c0647e2aee6eb344424a8cd1aa4f8c8094"
+  },
+  "en/internal-extract.md": {
+    "content": "364689c870881e1fde08030c713dc6fae472cdc85a9119a1f9e28a0a4b1831b6",
+    "description": "264e62ffea7896cb85e274f92f04509ca9e1dfcf96ea980783e797a8d9d21c85",
+    "seed_hash": "264e62ffea7896cb85e274f92f04509ca9e1dfcf96ea980783e797a8d9d21c85"
+  },
+  "en/internal-findings.md": {
+    "content": "b34aed22e6d4b82c6a9772737a52327bfa55dbe87e980c50442a5fb6004e48ed",
+    "description": "771a4e124850b95a6597a7e911e16e22871699819b71431946ea8306f2c31aa0",
+    "seed_hash": "771a4e124850b95a6597a7e911e16e22871699819b71431946ea8306f2c31aa0"
+  },
+  "en/internal-fix.md": {
+    "content": "4ece7d81d81f5ab2d555379dbbf1fee42efb2126ea3ac518acff433a3ae64ea4",
+    "description": "3e6fe06d3474ee0e338c21adf322726ead24b793b0ba475f1daed287ba348c6b",
+    "seed_hash": "3e6fe06d3474ee0e338c21adf322726ead24b793b0ba475f1daed287ba348c6b"
+  },
+  "en/internal-fixture.md": {
+    "content": "ac9a74b03b9ab0eac01f9e8eea9320a01a0709962f716c40fb12bf227173f523",
+    "description": "95fece3929874e0f3c330b18bd060df69a6eb44c032c930ffaad797a16504377",
+    "seed_hash": "95fece3929874e0f3c330b18bd060df69a6eb44c032c930ffaad797a16504377"
+  },
+  "en/internal-registrydump.md": {
+    "content": "7fe7f841051ab1bc92dc3534b057d72be086994e2fe5529b9690fcdff1fd9ee4",
+    "description": "a56613f61bfcbae58c76ed5be0229c3fee20d46895cdeafae6175fb38219079d",
+    "seed_hash": "a56613f61bfcbae58c76ed5be0229c3fee20d46895cdeafae6175fb38219079d"
+  },
+  "en/internal-relation.md": {
+    "content": "0219dd5c30b832a0103dcc154a2b07241efcbc561150f5692cf573c3e5d64867",
+    "description": "23cb96046c0f036f8d3bfd5c41de1156b3b1b40c3357676b7a17c14d1f99f4cc",
+    "seed_hash": "23cb96046c0f036f8d3bfd5c41de1156b3b1b40c3357676b7a17c14d1f99f4cc"
+  },
+  "en/internal-rules.md": {
+    "content": "19ec34732e8bd2d25e2bef11fae269179c7fc8aa3234f11b4e78aa6cad434820",
+    "description": "3441d4704b2f5a962130c62261a18c3714ecae62e2c79d45549559ffad155c9c",
+    "seed_hash": "3441d4704b2f5a962130c62261a18c3714ecae62e2c79d45549559ffad155c9c"
+  },
+  "en/internal-spec-configspec.md": {
+    "content": "4265ff524c240bc6ad5ba42ffe460177179bcff8cf508c355ade02bcd5aa6bb1",
+    "description": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200",
+    "seed_hash": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200"
+  },
+  "en/internal-spec-findingsspec.md": {
+    "content": "ef35f0c248e352e53110762c11dffff13dec974e39479ce220de5b9256d9dc92",
+    "description": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200",
+    "seed_hash": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200"
+  },
+  "en/internal-spec-profilespec.md": {
+    "content": "1395176e2b200741b5fef8e1a19357fa0b766ae8b5c2a7013af5677df5b4daf2",
+    "description": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200",
+    "seed_hash": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200"
+  },
+  "en/internal-spec-registryspec.md": {
+    "content": "ed3f34891a9f61260a17686471510b5f9d7eb981a5e822510b5a7008a56243ac",
+    "description": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200",
+    "seed_hash": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200"
+  },
+  "en/internal-spec-vocabspec.md": {
+    "content": "e2b7a4c98fc9dee24d3240fd4b510f69e658cd4808a3f0fe18992b28046fbe8a",
+    "description": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200",
+    "seed_hash": "502157584f1fe26a19b8e7845b5f45633eb748730923539828d7e05298c24200"
+  },
+  "en/internal-testctx.md": {
+    "content": "6dca21e94ce990dd8f77e70b8c7e7d0defa5c503be3ca206467a8c901e8b97b7",
+    "description": "360fcbc72e42d272a293c4ae985d1570f48930dcfc3b967433cc6d48c5f3d454",
+    "seed_hash": "360fcbc72e42d272a293c4ae985d1570f48930dcfc3b967433cc6d48c5f3d454"
+  },
+  "en/internal-treesitter.md": {
+    "content": "836a564cbe87c497e1b1d01441601270d4ebfe922afc1dac9de2937a98d2f9ec",
+    "description": "4cb27a0c8d5a0bda3700aa82ecd322975f79b50da05f52b809e3ad3c9c1444bb",
+    "seed_hash": "4cb27a0c8d5a0bda3700aa82ecd322975f79b50da05f52b809e3ad3c9c1444bb"
+  },
+  "en/internal-vocab-gen.md": {
+    "content": "6dd58c17d247bf2b33d96de2896fe3667ea01a90d13e10b1c1713451d862e781",
+    "description": "30e5ecb0bae5c67435d44527b82604542d5471ed63459b000a93925aa718baa6",
+    "seed_hash": "30e5ecb0bae5c67435d44527b82604542d5471ed63459b000a93925aa718baa6"
+  },
+  "en/internal-vocab.md": {
+    "content": "55892a0832fe206b541bc2641bd0e74a327d8bec23ec2cb24e24f5f4611f9891",
+    "description": "1b25b1f901d8f8993942a192ff77a8180787bb38e67a0a36e788377b9c4f2c48",
+    "seed_hash": "1b25b1f901d8f8993942a192ff77a8180787bb38e67a0a36e788377b9c4f2c48"
+  },
+  "en/internal-workspace.md": {
+    "content": "df4b972f69a649e2d3e95a106b9a6b6dc916c7adbfbe78bbc86c1f6f98cf5991",
+    "description": "afaa044dc38bc5d05baf28114a0cbc550e3b58c53cb55124336f688b19751add",
+    "seed_hash": "afaa044dc38bc5d05baf28114a0cbc550e3b58c53cb55124336f688b19751add"
   },
   "en/lessons.md": {
     "content": "4378337fd9abd4dd935f5aadc11d3a6e0a447d90df81b8e942b6f98acdc0ec8c",

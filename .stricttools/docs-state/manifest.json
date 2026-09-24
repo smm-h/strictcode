@@ -1,0 +1,3707 @@
+{
+  "schema_version": 1,
+  "name": "strictcode",
+  "slug": "strictcode",
+  "version": "0.2.0",
+  "description": "A deterministic linter for architecture, with tiered auto-fixes: strictcode builds a graph of a codebase's modules, callables, and types, and enforces dependency hygiene, dead-code, cycle, and library-boundary rules across Python, Go, and TypeScript/JavaScript",
+  "language": "go",
+  "base_url": "https://smmh.dev/strictcode",
+  "pages": [
+    {
+      "path": "call-resolution.md",
+      "title": "Call resolution",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Call resolution",
+          "anchor": "call-resolution"
+        },
+        {
+          "level": 2,
+          "text": "Two explicit layers",
+          "anchor": "two-explicit-layers"
+        },
+        {
+          "level": 2,
+          "text": "How the syntactic layer behaves",
+          "anchor": "how-the-syntactic-layer-behaves"
+        }
+      ]
+    },
+    {
+      "path": "capabilities-and-profiles.md",
+      "title": "Capabilities and profiles",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Capabilities and profiles",
+          "anchor": "capabilities-and-profiles"
+        },
+        {
+          "level": 2,
+          "text": "Layers",
+          "anchor": "layers"
+        },
+        {
+          "level": 2,
+          "text": "Capability statuses",
+          "anchor": "capability-statuses"
+        },
+        {
+          "level": 2,
+          "text": "Requires and uses",
+          "anchor": "requires-and-uses"
+        },
+        {
+          "level": 2,
+          "text": "Language profiles",
+          "anchor": "language-profiles"
+        },
+        {
+          "level": 3,
+          "text": "Python",
+          "anchor": "python"
+        },
+        {
+          "level": 3,
+          "text": "Go",
+          "anchor": "go"
+        },
+        {
+          "level": 3,
+          "text": "TypeScript/JavaScript",
+          "anchor": "typescriptjavascript"
+        }
+      ]
+    },
+    {
+      "path": "check-semantics.md",
+      "title": "Check semantics",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Check semantics",
+          "anchor": "check-semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin and boundary with rlsbl",
+          "anchor": "origin-and-boundary-with-rlsbl"
+        },
+        {
+          "level": 2,
+          "text": "Workspace and manifest inputs",
+          "anchor": "workspace-and-manifest-inputs"
+        },
+        {
+          "level": 3,
+          "text": "Source-walk exclusions",
+          "anchor": "source-walk-exclusions"
+        },
+        {
+          "level": 2,
+          "text": "Test context",
+          "anchor": "test-context"
+        },
+        {
+          "level": 2,
+          "text": "Import resolution",
+          "anchor": "import-resolution"
+        },
+        {
+          "level": 3,
+          "text": "Python",
+          "anchor": "python"
+        },
+        {
+          "level": 3,
+          "text": "Go",
+          "anchor": "go"
+        },
+        {
+          "level": 3,
+          "text": "TypeScript/JavaScript",
+          "anchor": "typescriptjavascript"
+        },
+        {
+          "level": 2,
+          "text": "Dead modules",
+          "anchor": "dead-modules"
+        },
+        {
+          "level": 2,
+          "text": "Library-boundary rules",
+          "anchor": "library-boundary-rules"
+        }
+      ]
+    },
+    {
+      "path": "cli-analyze.md",
+      "title": "strictcode analyze",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "strictcode analyze",
+          "anchor": "strictcode-analyze"
+        },
+        {
+          "level": 2,
+          "text": "Flags",
+          "anchor": "flags"
+        },
+        {
+          "level": 2,
+          "text": "Arguments",
+          "anchor": "arguments"
+        }
+      ]
+    },
+    {
+      "path": "cli-and-output.md",
+      "title": "CLI and output",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "CLI and output",
+          "anchor": "cli-and-output"
+        },
+        {
+          "level": 2,
+          "text": "Commands",
+          "anchor": "commands"
+        },
+        {
+          "level": 2,
+          "text": "`analyze`",
+          "anchor": "analyze"
+        },
+        {
+          "level": 2,
+          "text": "`fix`",
+          "anchor": "fix"
+        },
+        {
+          "level": 2,
+          "text": "`registry dump`",
+          "anchor": "registry-dump"
+        },
+        {
+          "level": 2,
+          "text": "Human output",
+          "anchor": "human-output"
+        },
+        {
+          "level": 2,
+          "text": "JSON output",
+          "anchor": "json-output"
+        }
+      ]
+    },
+    {
+      "path": "cli-fix.md",
+      "title": "strictcode fix",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "strictcode fix",
+          "anchor": "strictcode-fix"
+        },
+        {
+          "level": 2,
+          "text": "Flags",
+          "anchor": "flags"
+        },
+        {
+          "level": 2,
+          "text": "Arguments",
+          "anchor": "arguments"
+        }
+      ]
+    },
+    {
+      "path": "cli-index.md",
+      "title": "strictcode CLI Reference",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "strictcode CLI Reference",
+          "anchor": "strictcode-cli-reference"
+        },
+        {
+          "level": 2,
+          "text": "Commands",
+          "anchor": "commands"
+        },
+        {
+          "level": 2,
+          "text": "Command Groups",
+          "anchor": "command-groups"
+        },
+        {
+          "level": 2,
+          "text": "Framework flags",
+          "anchor": "framework-flags"
+        }
+      ]
+    },
+    {
+      "path": "cli-registry.md",
+      "title": "strictcode registry",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "strictcode registry",
+          "anchor": "strictcode-registry"
+        },
+        {
+          "level": 2,
+          "text": "registry dump",
+          "anchor": "registry-dump"
+        },
+        {
+          "level": 3,
+          "text": "Flags",
+          "anchor": "flags"
+        }
+      ]
+    },
+    {
+      "path": "cmd-strictcode.md",
+      "title": "cmd/strictcode",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "cmd/strictcode",
+          "anchor": "cmdstrictcode"
+        },
+        {
+          "level": 2,
+          "text": "`cmd/strictcode`",
+          "anchor": "cmdstrictcode"
+        }
+      ]
+    },
+    {
+      "path": "cmd-vocabgen.md",
+      "title": "cmd/vocabgen",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "cmd/vocabgen",
+          "anchor": "cmdvocabgen"
+        },
+        {
+          "level": 2,
+          "text": "`cmd/vocabgen`",
+          "anchor": "cmdvocabgen"
+        }
+      ]
+    },
+    {
+      "path": "config.md",
+      "title": "Configuration",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Configuration",
+          "anchor": "configuration"
+        },
+        {
+          "level": 2,
+          "text": "Top level",
+          "anchor": "top-level"
+        },
+        {
+          "level": 2,
+          "text": "Analysis modes",
+          "anchor": "analysis-modes"
+        },
+        {
+          "level": 2,
+          "text": "Groups",
+          "anchor": "groups"
+        },
+        {
+          "level": 2,
+          "text": "Rules",
+          "anchor": "rules"
+        },
+        {
+          "level": 2,
+          "text": "Suppressions",
+          "anchor": "suppressions"
+        },
+        {
+          "level": 2,
+          "text": "Errors when the file loads",
+          "anchor": "errors-when-the-file-loads"
+        },
+        {
+          "level": 2,
+          "text": "Workspace inputs",
+          "anchor": "workspace-inputs"
+        }
+      ]
+    },
+    {
+      "path": "decisions.md",
+      "title": "Decisions",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Decisions",
+          "anchor": "decisions"
+        },
+        {
+          "level": 2,
+          "text": "Design decisions",
+          "anchor": "design-decisions"
+        },
+        {
+          "level": 3,
+          "text": "Implementation language: Go",
+          "anchor": "implementation-language-go"
+        },
+        {
+          "level": 3,
+          "text": "Parser: tree-sitter, through the official C runtime",
+          "anchor": "parser-tree-sitter-through-the-official-c-runtime"
+        },
+        {
+          "level": 3,
+          "text": "Graph model: an interaction relation",
+          "anchor": "graph-model-an-interaction-relation"
+        },
+        {
+          "level": 3,
+          "text": "Node identity: qualified names",
+          "anchor": "node-identity-qualified-names"
+        },
+        {
+          "level": 3,
+          "text": "Vocabulary: universal kinds, capabilities, and profiles",
+          "anchor": "vocabulary-universal-kinds-capabilities-and-profiles"
+        },
+        {
+          "level": 3,
+          "text": "Subtyping: one `conforms_to` row kind",
+          "anchor": "subtyping-one-conforms_to-row-kind"
+        },
+        {
+          "level": 3,
+          "text": "Rule identity: mint once, retire with a record",
+          "anchor": "rule-identity-mint-once-retire-with-a-record"
+        },
+        {
+          "level": 3,
+          "text": "Vocabulary content versioning: strictspec enum sourcing",
+          "anchor": "vocabulary-content-versioning-strictspec-enum-sourcing"
+        },
+        {
+          "level": 3,
+          "text": "Speculative kinds, labeled",
+          "anchor": "speculative-kinds-labeled"
+        },
+        {
+          "level": 3,
+          "text": "Rules are built-in Go code",
+          "anchor": "rules-are-built-in-go-code"
+        },
+        {
+          "level": 3,
+          "text": "Stateless: rebuild every run",
+          "anchor": "stateless-rebuild-every-run"
+        },
+        {
+          "level": 3,
+          "text": "Tier-1 guarantee: whitelist plus graph re-verification",
+          "anchor": "tier-1-guarantee-whitelist-plus-graph-re-verification"
+        },
+        {
+          "level": 3,
+          "text": "Suppressions: per-rule shapes",
+          "anchor": "suppressions-per-rule-shapes"
+        },
+        {
+          "level": 3,
+          "text": "Language scope",
+          "anchor": "language-scope"
+        },
+        {
+          "level": 3,
+          "text": "Output formats",
+          "anchor": "output-formats"
+        },
+        {
+          "level": 3,
+          "text": "Documentation on selfdoc",
+          "anchor": "documentation-on-selfdoc"
+        },
+        {
+          "level": 2,
+          "text": "Build record",
+          "anchor": "build-record"
+        },
+        {
+          "level": 3,
+          "text": "2026-08-03: foundation",
+          "anchor": "2026-08-03-foundation"
+        },
+        {
+          "level": 3,
+          "text": "2026-08-04: the seed rules on three languages",
+          "anchor": "2026-08-04-the-seed-rules-on-three-languages"
+        },
+        {
+          "level": 3,
+          "text": "2026-08-04: Python full-semantic depth and tier-1 fixes",
+          "anchor": "2026-08-04-python-full-semantic-depth-and-tier-1-fixes"
+        },
+        {
+          "level": 3,
+          "text": "2026-08-17: the strictcli v0.33.0 declaration regime",
+          "anchor": "2026-08-17-the-strictcli-v0330-declaration-regime"
+        },
+        {
+          "level": 3,
+          "text": "2026-09-24: new module paths, the matrix from data, and selfdoc",
+          "anchor": "2026-09-24-new-module-paths-the-matrix-from-data-and-selfdoc"
+        },
+        {
+          "level": 2,
+          "text": "Experiments",
+          "anchor": "experiments"
+        },
+        {
+          "level": 3,
+          "text": "2026-08-03: binding benchmark",
+          "anchor": "2026-08-03-binding-benchmark"
+        },
+        {
+          "level": 3,
+          "text": "2026-08-04: why gotreesitter was slow",
+          "anchor": "2026-08-04-why-gotreesitter-was-slow"
+        },
+        {
+          "level": 3,
+          "text": "2026-09-24: second measurement",
+          "anchor": "2026-09-24-second-measurement"
+        },
+        {
+          "level": 3,
+          "text": "Runs on real repositories",
+          "anchor": "runs-on-real-repositories"
+        },
+        {
+          "level": 2,
+          "text": "Open defects and design work",
+          "anchor": "open-defects-and-design-work"
+        }
+      ]
+    },
+    {
+      "path": "distribution.md",
+      "title": "Distribution",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Distribution",
+          "anchor": "distribution"
+        },
+        {
+          "level": 2,
+          "text": "Why source-only is enough for now",
+          "anchor": "why-source-only-is-enough-for-now"
+        },
+        {
+          "level": 2,
+          "text": "When binaries become necessary",
+          "anchor": "when-binaries-become-necessary"
+        },
+        {
+          "level": 2,
+          "text": "How binaries would be built",
+          "anchor": "how-binaries-would-be-built"
+        }
+      ]
+    },
+    {
+      "path": "fixes.md",
+      "title": "Fixes",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Fixes",
+          "anchor": "fixes"
+        },
+        {
+          "level": 2,
+          "text": "Tier 1: guaranteed behavior-preserving",
+          "anchor": "tier-1-guaranteed-behavior-preserving"
+        },
+        {
+          "level": 3,
+          "text": "Verification by structural correspondence",
+          "anchor": "verification-by-structural-correspondence"
+        },
+        {
+          "level": 3,
+          "text": "Plan-time refusals",
+          "anchor": "plan-time-refusals"
+        },
+        {
+          "level": 2,
+          "text": "Tier 2: behavior-changing, arguably improved",
+          "anchor": "tier-2-behavior-changing-arguably-improved"
+        },
+        {
+          "level": 2,
+          "text": "Tier 3: suggestion only",
+          "anchor": "tier-3-suggestion-only"
+        }
+      ]
+    },
+    {
+      "path": "gen-index.md",
+      "title": "API Reference",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "API Reference",
+          "anchor": "api-reference"
+        }
+      ]
+    },
+    {
+      "path": "glossary.md",
+      "title": "Glossary",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Glossary",
+          "anchor": "glossary"
+        }
+      ]
+    },
+    {
+      "path": "graph-model.md",
+      "title": "Graph model",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Graph model",
+          "anchor": "graph-model"
+        },
+        {
+          "level": 2,
+          "text": "The interaction relation",
+          "anchor": "the-interaction-relation"
+        },
+        {
+          "level": 2,
+          "text": "Side tables for sites without two nodes",
+          "anchor": "side-tables-for-sites-without-two-nodes"
+        },
+        {
+          "level": 2,
+          "text": "Canonical form",
+          "anchor": "canonical-form"
+        },
+        {
+          "level": 2,
+          "text": "Spans and positions",
+          "anchor": "spans-and-positions"
+        },
+        {
+          "level": 2,
+          "text": "Identity",
+          "anchor": "identity"
+        }
+      ]
+    },
+    {
+      "path": "implementation.md",
+      "title": "Implementation",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Implementation",
+          "anchor": "implementation"
+        },
+        {
+          "level": 2,
+          "text": "Language: Go",
+          "anchor": "language-go"
+        },
+        {
+          "level": 2,
+          "text": "Parsing: tree-sitter through the official C runtime",
+          "anchor": "parsing-tree-sitter-through-the-official-c-runtime"
+        },
+        {
+          "level": 2,
+          "text": "Build versus depend",
+          "anchor": "build-versus-depend"
+        },
+        {
+          "level": 2,
+          "text": "Runtime model",
+          "anchor": "runtime-model"
+        },
+        {
+          "level": 2,
+          "text": "Go full-semantic depth",
+          "anchor": "go-full-semantic-depth"
+        },
+        {
+          "level": 2,
+          "text": "Package layout",
+          "anchor": "package-layout"
+        }
+      ]
+    },
+    {
+      "path": "index.md",
+      "title": "strictcode",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "strictcode",
+          "anchor": "strictcode"
+        },
+        {
+          "level": 2,
+          "text": "Fix tiers",
+          "anchor": "fix-tiers"
+        },
+        {
+          "level": 2,
+          "text": "Languages",
+          "anchor": "languages"
+        },
+        {
+          "level": 2,
+          "text": "Where to go next",
+          "anchor": "where-to-go-next"
+        }
+      ]
+    },
+    {
+      "path": "installation.md",
+      "title": "Installation",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Installation",
+          "anchor": "installation"
+        },
+        {
+          "level": 2,
+          "text": "Requirements",
+          "anchor": "requirements"
+        },
+        {
+          "level": 2,
+          "text": "When the build fails with \"build constraints exclude all Go files\"",
+          "anchor": "when-the-build-fails-with-build-constraints-exclude-all-go-files"
+        },
+        {
+          "level": 2,
+          "text": "Distribution plans",
+          "anchor": "distribution-plans"
+        }
+      ]
+    },
+    {
+      "path": "internal-checks.md",
+      "title": "internal/checks",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/checks",
+          "anchor": "internalchecks"
+        },
+        {
+          "level": 2,
+          "text": "`internal/checks`",
+          "anchor": "internalchecks"
+        },
+        {
+          "level": 3,
+          "text": "`Context`",
+          "anchor": "context"
+        },
+        {
+          "level": 3,
+          "text": "`ModuleInfo`",
+          "anchor": "moduleinfo"
+        },
+        {
+          "level": 3,
+          "text": "`ModuleEdge`",
+          "anchor": "moduleedge"
+        },
+        {
+          "level": 3,
+          "text": "`ExportEdge`",
+          "anchor": "exportedge"
+        },
+        {
+          "level": 3,
+          "text": "`EntryPointInfo`",
+          "anchor": "entrypointinfo"
+        },
+        {
+          "level": 3,
+          "text": "`View`",
+          "anchor": "view"
+        },
+        {
+          "level": 3,
+          "text": "`Run`",
+          "anchor": "run"
+        }
+      ]
+    },
+    {
+      "path": "internal-config.md",
+      "title": "internal/config",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/config",
+          "anchor": "internalconfig"
+        },
+        {
+          "level": 2,
+          "text": "`internal/config`",
+          "anchor": "internalconfig"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression`",
+          "anchor": "suppression"
+        },
+        {
+          "level": 3,
+          "text": "`RuleSetting`",
+          "anchor": "rulesetting"
+        },
+        {
+          "level": 3,
+          "text": "`Analysis`",
+          "anchor": "analysis"
+        },
+        {
+          "level": 3,
+          "text": "`Effective`",
+          "anchor": "effective"
+        },
+        {
+          "level": 3,
+          "text": "`Load`",
+          "anchor": "load"
+        },
+        {
+          "level": 3,
+          "text": "`Defaults`",
+          "anchor": "defaults"
+        },
+        {
+          "level": 3,
+          "text": "`Parse`",
+          "anchor": "parse"
+        },
+        {
+          "level": 3,
+          "text": "`Effective.Setting`",
+          "anchor": "effectivesetting"
+        },
+        {
+          "level": 3,
+          "text": "`Effective.AllSuppressions`",
+          "anchor": "effectiveallsuppressions"
+        }
+      ]
+    },
+    {
+      "path": "internal-engine.md",
+      "title": "internal/engine",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/engine",
+          "anchor": "internalengine"
+        },
+        {
+          "level": 2,
+          "text": "`internal/engine`",
+          "anchor": "internalengine"
+        },
+        {
+          "level": 3,
+          "text": "`Result`",
+          "anchor": "result"
+        },
+        {
+          "level": 3,
+          "text": "`Analyze`",
+          "anchor": "analyze"
+        }
+      ]
+    },
+    {
+      "path": "internal-extract.md",
+      "title": "internal/extract",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/extract",
+          "anchor": "internalextract"
+        },
+        {
+          "level": 2,
+          "text": "`internal/extract`",
+          "anchor": "internalextract"
+        },
+        {
+          "level": 3,
+          "text": "`CallSyntactic`",
+          "anchor": "callsyntactic"
+        },
+        {
+          "level": 3,
+          "text": "`CallExternal`",
+          "anchor": "callexternal"
+        },
+        {
+          "level": 3,
+          "text": "`CallUnresolved`",
+          "anchor": "callunresolved"
+        },
+        {
+          "level": 3,
+          "text": "`Result`",
+          "anchor": "result"
+        },
+        {
+          "level": 3,
+          "text": "`ExternalImport`",
+          "anchor": "externalimport"
+        },
+        {
+          "level": 3,
+          "text": "`CallResolution`",
+          "anchor": "callresolution"
+        },
+        {
+          "level": 3,
+          "text": "`CallSite`",
+          "anchor": "callsite"
+        },
+        {
+          "level": 3,
+          "text": "`UnreachableRegion`",
+          "anchor": "unreachableregion"
+        },
+        {
+          "level": 3,
+          "text": "`Extract`",
+          "anchor": "extract"
+        },
+        {
+          "level": 3,
+          "text": "`Result.Line`",
+          "anchor": "resultline"
+        }
+      ]
+    },
+    {
+      "path": "internal-findings.md",
+      "title": "internal/findings",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/findings",
+          "anchor": "internalfindings"
+        },
+        {
+          "level": 2,
+          "text": "`internal/findings`",
+          "anchor": "internalfindings"
+        },
+        {
+          "level": 3,
+          "text": "`Schema`",
+          "anchor": "schema"
+        },
+        {
+          "level": 3,
+          "text": "`Target`",
+          "anchor": "target"
+        },
+        {
+          "level": 3,
+          "text": "`Fix`",
+          "anchor": "fix"
+        },
+        {
+          "level": 3,
+          "text": "`Finding`",
+          "anchor": "finding"
+        },
+        {
+          "level": 3,
+          "text": "`Document`",
+          "anchor": "document"
+        },
+        {
+          "level": 3,
+          "text": "`Sort`",
+          "anchor": "sort"
+        },
+        {
+          "level": 3,
+          "text": "`FailRun`",
+          "anchor": "failrun"
+        },
+        {
+          "level": 3,
+          "text": "`Build`",
+          "anchor": "build"
+        },
+        {
+          "level": 3,
+          "text": "`RenderText`",
+          "anchor": "rendertext"
+        }
+      ]
+    },
+    {
+      "path": "internal-fix.md",
+      "title": "internal/fix",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/fix",
+          "anchor": "internalfix"
+        },
+        {
+          "level": 2,
+          "text": "`internal/fix`",
+          "anchor": "internalfix"
+        },
+        {
+          "level": 3,
+          "text": "`Planned`",
+          "anchor": "planned"
+        },
+        {
+          "level": 3,
+          "text": "`Report`",
+          "anchor": "report"
+        },
+        {
+          "level": 3,
+          "text": "`PlanUnreachableRemovals`",
+          "anchor": "planunreachableremovals"
+        },
+        {
+          "level": 3,
+          "text": "`Apply`",
+          "anchor": "apply"
+        }
+      ]
+    },
+    {
+      "path": "internal-fixture.md",
+      "title": "internal/fixture",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/fixture",
+          "anchor": "internalfixture"
+        },
+        {
+          "level": 2,
+          "text": "`internal/fixture`",
+          "anchor": "internalfixture"
+        },
+        {
+          "level": 3,
+          "text": "`Write`",
+          "anchor": "write"
+        }
+      ]
+    },
+    {
+      "path": "internal-registrydump.md",
+      "title": "internal/registrydump",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/registrydump",
+          "anchor": "internalregistrydump"
+        },
+        {
+          "level": 2,
+          "text": "`internal/registrydump`",
+          "anchor": "internalregistrydump"
+        },
+        {
+          "level": 3,
+          "text": "`FormatVersion`",
+          "anchor": "formatversion"
+        },
+        {
+          "level": 3,
+          "text": "`RegistryJSON`",
+          "anchor": "registryjson"
+        }
+      ]
+    },
+    {
+      "path": "internal-relation.md",
+      "title": "internal/relation",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/relation",
+          "anchor": "internalrelation"
+        },
+        {
+          "level": 2,
+          "text": "`internal/relation`",
+          "anchor": "internalrelation"
+        },
+        {
+          "level": 3,
+          "text": "`ValueString`",
+          "anchor": "valuestring"
+        },
+        {
+          "level": 3,
+          "text": "`ValueInt`",
+          "anchor": "valueint"
+        },
+        {
+          "level": 3,
+          "text": "`ValueBool`",
+          "anchor": "valuebool"
+        },
+        {
+          "level": 3,
+          "text": "`NodeID`",
+          "anchor": "nodeid"
+        },
+        {
+          "level": 3,
+          "text": "`Segment`",
+          "anchor": "segment"
+        },
+        {
+          "level": 3,
+          "text": "`Span`",
+          "anchor": "span"
+        },
+        {
+          "level": 3,
+          "text": "`Node`",
+          "anchor": "node"
+        },
+        {
+          "level": 3,
+          "text": "`Row`",
+          "anchor": "row"
+        },
+        {
+          "level": 3,
+          "text": "`Builder`",
+          "anchor": "builder"
+        },
+        {
+          "level": 3,
+          "text": "`Relation`",
+          "anchor": "relation"
+        },
+        {
+          "level": 3,
+          "text": "`Edge`",
+          "anchor": "edge"
+        },
+        {
+          "level": 3,
+          "text": "`ValueKind`",
+          "anchor": "valuekind"
+        },
+        {
+          "level": 3,
+          "text": "`Value`",
+          "anchor": "value"
+        },
+        {
+          "level": 3,
+          "text": "`NewBuilder`",
+          "anchor": "newbuilder"
+        },
+        {
+          "level": 3,
+          "text": "`CanonicalFormOf`",
+          "anchor": "canonicalformof"
+        },
+        {
+          "level": 3,
+          "text": "`StringValue`",
+          "anchor": "stringvalue"
+        },
+        {
+          "level": 3,
+          "text": "`IntValue`",
+          "anchor": "intvalue"
+        },
+        {
+          "level": 3,
+          "text": "`BoolValue`",
+          "anchor": "boolvalue"
+        },
+        {
+          "level": 3,
+          "text": "`NodeID.Validate`",
+          "anchor": "nodeidvalidate"
+        },
+        {
+          "level": 3,
+          "text": "`NodeID.String`",
+          "anchor": "nodeidstring"
+        },
+        {
+          "level": 3,
+          "text": "`Builder.AddNode`",
+          "anchor": "builderaddnode"
+        },
+        {
+          "level": 3,
+          "text": "`Builder.AddRow`",
+          "anchor": "builderaddrow"
+        },
+        {
+          "level": 3,
+          "text": "`Builder.Build`",
+          "anchor": "builderbuild"
+        },
+        {
+          "level": 3,
+          "text": "`Relation.CanonicalForm`",
+          "anchor": "relationcanonicalform"
+        },
+        {
+          "level": 3,
+          "text": "`Relation.Hash`",
+          "anchor": "relationhash"
+        },
+        {
+          "level": 3,
+          "text": "`Relation.AlgorithmGraph`",
+          "anchor": "relationalgorithmgraph"
+        },
+        {
+          "level": 3,
+          "text": "`Relation.SiteFeed`",
+          "anchor": "relationsitefeed"
+        },
+        {
+          "level": 3,
+          "text": "`Value.Kind`",
+          "anchor": "valuekind-1"
+        },
+        {
+          "level": 3,
+          "text": "`Value.AsString`",
+          "anchor": "valueasstring"
+        },
+        {
+          "level": 3,
+          "text": "`Value.AsInt`",
+          "anchor": "valueasint"
+        },
+        {
+          "level": 3,
+          "text": "`Value.AsBool`",
+          "anchor": "valueasbool"
+        }
+      ]
+    },
+    {
+      "path": "internal-rules.md",
+      "title": "internal/rules",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/rules",
+          "anchor": "internalrules"
+        },
+        {
+          "level": 2,
+          "text": "`internal/rules`",
+          "anchor": "internalrules"
+        },
+        {
+          "level": 3,
+          "text": "`CellSupported`",
+          "anchor": "cellsupported"
+        },
+        {
+          "level": 3,
+          "text": "`CellPlanned`",
+          "anchor": "cellplanned"
+        },
+        {
+          "level": 3,
+          "text": "`CellNotApplicable`",
+          "anchor": "cellnotapplicable"
+        },
+        {
+          "level": 3,
+          "text": "`SeverityError`",
+          "anchor": "severityerror"
+        },
+        {
+          "level": 3,
+          "text": "`SeverityWarning`",
+          "anchor": "severitywarning"
+        },
+        {
+          "level": 3,
+          "text": "`SuppressNone`",
+          "anchor": "suppressnone"
+        },
+        {
+          "level": 3,
+          "text": "`SuppressPath`",
+          "anchor": "suppresspath"
+        },
+        {
+          "level": 3,
+          "text": "`SuppressProjectDep`",
+          "anchor": "suppressprojectdep"
+        },
+        {
+          "level": 3,
+          "text": "`SuppressMemberSet`",
+          "anchor": "suppressmemberset"
+        },
+        {
+          "level": 3,
+          "text": "`SuppressMember`",
+          "anchor": "suppressmember"
+        },
+        {
+          "level": 3,
+          "text": "`Tier1`",
+          "anchor": "tier1"
+        },
+        {
+          "level": 3,
+          "text": "`Tier2`",
+          "anchor": "tier2"
+        },
+        {
+          "level": 3,
+          "text": "`Tier3`",
+          "anchor": "tier3"
+        },
+        {
+          "level": 3,
+          "text": "`Groups`",
+          "anchor": "groups"
+        },
+        {
+          "level": 3,
+          "text": "`Tombstones`",
+          "anchor": "tombstones"
+        },
+        {
+          "level": 3,
+          "text": "`Rules`",
+          "anchor": "rules"
+        },
+        {
+          "level": 3,
+          "text": "`CellStatus`",
+          "anchor": "cellstatus"
+        },
+        {
+          "level": 3,
+          "text": "`Cell`",
+          "anchor": "cell"
+        },
+        {
+          "level": 3,
+          "text": "`Severity`",
+          "anchor": "severity"
+        },
+        {
+          "level": 3,
+          "text": "`SuppressionShape`",
+          "anchor": "suppressionshape"
+        },
+        {
+          "level": 3,
+          "text": "`FixTier`",
+          "anchor": "fixtier"
+        },
+        {
+          "level": 3,
+          "text": "`PlannedFix`",
+          "anchor": "plannedfix"
+        },
+        {
+          "level": 3,
+          "text": "`Rule`",
+          "anchor": "rule"
+        },
+        {
+          "level": 3,
+          "text": "`Tombstone`",
+          "anchor": "tombstone"
+        },
+        {
+          "level": 3,
+          "text": "`MatrixCell`",
+          "anchor": "matrixcell"
+        },
+        {
+          "level": 3,
+          "text": "`ByID`",
+          "anchor": "byid"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneByID`",
+          "anchor": "tombstonebyid"
+        },
+        {
+          "level": 3,
+          "text": "`Rule.LanguageIndependent`",
+          "anchor": "rulelanguageindependent"
+        }
+      ]
+    },
+    {
+      "path": "internal-spec-configspec.md",
+      "title": "internal/spec/configspec",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/spec/configspec",
+          "anchor": "internalspecconfigspec"
+        },
+        {
+          "level": 2,
+          "text": "`internal/spec/configspec`",
+          "anchor": "internalspecconfigspec"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_BY`",
+          "anchor": "generated_by"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_CODE_FORMAT`",
+          "anchor": "generated_code_format"
+        },
+        {
+          "level": 3,
+          "text": "`SCHEMA_FORMAT_VERSION`",
+          "anchor": "schema_format_version"
+        },
+        {
+          "level": 3,
+          "text": "`Config`",
+          "anchor": "config"
+        },
+        {
+          "level": 3,
+          "text": "`Analysis`",
+          "anchor": "analysis"
+        },
+        {
+          "level": 3,
+          "text": "`GroupConfig`",
+          "anchor": "groupconfig"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig`",
+          "anchor": "ruleconfig"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression`",
+          "anchor": "suppression"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytes`",
+          "anchor": "validatebytes"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateValue`",
+          "anchor": "validatevalue"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytesWithEvidence`",
+          "anchor": "validatebyteswithevidence"
+        },
+        {
+          "level": 3,
+          "text": "`Config.WithAnalysis`",
+          "anchor": "configwithanalysis"
+        },
+        {
+          "level": 3,
+          "text": "`Config.WithGroups`",
+          "anchor": "configwithgroups"
+        },
+        {
+          "level": 3,
+          "text": "`Config.WithRules`",
+          "anchor": "configwithrules"
+        },
+        {
+          "level": 3,
+          "text": "`Analysis.WithPythonCallResolution`",
+          "anchor": "analysiswithpythoncallresolution"
+        },
+        {
+          "level": 3,
+          "text": "`Analysis.WithPythonTypeChecker`",
+          "anchor": "analysiswithpythontypechecker"
+        },
+        {
+          "level": 3,
+          "text": "`GroupConfig.WithEnabled`",
+          "anchor": "groupconfigwithenabled"
+        },
+        {
+          "level": 3,
+          "text": "`GroupConfig.WithSeverity`",
+          "anchor": "groupconfigwithseverity"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig.WithEnabled`",
+          "anchor": "ruleconfigwithenabled"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig.WithSeverity`",
+          "anchor": "ruleconfigwithseverity"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig.WithThresholds`",
+          "anchor": "ruleconfigwiththresholds"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig.WithSuppressions`",
+          "anchor": "ruleconfigwithsuppressions"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig.WithAllow`",
+          "anchor": "ruleconfigwithallow"
+        },
+        {
+          "level": 3,
+          "text": "`RuleConfig.WithForbidden`",
+          "anchor": "ruleconfigwithforbidden"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression.WithReason`",
+          "anchor": "suppressionwithreason"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression.WithPath`",
+          "anchor": "suppressionwithpath"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression.WithProject`",
+          "anchor": "suppressionwithproject"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression.WithDep`",
+          "anchor": "suppressionwithdep"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression.WithModules`",
+          "anchor": "suppressionwithmodules"
+        },
+        {
+          "level": 3,
+          "text": "`Suppression.WithMember`",
+          "anchor": "suppressionwithmember"
+        }
+      ]
+    },
+    {
+      "path": "internal-spec-findingsspec.md",
+      "title": "internal/spec/findingsspec",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/spec/findingsspec",
+          "anchor": "internalspecfindingsspec"
+        },
+        {
+          "level": 2,
+          "text": "`internal/spec/findingsspec`",
+          "anchor": "internalspecfindingsspec"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_BY`",
+          "anchor": "generated_by"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_CODE_FORMAT`",
+          "anchor": "generated_code_format"
+        },
+        {
+          "level": 3,
+          "text": "`SCHEMA_FORMAT_VERSION`",
+          "anchor": "schema_format_version"
+        },
+        {
+          "level": 3,
+          "text": "`Findings`",
+          "anchor": "findings"
+        },
+        {
+          "level": 3,
+          "text": "`Finding`",
+          "anchor": "finding"
+        },
+        {
+          "level": 3,
+          "text": "`Target`",
+          "anchor": "target"
+        },
+        {
+          "level": 3,
+          "text": "`Fix`",
+          "anchor": "fix"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytes`",
+          "anchor": "validatebytes"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateValue`",
+          "anchor": "validatevalue"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytesWithEvidence`",
+          "anchor": "validatebyteswithevidence"
+        },
+        {
+          "level": 3,
+          "text": "`Findings.WithStrictcodeVersion`",
+          "anchor": "findingswithstrictcodeversion"
+        },
+        {
+          "level": 3,
+          "text": "`Findings.WithWorkspaceRoot`",
+          "anchor": "findingswithworkspaceroot"
+        },
+        {
+          "level": 3,
+          "text": "`Findings.WithFindings`",
+          "anchor": "findingswithfindings"
+        },
+        {
+          "level": 3,
+          "text": "`Finding.WithRule`",
+          "anchor": "findingwithrule"
+        },
+        {
+          "level": 3,
+          "text": "`Finding.WithSeverity`",
+          "anchor": "findingwithseverity"
+        },
+        {
+          "level": 3,
+          "text": "`Finding.WithMessage`",
+          "anchor": "findingwithmessage"
+        },
+        {
+          "level": 3,
+          "text": "`Finding.WithTarget`",
+          "anchor": "findingwithtarget"
+        },
+        {
+          "level": 3,
+          "text": "`Finding.WithFix`",
+          "anchor": "findingwithfix"
+        },
+        {
+          "level": 3,
+          "text": "`Target.WithId`",
+          "anchor": "targetwithid"
+        },
+        {
+          "level": 3,
+          "text": "`Target.WithKind`",
+          "anchor": "targetwithkind"
+        },
+        {
+          "level": 3,
+          "text": "`Target.WithFile`",
+          "anchor": "targetwithfile"
+        },
+        {
+          "level": 3,
+          "text": "`Target.WithLine`",
+          "anchor": "targetwithline"
+        },
+        {
+          "level": 3,
+          "text": "`Fix.WithTier`",
+          "anchor": "fixwithtier"
+        },
+        {
+          "level": 3,
+          "text": "`Fix.WithDescription`",
+          "anchor": "fixwithdescription"
+        }
+      ]
+    },
+    {
+      "path": "internal-spec-profilespec.md",
+      "title": "internal/spec/profilespec",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/spec/profilespec",
+          "anchor": "internalspecprofilespec"
+        },
+        {
+          "level": 2,
+          "text": "`internal/spec/profilespec`",
+          "anchor": "internalspecprofilespec"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_BY`",
+          "anchor": "generated_by"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_CODE_FORMAT`",
+          "anchor": "generated_code_format"
+        },
+        {
+          "level": 3,
+          "text": "`SCHEMA_FORMAT_VERSION`",
+          "anchor": "schema_format_version"
+        },
+        {
+          "level": 3,
+          "text": "`Profile`",
+          "anchor": "profile"
+        },
+        {
+          "level": 3,
+          "text": "`Construct`",
+          "anchor": "construct"
+        },
+        {
+          "level": 3,
+          "text": "`CapabilityStatus`",
+          "anchor": "capabilitystatus"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytes`",
+          "anchor": "validatebytes"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateValue`",
+          "anchor": "validatevalue"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytesWithEvidence`",
+          "anchor": "validatebyteswithevidence"
+        },
+        {
+          "level": 3,
+          "text": "`Profile.WithLanguage`",
+          "anchor": "profilewithlanguage"
+        },
+        {
+          "level": 3,
+          "text": "`Profile.WithDisplayName`",
+          "anchor": "profilewithdisplayname"
+        },
+        {
+          "level": 3,
+          "text": "`Profile.WithGrammar`",
+          "anchor": "profilewithgrammar"
+        },
+        {
+          "level": 3,
+          "text": "`Profile.WithConstructs`",
+          "anchor": "profilewithconstructs"
+        },
+        {
+          "level": 3,
+          "text": "`Profile.WithCapabilities`",
+          "anchor": "profilewithcapabilities"
+        },
+        {
+          "level": 3,
+          "text": "`Construct.WithConstruct`",
+          "anchor": "constructwithconstruct"
+        },
+        {
+          "level": 3,
+          "text": "`Construct.WithNodeKind`",
+          "anchor": "constructwithnodekind"
+        },
+        {
+          "level": 3,
+          "text": "`Construct.WithRowKind`",
+          "anchor": "constructwithrowkind"
+        },
+        {
+          "level": 3,
+          "text": "`Construct.WithNotes`",
+          "anchor": "constructwithnotes"
+        },
+        {
+          "level": 3,
+          "text": "`CapabilityStatus.WithStatus`",
+          "anchor": "capabilitystatuswithstatus"
+        },
+        {
+          "level": 3,
+          "text": "`CapabilityStatus.WithReason`",
+          "anchor": "capabilitystatuswithreason"
+        }
+      ]
+    },
+    {
+      "path": "internal-spec-registryspec.md",
+      "title": "internal/spec/registryspec",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/spec/registryspec",
+          "anchor": "internalspecregistryspec"
+        },
+        {
+          "level": 2,
+          "text": "`internal/spec/registryspec`",
+          "anchor": "internalspecregistryspec"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_BY`",
+          "anchor": "generated_by"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_CODE_FORMAT`",
+          "anchor": "generated_code_format"
+        },
+        {
+          "level": 3,
+          "text": "`SCHEMA_FORMAT_VERSION`",
+          "anchor": "schema_format_version"
+        },
+        {
+          "level": 3,
+          "text": "`Registry`",
+          "anchor": "registry"
+        },
+        {
+          "level": 3,
+          "text": "`LanguageDecl`",
+          "anchor": "languagedecl"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl`",
+          "anchor": "ruledecl"
+        },
+        {
+          "level": 3,
+          "text": "`SupportCell`",
+          "anchor": "supportcell"
+        },
+        {
+          "level": 3,
+          "text": "`PlannedFixDecl`",
+          "anchor": "plannedfixdecl"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneDecl`",
+          "anchor": "tombstonedecl"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytes`",
+          "anchor": "validatebytes"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateValue`",
+          "anchor": "validatevalue"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytesWithEvidence`",
+          "anchor": "validatebyteswithevidence"
+        },
+        {
+          "level": 3,
+          "text": "`Registry.WithLanguages`",
+          "anchor": "registrywithlanguages"
+        },
+        {
+          "level": 3,
+          "text": "`Registry.WithRules`",
+          "anchor": "registrywithrules"
+        },
+        {
+          "level": 3,
+          "text": "`Registry.WithGroups`",
+          "anchor": "registrywithgroups"
+        },
+        {
+          "level": 3,
+          "text": "`Registry.WithTombstones`",
+          "anchor": "registrywithtombstones"
+        },
+        {
+          "level": 3,
+          "text": "`LanguageDecl.WithId`",
+          "anchor": "languagedeclwithid"
+        },
+        {
+          "level": 3,
+          "text": "`LanguageDecl.WithDisplayName`",
+          "anchor": "languagedeclwithdisplayname"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithId`",
+          "anchor": "ruledeclwithid"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithSeverity`",
+          "anchor": "ruledeclwithseverity"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithDescription`",
+          "anchor": "ruledeclwithdescription"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithRequires`",
+          "anchor": "ruledeclwithrequires"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithUses`",
+          "anchor": "ruledeclwithuses"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithGroups`",
+          "anchor": "ruledeclwithgroups"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithSuppression`",
+          "anchor": "ruledeclwithsuppression"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithFixTier`",
+          "anchor": "ruledeclwithfixtier"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithPlannedFixes`",
+          "anchor": "ruledeclwithplannedfixes"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithNotApplicable`",
+          "anchor": "ruledeclwithnotapplicable"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithLanguageIndependent`",
+          "anchor": "ruledeclwithlanguageindependent"
+        },
+        {
+          "level": 3,
+          "text": "`RuleDecl.WithSupport`",
+          "anchor": "ruledeclwithsupport"
+        },
+        {
+          "level": 3,
+          "text": "`SupportCell.WithStatus`",
+          "anchor": "supportcellwithstatus"
+        },
+        {
+          "level": 3,
+          "text": "`SupportCell.WithReason`",
+          "anchor": "supportcellwithreason"
+        },
+        {
+          "level": 3,
+          "text": "`PlannedFixDecl.WithTier`",
+          "anchor": "plannedfixdeclwithtier"
+        },
+        {
+          "level": 3,
+          "text": "`PlannedFixDecl.WithDescription`",
+          "anchor": "plannedfixdeclwithdescription"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneDecl.WithId`",
+          "anchor": "tombstonedeclwithid"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneDecl.WithRetiredIn`",
+          "anchor": "tombstonedeclwithretiredin"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneDecl.WithReason`",
+          "anchor": "tombstonedeclwithreason"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneDecl.WithReplacedBy`",
+          "anchor": "tombstonedeclwithreplacedby"
+        },
+        {
+          "level": 3,
+          "text": "`TombstoneDecl.WithMigration`",
+          "anchor": "tombstonedeclwithmigration"
+        }
+      ]
+    },
+    {
+      "path": "internal-spec-vocabspec.md",
+      "title": "internal/spec/vocabspec",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/spec/vocabspec",
+          "anchor": "internalspecvocabspec"
+        },
+        {
+          "level": 2,
+          "text": "`internal/spec/vocabspec`",
+          "anchor": "internalspecvocabspec"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_BY`",
+          "anchor": "generated_by"
+        },
+        {
+          "level": 3,
+          "text": "`GENERATED_CODE_FORMAT`",
+          "anchor": "generated_code_format"
+        },
+        {
+          "level": 3,
+          "text": "`SCHEMA_FORMAT_VERSION`",
+          "anchor": "schema_format_version"
+        },
+        {
+          "level": 3,
+          "text": "`Vocabulary`",
+          "anchor": "vocabulary"
+        },
+        {
+          "level": 3,
+          "text": "`Attribute`",
+          "anchor": "attribute"
+        },
+        {
+          "level": 3,
+          "text": "`Enum`",
+          "anchor": "enum"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKind`",
+          "anchor": "nodekind"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind`",
+          "anchor": "rowkind"
+        },
+        {
+          "level": 3,
+          "text": "`Capability`",
+          "anchor": "capability"
+        },
+        {
+          "level": 3,
+          "text": "`Layer`",
+          "anchor": "layer"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytes`",
+          "anchor": "validatebytes"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateValue`",
+          "anchor": "validatevalue"
+        },
+        {
+          "level": 3,
+          "text": "`ValidateBytesWithEvidence`",
+          "anchor": "validatebyteswithevidence"
+        },
+        {
+          "level": 3,
+          "text": "`Vocabulary.WithEnums`",
+          "anchor": "vocabularywithenums"
+        },
+        {
+          "level": 3,
+          "text": "`Vocabulary.WithNodeKinds`",
+          "anchor": "vocabularywithnodekinds"
+        },
+        {
+          "level": 3,
+          "text": "`Vocabulary.WithRowKinds`",
+          "anchor": "vocabularywithrowkinds"
+        },
+        {
+          "level": 3,
+          "text": "`Vocabulary.WithCapabilities`",
+          "anchor": "vocabularywithcapabilities"
+        },
+        {
+          "level": 3,
+          "text": "`Vocabulary.WithLayers`",
+          "anchor": "vocabularywithlayers"
+        },
+        {
+          "level": 3,
+          "text": "`Attribute.WithName`",
+          "anchor": "attributewithname"
+        },
+        {
+          "level": 3,
+          "text": "`Attribute.WithType`",
+          "anchor": "attributewithtype"
+        },
+        {
+          "level": 3,
+          "text": "`Enum.WithId`",
+          "anchor": "enumwithid"
+        },
+        {
+          "level": 3,
+          "text": "`Enum.WithValues`",
+          "anchor": "enumwithvalues"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKind.WithId`",
+          "anchor": "nodekindwithid"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKind.WithMaturity`",
+          "anchor": "nodekindwithmaturity"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKind.WithDescription`",
+          "anchor": "nodekindwithdescription"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKind.WithAttributes`",
+          "anchor": "nodekindwithattributes"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind.WithId`",
+          "anchor": "rowkindwithid"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind.WithMaturity`",
+          "anchor": "rowkindwithmaturity"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind.WithDescription`",
+          "anchor": "rowkindwithdescription"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind.WithSrcKinds`",
+          "anchor": "rowkindwithsrckinds"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind.WithDstKinds`",
+          "anchor": "rowkindwithdstkinds"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind.WithAttributes`",
+          "anchor": "rowkindwithattributes"
+        },
+        {
+          "level": 3,
+          "text": "`Capability.WithId`",
+          "anchor": "capabilitywithid"
+        },
+        {
+          "level": 3,
+          "text": "`Capability.WithLayer`",
+          "anchor": "capabilitywithlayer"
+        },
+        {
+          "level": 3,
+          "text": "`Capability.WithDescription`",
+          "anchor": "capabilitywithdescription"
+        },
+        {
+          "level": 3,
+          "text": "`Layer.WithId`",
+          "anchor": "layerwithid"
+        },
+        {
+          "level": 3,
+          "text": "`Layer.WithMaturity`",
+          "anchor": "layerwithmaturity"
+        },
+        {
+          "level": 3,
+          "text": "`Layer.WithDescription`",
+          "anchor": "layerwithdescription"
+        }
+      ]
+    },
+    {
+      "path": "internal-testctx.md",
+      "title": "internal/testctx",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/testctx",
+          "anchor": "internaltestctx"
+        },
+        {
+          "level": 2,
+          "text": "`internal/testctx`",
+          "anchor": "internaltestctx"
+        },
+        {
+          "level": 3,
+          "text": "`IsTestContext`",
+          "anchor": "istestcontext"
+        }
+      ]
+    },
+    {
+      "path": "internal-treesitter.md",
+      "title": "internal/treesitter",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/treesitter",
+          "anchor": "internaltreesitter"
+        },
+        {
+          "level": 2,
+          "text": "`internal/treesitter`",
+          "anchor": "internaltreesitter"
+        },
+        {
+          "level": 3,
+          "text": "`GrammarPython`",
+          "anchor": "grammarpython"
+        },
+        {
+          "level": 3,
+          "text": "`GrammarGo`",
+          "anchor": "grammargo"
+        },
+        {
+          "level": 3,
+          "text": "`GrammarTypeScript`",
+          "anchor": "grammartypescript"
+        },
+        {
+          "level": 3,
+          "text": "`GrammarTSX`",
+          "anchor": "grammartsx"
+        },
+        {
+          "level": 3,
+          "text": "`Grammar`",
+          "anchor": "grammar"
+        },
+        {
+          "level": 3,
+          "text": "`Tree`",
+          "anchor": "tree"
+        },
+        {
+          "level": 3,
+          "text": "`Query`",
+          "anchor": "query"
+        },
+        {
+          "level": 3,
+          "text": "`Capture`",
+          "anchor": "capture"
+        },
+        {
+          "level": 3,
+          "text": "`Match`",
+          "anchor": "match"
+        },
+        {
+          "level": 3,
+          "text": "`GrammarForFile`",
+          "anchor": "grammarforfile"
+        },
+        {
+          "level": 3,
+          "text": "`NormalizeLF`",
+          "anchor": "normalizelf"
+        },
+        {
+          "level": 3,
+          "text": "`Parse`",
+          "anchor": "parse"
+        },
+        {
+          "level": 3,
+          "text": "`CompileQuery`",
+          "anchor": "compilequery"
+        },
+        {
+          "level": 3,
+          "text": "`Grammar.String`",
+          "anchor": "grammarstring"
+        },
+        {
+          "level": 3,
+          "text": "`Tree.Root`",
+          "anchor": "treeroot"
+        },
+        {
+          "level": 3,
+          "text": "`Tree.HasParseErrors`",
+          "anchor": "treehasparseerrors"
+        },
+        {
+          "level": 3,
+          "text": "`Tree.Close`",
+          "anchor": "treeclose"
+        },
+        {
+          "level": 3,
+          "text": "`Query.Close`",
+          "anchor": "queryclose"
+        },
+        {
+          "level": 3,
+          "text": "`Query.Matches`",
+          "anchor": "querymatches"
+        }
+      ]
+    },
+    {
+      "path": "internal-vocab-gen.md",
+      "title": "internal/vocab/gen",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/vocab/gen",
+          "anchor": "internalvocabgen"
+        },
+        {
+          "level": 2,
+          "text": "`internal/vocab/gen`",
+          "anchor": "internalvocabgen"
+        },
+        {
+          "level": 3,
+          "text": "`MaturityStable`",
+          "anchor": "maturitystable"
+        },
+        {
+          "level": 3,
+          "text": "`MaturitySpeculative`",
+          "anchor": "maturityspeculative"
+        },
+        {
+          "level": 3,
+          "text": "`AttrString`",
+          "anchor": "attrstring"
+        },
+        {
+          "level": 3,
+          "text": "`AttrBool`",
+          "anchor": "attrbool"
+        },
+        {
+          "level": 3,
+          "text": "`AttrInt`",
+          "anchor": "attrint"
+        },
+        {
+          "level": 3,
+          "text": "`AttrEnum`",
+          "anchor": "attrenum"
+        },
+        {
+          "level": 3,
+          "text": "`LangPy`",
+          "anchor": "langpy"
+        },
+        {
+          "level": 3,
+          "text": "`LangGo`",
+          "anchor": "langgo"
+        },
+        {
+          "level": 3,
+          "text": "`LangTS`",
+          "anchor": "langts"
+        },
+        {
+          "level": 3,
+          "text": "`StatusSupported`",
+          "anchor": "statussupported"
+        },
+        {
+          "level": 3,
+          "text": "`StatusPlanned`",
+          "anchor": "statusplanned"
+        },
+        {
+          "level": 3,
+          "text": "`StatusNotApplicable`",
+          "anchor": "statusnotapplicable"
+        },
+        {
+          "level": 3,
+          "text": "`Langs`",
+          "anchor": "langs"
+        },
+        {
+          "level": 3,
+          "text": "`Maturity`",
+          "anchor": "maturity"
+        },
+        {
+          "level": 3,
+          "text": "`AttrType`",
+          "anchor": "attrtype"
+        },
+        {
+          "level": 3,
+          "text": "`AttrDecl`",
+          "anchor": "attrdecl"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindDecl`",
+          "anchor": "nodekinddecl"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindDecl`",
+          "anchor": "rowkinddecl"
+        },
+        {
+          "level": 3,
+          "text": "`Lang`",
+          "anchor": "lang"
+        },
+        {
+          "level": 3,
+          "text": "`CapabilityStatus`",
+          "anchor": "capabilitystatus"
+        },
+        {
+          "level": 3,
+          "text": "`ProfileCapability`",
+          "anchor": "profilecapability"
+        },
+        {
+          "level": 3,
+          "text": "`Profile`",
+          "anchor": "profile"
+        },
+        {
+          "level": 3,
+          "text": "`Generate`",
+          "anchor": "generate"
+        }
+      ]
+    },
+    {
+      "path": "internal-vocab.md",
+      "title": "internal/vocab",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/vocab",
+          "anchor": "internalvocab"
+        },
+        {
+          "level": 2,
+          "text": "`internal/vocab`",
+          "anchor": "internalvocab"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindWorkspaceMember`",
+          "anchor": "nodekindworkspacemember"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindModule`",
+          "anchor": "nodekindmodule"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindEntryPoint`",
+          "anchor": "nodekindentrypoint"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindFunction`",
+          "anchor": "nodekindfunction"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindClosure`",
+          "anchor": "nodekindclosure"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindType`",
+          "anchor": "nodekindtype"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindTypeParam`",
+          "anchor": "nodekindtypeparam"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindVariable`",
+          "anchor": "nodekindvariable"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindEndpoint`",
+          "anchor": "nodekindendpoint"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindDbEntity`",
+          "anchor": "nodekinddbentity"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindImports`",
+          "anchor": "rowkindimports"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindDeclaresDependency`",
+          "anchor": "rowkinddeclaresdependency"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindExports`",
+          "anchor": "rowkindexports"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindResolvesTo`",
+          "anchor": "rowkindresolvesto"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindContains`",
+          "anchor": "rowkindcontains"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindCalls`",
+          "anchor": "rowkindcalls"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindInstantiates`",
+          "anchor": "rowkindinstantiates"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindReferences`",
+          "anchor": "rowkindreferences"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindConformsTo`",
+          "anchor": "rowkindconformsto"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindDecorates`",
+          "anchor": "rowkinddecorates"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindValidates`",
+          "anchor": "rowkindvalidates"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindAccesses`",
+          "anchor": "rowkindaccesses"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindHandledBy`",
+          "anchor": "rowkindhandledby"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindPersistsTo`",
+          "anchor": "rowkindpersiststo"
+        },
+        {
+          "level": 3,
+          "text": "`MaturityStable`",
+          "anchor": "maturitystable"
+        },
+        {
+          "level": 3,
+          "text": "`MaturitySpeculative`",
+          "anchor": "maturityspeculative"
+        },
+        {
+          "level": 3,
+          "text": "`AttrString`",
+          "anchor": "attrstring"
+        },
+        {
+          "level": 3,
+          "text": "`AttrBool`",
+          "anchor": "attrbool"
+        },
+        {
+          "level": 3,
+          "text": "`AttrInt`",
+          "anchor": "attrint"
+        },
+        {
+          "level": 3,
+          "text": "`AttrEnum`",
+          "anchor": "attrenum"
+        },
+        {
+          "level": 3,
+          "text": "`CapModuleEnumeration`",
+          "anchor": "capmoduleenumeration"
+        },
+        {
+          "level": 3,
+          "text": "`CapImportExtraction`",
+          "anchor": "capimportextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapResolveImportsInternal`",
+          "anchor": "capresolveimportsinternal"
+        },
+        {
+          "level": 3,
+          "text": "`CapResolveImportsModules`",
+          "anchor": "capresolveimportsmodules"
+        },
+        {
+          "level": 3,
+          "text": "`CapImportAttrGuarded`",
+          "anchor": "capimportattrguarded"
+        },
+        {
+          "level": 3,
+          "text": "`CapImportAttrTypeChecking`",
+          "anchor": "capimportattrtypechecking"
+        },
+        {
+          "level": 3,
+          "text": "`CapTestContextClassification`",
+          "anchor": "captestcontextclassification"
+        },
+        {
+          "level": 3,
+          "text": "`CapEntryPointDiscovery`",
+          "anchor": "capentrypointdiscovery"
+        },
+        {
+          "level": 3,
+          "text": "`CapDeclaredDependencyExtraction`",
+          "anchor": "capdeclareddependencyextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapExportExtraction`",
+          "anchor": "capexportextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapCallableExtraction`",
+          "anchor": "capcallableextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapTypeExtraction`",
+          "anchor": "captypeextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapCallResolutionSyntactic`",
+          "anchor": "capcallresolutionsyntactic"
+        },
+        {
+          "level": 3,
+          "text": "`CapCallResolutionTypeInformed`",
+          "anchor": "capcallresolutiontypeinformed"
+        },
+        {
+          "level": 3,
+          "text": "`CapConformanceDeclared`",
+          "anchor": "capconformancedeclared"
+        },
+        {
+          "level": 3,
+          "text": "`CapConformanceDerived`",
+          "anchor": "capconformancederived"
+        },
+        {
+          "level": 3,
+          "text": "`CapInstantiationExtraction`",
+          "anchor": "capinstantiationextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapReferenceExtraction`",
+          "anchor": "capreferenceextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapDecorationExtraction`",
+          "anchor": "capdecorationextraction"
+        },
+        {
+          "level": 3,
+          "text": "`CapUnreachableStatementAnalysis`",
+          "anchor": "capunreachablestatementanalysis"
+        },
+        {
+          "level": 3,
+          "text": "`CapEndpointDiscovery`",
+          "anchor": "capendpointdiscovery"
+        },
+        {
+          "level": 3,
+          "text": "`CapDbEntityDiscovery`",
+          "anchor": "capdbentitydiscovery"
+        },
+        {
+          "level": 3,
+          "text": "`LayerImportGraph`",
+          "anchor": "layerimportgraph"
+        },
+        {
+          "level": 3,
+          "text": "`LayerFullSemanticGraph`",
+          "anchor": "layerfullsemanticgraph"
+        },
+        {
+          "level": 3,
+          "text": "`LayerBoundaryGraph`",
+          "anchor": "layerboundarygraph"
+        },
+        {
+          "level": 3,
+          "text": "`LangPy`",
+          "anchor": "langpy"
+        },
+        {
+          "level": 3,
+          "text": "`LangGo`",
+          "anchor": "langgo"
+        },
+        {
+          "level": 3,
+          "text": "`LangTS`",
+          "anchor": "langts"
+        },
+        {
+          "level": 3,
+          "text": "`StatusSupported`",
+          "anchor": "statussupported"
+        },
+        {
+          "level": 3,
+          "text": "`StatusPlanned`",
+          "anchor": "statusplanned"
+        },
+        {
+          "level": 3,
+          "text": "`StatusNotApplicable`",
+          "anchor": "statusnotapplicable"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKinds`",
+          "anchor": "nodekinds"
+        },
+        {
+          "level": 3,
+          "text": "`RowKinds`",
+          "anchor": "rowkinds"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindInfo`",
+          "anchor": "nodekindinfo"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindInfo`",
+          "anchor": "rowkindinfo"
+        },
+        {
+          "level": 3,
+          "text": "`Enums`",
+          "anchor": "enums"
+        },
+        {
+          "level": 3,
+          "text": "`Capabilities`",
+          "anchor": "capabilities"
+        },
+        {
+          "level": 3,
+          "text": "`CapabilityLayer`",
+          "anchor": "capabilitylayer"
+        },
+        {
+          "level": 3,
+          "text": "`Langs`",
+          "anchor": "langs"
+        },
+        {
+          "level": 3,
+          "text": "`Profiles`",
+          "anchor": "profiles"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKind`",
+          "anchor": "nodekind"
+        },
+        {
+          "level": 3,
+          "text": "`RowKind`",
+          "anchor": "rowkind"
+        },
+        {
+          "level": 3,
+          "text": "`Maturity`",
+          "anchor": "maturity"
+        },
+        {
+          "level": 3,
+          "text": "`AttrType`",
+          "anchor": "attrtype"
+        },
+        {
+          "level": 3,
+          "text": "`AttrDecl`",
+          "anchor": "attrdecl"
+        },
+        {
+          "level": 3,
+          "text": "`NodeKindDecl`",
+          "anchor": "nodekinddecl"
+        },
+        {
+          "level": 3,
+          "text": "`RowKindDecl`",
+          "anchor": "rowkinddecl"
+        },
+        {
+          "level": 3,
+          "text": "`Capability`",
+          "anchor": "capability"
+        },
+        {
+          "level": 3,
+          "text": "`Layer`",
+          "anchor": "layer"
+        },
+        {
+          "level": 3,
+          "text": "`Lang`",
+          "anchor": "lang"
+        },
+        {
+          "level": 3,
+          "text": "`CapabilityStatus`",
+          "anchor": "capabilitystatus"
+        },
+        {
+          "level": 3,
+          "text": "`ProfileCapability`",
+          "anchor": "profilecapability"
+        },
+        {
+          "level": 3,
+          "text": "`Profile`",
+          "anchor": "profile"
+        }
+      ]
+    },
+    {
+      "path": "internal-workspace.md",
+      "title": "internal/workspace",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/workspace",
+          "anchor": "internalworkspace"
+        },
+        {
+          "level": 2,
+          "text": "`internal/workspace`",
+          "anchor": "internalworkspace"
+        },
+        {
+          "level": 3,
+          "text": "`ScopeRuntime`",
+          "anchor": "scoperuntime"
+        },
+        {
+          "level": 3,
+          "text": "`ScopeDev`",
+          "anchor": "scopedev"
+        },
+        {
+          "level": 3,
+          "text": "`ScopePeer`",
+          "anchor": "scopepeer"
+        },
+        {
+          "level": 3,
+          "text": "`ScopeExplicit`",
+          "anchor": "scopeexplicit"
+        },
+        {
+          "level": 3,
+          "text": "`DepScope`",
+          "anchor": "depscope"
+        },
+        {
+          "level": 3,
+          "text": "`DeclaredDep`",
+          "anchor": "declareddep"
+        },
+        {
+          "level": 3,
+          "text": "`EntryPoint`",
+          "anchor": "entrypoint"
+        },
+        {
+          "level": 3,
+          "text": "`Manifest`",
+          "anchor": "manifest"
+        },
+        {
+          "level": 3,
+          "text": "`Member`",
+          "anchor": "member"
+        },
+        {
+          "level": 3,
+          "text": "`Workspace`",
+          "anchor": "workspace"
+        },
+        {
+          "level": 3,
+          "text": "`ParseGoMod`",
+          "anchor": "parsegomod"
+        },
+        {
+          "level": 3,
+          "text": "`Load`",
+          "anchor": "load"
+        },
+        {
+          "level": 3,
+          "text": "`DepScope.Optional`",
+          "anchor": "depscopeoptional"
+        },
+        {
+          "level": 3,
+          "text": "`Member.RegistryName`",
+          "anchor": "memberregistryname"
+        },
+        {
+          "level": 3,
+          "text": "`Workspace.MemberByName`",
+          "anchor": "workspacememberbyname"
+        }
+      ]
+    },
+    {
+      "path": "lessons.md",
+      "title": "Lessons register",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Lessons register",
+          "anchor": "lessons-register"
+        },
+        {
+          "level": 2,
+          "text": "From the donor",
+          "anchor": "from-the-donor"
+        },
+        {
+          "level": 2,
+          "text": "From real-code runs",
+          "anchor": "from-real-code-runs"
+        }
+      ]
+    },
+    {
+      "path": "node-identity.md",
+      "title": "Node identity",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Node identity",
+          "anchor": "node-identity"
+        },
+        {
+          "level": 2,
+          "text": "Structure",
+          "anchor": "structure"
+        },
+        {
+          "level": 2,
+          "text": "Escaping",
+          "anchor": "escaping"
+        },
+        {
+          "level": 2,
+          "text": "Module segment: logical identity, never a file path",
+          "anchor": "module-segment-logical-identity-never-a-file-path"
+        },
+        {
+          "level": 2,
+          "text": "Anonymous units",
+          "anchor": "anonymous-units"
+        },
+        {
+          "level": 2,
+          "text": "Overloads and redefinitions",
+          "anchor": "overloads-and-redefinitions"
+        },
+        {
+          "level": 2,
+          "text": "Go receivers",
+          "anchor": "go-receivers"
+        },
+        {
+          "level": 2,
+          "text": "Entry points",
+          "anchor": "entry-points"
+        },
+        {
+          "level": 2,
+          "text": "Collisions",
+          "anchor": "collisions"
+        }
+      ]
+    },
+    {
+      "path": "non-goals.md",
+      "title": "Non-goals",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Non-goals",
+          "anchor": "non-goals"
+        }
+      ]
+    },
+    {
+      "path": "philosophy.md",
+      "title": "Philosophy",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Philosophy",
+          "anchor": "philosophy"
+        }
+      ]
+    },
+    {
+      "path": "prior-art.md",
+      "title": "Prior art",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Prior art",
+          "anchor": "prior-art"
+        },
+        {
+          "level": 2,
+          "text": "Architecture and dependency analysis",
+          "anchor": "architecture-and-dependency-analysis"
+        },
+        {
+          "level": 2,
+          "text": "Security-oriented code graphs",
+          "anchor": "security-oriented-code-graphs"
+        },
+        {
+          "level": 2,
+          "text": "Code intelligence and index formats",
+          "anchor": "code-intelligence-and-index-formats"
+        },
+        {
+          "level": 2,
+          "text": "Graph storage options considered",
+          "anchor": "graph-storage-options-considered"
+        },
+        {
+          "level": 2,
+          "text": "Why strictcode builds its own graph",
+          "anchor": "why-strictcode-builds-its-own-graph"
+        }
+      ]
+    },
+    {
+      "path": "rlsbl-integration.md",
+      "title": "rlsbl integration",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "rlsbl integration",
+          "anchor": "rlsbl-integration"
+        }
+      ]
+    },
+    {
+      "path": "rules.md",
+      "title": "Rules",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Rules",
+          "anchor": "rules"
+        },
+        {
+          "level": 2,
+          "text": "The rules",
+          "anchor": "the-rules"
+        },
+        {
+          "level": 2,
+          "text": "Rule identity",
+          "anchor": "rule-identity"
+        },
+        {
+          "level": 3,
+          "text": "Retired rules",
+          "anchor": "retired-rules"
+        },
+        {
+          "level": 2,
+          "text": "Groups",
+          "anchor": "groups"
+        },
+        {
+          "level": 2,
+          "text": "Capabilities",
+          "anchor": "capabilities"
+        },
+        {
+          "level": 2,
+          "text": "Future rules",
+          "anchor": "future-rules"
+        }
+      ]
+    },
+    {
+      "path": "rules/dead-modules.md",
+      "title": "dead-modules",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`dead-modules`",
+          "anchor": "dead-modules"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/dead-workspace-packages.md",
+      "title": "dead-workspace-packages",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`dead-workspace-packages`",
+          "anchor": "dead-workspace-packages"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/deps-dev-in-production.md",
+      "title": "deps-dev-in-production",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`deps-dev-in-production`",
+          "anchor": "deps-dev-in-production"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/deps-hard-guarded-only.md",
+      "title": "deps-hard-guarded-only",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`deps-hard-guarded-only`",
+          "anchor": "deps-hard-guarded-only"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/deps-runtime-test-only.md",
+      "title": "deps-runtime-test-only",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`deps-runtime-test-only`",
+          "anchor": "deps-runtime-test-only"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/deps-undeclared.md",
+      "title": "deps-undeclared",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`deps-undeclared`",
+          "anchor": "deps-undeclared"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/deps-unused.md",
+      "title": "deps-unused",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`deps-unused`",
+          "anchor": "deps-unused"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/import-cycles.md",
+      "title": "import-cycles",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`import-cycles`",
+          "anchor": "import-cycles"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/library-direct-logging.md",
+      "title": "library-direct-logging",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`library-direct-logging`",
+          "anchor": "library-direct-logging"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Configuring",
+          "anchor": "configuring"
+        }
+      ]
+    },
+    {
+      "path": "rules/library-entry-point.md",
+      "title": "library-entry-point",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`library-entry-point`",
+          "anchor": "library-entry-point"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Configuring",
+          "anchor": "configuring"
+        }
+      ]
+    },
+    {
+      "path": "rules/library-forbidden-imports.md",
+      "title": "library-forbidden-imports",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`library-forbidden-imports`",
+          "anchor": "library-forbidden-imports"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Configuring",
+          "anchor": "configuring"
+        }
+      ]
+    },
+    {
+      "path": "rules/library-stdout.md",
+      "title": "library-stdout",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`library-stdout`",
+          "anchor": "library-stdout"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Configuring",
+          "anchor": "configuring"
+        }
+      ]
+    },
+    {
+      "path": "rules/stale-suppression.md",
+      "title": "stale-suppression",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`stale-suppression`",
+          "anchor": "stale-suppression"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/unreachable-code.md",
+      "title": "unreachable-code",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`unreachable-code`",
+          "anchor": "unreachable-code"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Fix",
+          "anchor": "fix"
+        },
+        {
+          "level": 2,
+          "text": "Lineage",
+          "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "support-matrix.md",
+      "title": "Support matrix",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Support matrix",
+          "anchor": "support-matrix"
+        },
+        {
+          "level": 2,
+          "text": "Rules",
+          "anchor": "rules"
+        },
+        {
+          "level": 2,
+          "text": "Capabilities",
+          "anchor": "capabilities"
+        }
+      ]
+    },
+    {
+      "path": "versioning.md",
+      "title": "Versioning",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Versioning",
+          "anchor": "versioning"
+        },
+        {
+          "level": 2,
+          "text": "Vocabulary content versioning",
+          "anchor": "vocabulary-content-versioning"
+        },
+        {
+          "level": 2,
+          "text": "Designed for iteration",
+          "anchor": "designed-for-iteration"
+        }
+      ]
+    },
+    {
+      "path": "vocabulary.md",
+      "title": "Vocabulary",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "Vocabulary",
+          "anchor": "vocabulary"
+        },
+        {
+          "level": 2,
+          "text": "Node kinds",
+          "anchor": "node-kinds"
+        },
+        {
+          "level": 2,
+          "text": "Row kinds",
+          "anchor": "row-kinds"
+        },
+        {
+          "level": 2,
+          "text": "Enumerations",
+          "anchor": "enumerations"
+        },
+        {
+          "level": 2,
+          "text": "Import attributes",
+          "anchor": "import-attributes"
+        },
+        {
+          "level": 2,
+          "text": "Subtyping: `conforms_to`",
+          "anchor": "subtyping-conforms_to"
+        }
+      ]
+    }
+  ],
+  "posts": [],
+  "last_gen": "2026-09-24T01:22:51.271268+00:00",
+  "theme": "minimal"
+}
