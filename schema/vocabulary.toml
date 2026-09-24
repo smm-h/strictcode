@@ -1,5 +1,5 @@
 # strictcode graph vocabulary — the universal node/row/capability truth.
-# A strictspec-gated document (schema/strictspec/vocabulary.schema.toml).
+# A strictspec document, validated by schema/strictspec/vocabulary.schema.toml.
 # Selectors pinned for enum sourcing: node_kinds[].id, row_kinds[].id, capabilities[].id.
 
 format_version = 1
@@ -66,7 +66,7 @@ values = ["supported", "planned", "not-applicable"]
 
 # ---------------------------------------------------------------------------
 # Node kinds. Attribute types: "string" | "boolean" | "integer" | "enum:<id>".
-# Identity (the qualified ID, SPEC.md section 2) and span are universal and
+# Identity (the qualified ID, .stricttools/docs/node-identity.md) and span are universal and
 # not repeated per kind.
 # ---------------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ type = "boolean"
 [[node_kinds]]
 id = "closure"
 maturity = "stable"
-description = "An anonymous callable capturing scope; identity per SPEC.md section 2.3."
+description = "An anonymous callable capturing scope, identified by name hint, ordinal, and signature fingerprint."
 [[node_kinds.attributes]]
 name = "name_hint"
 type = "string"

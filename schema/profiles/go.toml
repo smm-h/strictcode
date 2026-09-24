@@ -1,5 +1,5 @@
 # strictcode language profile: Go.
-# A strictspec-gated document (schema/strictspec/profile.schema.toml).
+# A strictspec document, validated by schema/strictspec/profile.schema.toml.
 
 format_version = 1
 language = "go"
@@ -16,12 +16,12 @@ notes = "The import-addressable unit is the package, not the file. Logical name 
 [[constructs]]
 construct = "func"
 node_kind = "function"
-notes = "Methods use the receiver type as container; pointer-ness normalized (SPEC.md 2.5). Visibility=unexported for lowercase identifiers."
+notes = "Methods use the receiver type as container; pointer-ness normalized, so changing a receiver between value and pointer keeps the ID. Visibility=unexported for lowercase identifiers."
 
 [[constructs]]
 construct = "func literal"
 node_kind = "closure"
-notes = "Identity per SPEC.md 2.3."
+notes = "Identified by name hint, ordinal, and signature fingerprint."
 
 [[constructs]]
 construct = "struct type"

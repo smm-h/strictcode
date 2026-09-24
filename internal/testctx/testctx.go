@@ -1,5 +1,5 @@
-// Package testctx implements the shared test-context predicate (DESIGN.md
-// section 6.4): one definition of "non-production", computed on the
+// Package testctx implements the shared test-context predicate (.stricttools/docs/check-semantics.md,
+// test context): one definition of "non-production", computed on the
 // slash-separated path relative to the project root, shared by every check
 // and every extractor. Root-relative matching is deliberate — a production
 // src/test/ directory is not test code (lesson 6).

@@ -1,5 +1,5 @@
 # strictcode language profile: TypeScript/JavaScript (one column — TS is a superset of JS).
-# A strictspec-gated document (schema/strictspec/profile.schema.toml).
+# A strictspec document, validated by schema/strictspec/profile.schema.toml.
 
 format_version = 1
 language = "ts"
@@ -11,12 +11,12 @@ grammar = "tree-sitter-typescript"
 [[constructs]]
 construct = "source file"
 node_kind = "module"
-notes = "No logical module identity exists; logical name = member-relative path, extension stripped, index collapsed (SPEC.md 2.2)."
+notes = "No logical module identity exists; logical name = member-relative path, extension stripped, index collapsed."
 
 [[constructs]]
 construct = "function declaration / method"
 node_kind = "function"
-notes = "Overload signatures disambiguated by source-order index (SPEC.md 2.4)."
+notes = "Overload signatures disambiguated by source-order index."
 
 [[constructs]]
 construct = "arrow function / function expression"
@@ -56,7 +56,7 @@ notes = "provenance=derived, discipline=structural, mechanism=satisfaction. Lazi
 [[constructs]]
 construct = "import / export-from / require() / dynamic import()"
 row_kind = "imports"
-notes = "Specifier reduction per DESIGN.md 6.3 (TS/JS); type_checking=true for import type; guarded always false."
+notes = "Specifiers reduce to bare package names; type_checking=true for import type; guarded always false."
 
 [[constructs]]
 construct = "re-exports (export ... from)"

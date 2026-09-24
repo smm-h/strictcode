@@ -14,7 +14,7 @@ import (
 	"github.com/smm-h/strictcode/internal/workspace"
 )
 
-// --- resolution index (DESIGN.md 6.3, built across all members) -----------
+// --- resolution index (built across all members; see check-semantics.md) ---
 
 // pyNorm applies PyPI name normalization: lowercase with -, _, and .
 // unified (lesson 10: registry name and workspace name both match through
@@ -106,7 +106,7 @@ func buildPyResolutionIndex(ws *workspace.Workspace) (*pyResolutionIndex, error)
 	return idx, nil
 }
 
-// resolveMember applies the DESIGN.md 6.3 resolution order to an absolute
+// resolveMember applies the import resolution order in .stricttools/docs/check-semantics.md to an absolute
 // dotted import. Returns nil for stdlib and external imports.
 func (idx *pyResolutionIndex) resolveMember(dotted string) *workspace.Member {
 	parts := strings.Split(dotted, ".")
@@ -139,7 +139,7 @@ func (idx *pyResolutionIndex) resolveMember(dotted string) *workspace.Member {
 }
 
 // discoverPyLayout walks a member's .py files and derives package roots and
-// module logical names (SPEC.md 2.2: dotted path from the discovered
+// module logical names (.stricttools/docs/node-identity.md, module segment: dotted path from the discovered
 // package root; the same discovery feeds the namespace map).
 func discoverPyLayout(ws *workspace.Workspace, m *workspace.Member) (*pyMemberLayout, error) {
 	files, err := walkMember(ws, m, func(name string) bool { return strings.HasSuffix(name, ".py") })
@@ -271,7 +271,7 @@ type pyImport struct {
 	// relative marks a relative import: its candidates are pre-resolved to
 	// absolute names from the file's package position for intra-member
 	// module resolution, but relative imports never participate in member
-	// resolution (DESIGN.md 6.3 step 1 drops them).
+	// resolution (step 1 of the import resolution order drops them).
 	relative bool
 	// dotted are the absolute dotted-name candidates this site references,
 	// most specific first (e.g. from pkg import mod -> [pkg.mod, pkg]).

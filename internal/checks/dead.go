@@ -10,7 +10,7 @@ import (
 )
 
 // checkDeadModules dispatches the per-language dead-module algorithms
-// pinned in DESIGN.md 6.2: union-of-imports for Python and Go, BFS from
+// described in .stricttools/docs/check-semantics.md, dead modules: union-of-imports for Python and Go, BFS from
 // entry points for TS/JS.
 func checkDeadModules(ctx *Context) []findings.Finding {
 	var out []findings.Finding

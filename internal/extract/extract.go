@@ -1,6 +1,6 @@
 // Package extract builds the interaction relation from a loaded workspace:
-// the import-graph extractors for the language trio (DESIGN.md sections
-// 6.2-6.4, schema/SPEC.md). One extraction pass populates one relation
+// the import-graph extractors for the language trio (.stricttools/docs/check-semantics.md
+// and .stricttools/docs/graph-model.md). One extraction pass populates one relation
 // shared by every check (lesson 30).
 package extract
 
@@ -35,7 +35,7 @@ type Result struct {
 	// relation row), external (builtins/stdlib/external packages — the
 	// library-stdout surface), and unresolved (honestly unknown). The
 	// relation itself carries only resolved local-to-local rows because
-	// rows demand both endpoints exist as nodes; see BUILDLOG.
+	// rows demand both endpoints exist as nodes; see .stricttools/docs/graph-model.md, side tables.
 	Calls []CallSite
 	// Unreachable carries dead statement regions (the unreachable-code
 	// rule and the tier-1 removal transform).
@@ -113,7 +113,7 @@ func Extract(ws *workspace.Workspace) (*Result, error) {
 	}
 
 	// Python resolution index needs every member's package roots before any
-	// member's imports are resolved (namespace map, DESIGN 6.3 step 4).
+	// member's imports are resolved (namespace map, step 4 of the import resolution order).
 	idx, err := buildPyResolutionIndex(ws)
 	if err != nil {
 		return nil, err

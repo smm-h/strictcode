@@ -1,23 +1,23 @@
 // Binding evaluation harness: gotreesitter (pure Go) vs the official CGo
-// bindings, per the pinned criteria in DESIGN.md section 12.4.
+// bindings, per the pinned criteria recorded in .stricttools/docs/decisions.md.
 //
 // Absolute criteria:
 //  1. identical  — byte-identical parse trees vs the C grammar on the input files.
 //  2. queries    — support for every tree-sitter query form strictcode needs,
-//                  with equal results from both engines on the input files.
+//     with equal results from both engines on the input files.
 //
 // If both criteria pass: gotreesitter wins when its parse throughput is >= 75%
 // of the CGo bindings' throughput (mode: throughput), else CGo wins.
 //
 // A diagnostic mode (not part of the verdict):
 //  4. normalized -- mirror gotreesitter's documented Python wrapper removal
-//                  onto the C tree, compare, and group whatever still differs
-//                  by the node kinds at the first divergence. What remains is
-//                  divergence the documented normalization does not explain,
-//                  that is, misparses worth reporting upstream.
+//     onto the C tree, compare, and group whatever still differs
+//     by the node kinds at the first divergence. What remains is
+//     divergence the documented normalization does not explain,
+//     that is, misparses worth reporting upstream.
 //
 // This is a standalone Go module so the main strictcode module only ever
-// depends on the winning binding. Methodology and verdict: BUILDLOG.md.
+// depends on the winning binding. Methodology and verdicts: .stricttools/docs/decisions.md (experiments).
 package main
 
 import (

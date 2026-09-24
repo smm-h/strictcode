@@ -5,8 +5,7 @@ import (
 	"strings"
 )
 
-// NodeID is the hierarchical qualified name of a node (schema/SPEC.md
-// section 2). Location is never part of identity. The serialized form is
+// NodeID is the hierarchical qualified name of a node (.stricttools/docs/node-identity.md). Location is never part of identity. The serialized form is
 //
 //	<lang>:<member>:<module>:<container-chain>
 //
@@ -18,7 +17,7 @@ type NodeID struct {
 	// Member is the workspace member name, or "_" for a single-project
 	// (non-workspace) scan.
 	Member string
-	// Module is the module's logical name (SPEC.md section 2.2).
+	// Module is the module's logical name (.stricttools/docs/node-identity.md, module segment).
 	Module string
 	// Chain is the container chain from module scope inward; empty for
 	// module-kind nodes.
@@ -31,10 +30,10 @@ type Segment struct {
 	// "anon" when no hint is syntactically derivable.
 	Name string
 	// Overload is the 0-based source-order index among same-name siblings in
-	// the same container (SPEC.md section 2.4). Serialized as #<n>, omitted
+	// the same container (.stricttools/docs/node-identity.md, overloads and redefinitions). Serialized as #<n>, omitted
 	// for 0.
 	Overload int
-	// Anonymous marks a synthesized segment (SPEC.md section 2.3):
+	// Anonymous marks a synthesized segment (.stricttools/docs/node-identity.md, anonymous units):
 	// <name-hint|anon>~<ordinal>~<fp8>.
 	Anonymous bool
 	// Ordinal is the 0-based source-order index among same-hint anonymous
@@ -98,9 +97,9 @@ func isFP8(s string) bool {
 }
 
 // String returns the serialized ID. Reserved characters inside a segment are
-// percent-encoded (SPEC.md section 2.1 lists %, :, ., #, whitespace; the
+// percent-encoded (.stricttools/docs/node-identity.md, escaping: %, :, ., #, ~, and whitespace; the
 // tilde is additionally escaped so the anonymous-segment structure
-// <hint>~<ordinal>~<fp8> is unambiguous — see BUILDLOG.md).
+// <hint>~<ordinal>~<fp8> is unambiguous).
 func (id NodeID) String() string {
 	var b strings.Builder
 	b.WriteString(escapeSegment(id.Lang))

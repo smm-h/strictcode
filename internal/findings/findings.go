@@ -11,15 +11,15 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/stricttools/strictcli/go/strictcli"
 	"github.com/smm-h/strictcode/internal/rules"
 	"github.com/smm-h/strictcode/internal/spec/findingsspec"
 	"github.com/smm-h/strictcode/internal/vocab"
+	"github.com/stricttools/strictcli/go/strictcli"
 )
 
 // Target is what a finding points at: a node plus its site.
 type Target struct {
-	// ID is the serialized qualified node ID (schema/SPEC.md section 2).
+	// ID is the serialized qualified node ID (.stricttools/docs/node-identity.md).
 	ID string
 	// Kind is the node kind.
 	Kind vocab.NodeKind

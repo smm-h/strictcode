@@ -1,5 +1,5 @@
 # strictcode language profile: Python.
-# A strictspec-gated document (schema/strictspec/profile.schema.toml).
+# A strictspec document, validated by schema/strictspec/profile.schema.toml.
 # Declares how Python constructs map onto the vocabulary and the status of every capability.
 
 format_version = 1
@@ -22,7 +22,7 @@ notes = "is_async from async def; is_test from the shared test-context predicate
 [[constructs]]
 construct = "lambda"
 node_kind = "closure"
-notes = "Identity per SPEC.md 2.3 (name hint, ordinal, fingerprint)."
+notes = "Identified by name hint, ordinal, and signature fingerprint."
 
 [[constructs]]
 construct = "class"
@@ -52,7 +52,7 @@ notes = "The decorator callable decorates the target function or class."
 [[constructs]]
 construct = "import / from-import"
 row_kind = "imports"
-notes = "guarded per try/except ImportError try-body rule; type_checking per if TYPE_CHECKING; resolution to workspace members per the DESIGN.md 6.3 order."
+notes = "guarded per try/except ImportError try-body rule; type_checking per if TYPE_CHECKING; resolution to workspace members per the import resolution order."
 
 [[constructs]]
 construct = "__init__.py exports (__all__, relative imports)"

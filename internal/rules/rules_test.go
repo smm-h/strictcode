@@ -11,7 +11,7 @@ var idPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
 func TestRegistryHasFourteenMintedRules(t *testing.T) {
 	if len(Rules) != 14 {
-		t.Fatalf("registry has %d rules, CATALOG.md mints 14", len(Rules))
+		t.Fatalf("registry has %d rules, the rule reference documents 14", len(Rules))
 	}
 }
 

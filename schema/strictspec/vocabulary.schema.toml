@@ -5,7 +5,7 @@ document_syntax = "toml"
 role = "schema"
 root = "Vocabulary"
 targets = ["go"]
-description = "Gates schema/vocabulary.toml: the universal node/row/capability vocabulary."
+description = "Validates schema/vocabulary.toml: the universal node/row/capability vocabulary."
 
 [types.Vocabulary]
 type = "record"

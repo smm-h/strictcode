@@ -1,9 +1,9 @@
 // Python stdlib module-name table.
 //
-// Generated once from CPython 3.14.5 sys.stdlib_module_names (see BUILDLOG).
-// Used by the DESIGN.md section-6.3 resolution order, step 1: stdlib imports
+// Generated once from CPython 3.14.5 sys.stdlib_module_names.
+// Used by step 1 of the import resolution order (.stricttools/docs/check-semantics.md): stdlib imports
 // never resolve to workspace members. Hand-committed data table; regenerate
-// with the command recorded in BUILDLOG.md if the interpreter baseline moves.
+// with the generating command from this file's git history if the interpreter baseline moves.
 package extract
 
 // pyStdlib holds every CPython stdlib top-level module name.

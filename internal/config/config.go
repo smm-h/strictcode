@@ -1,6 +1,6 @@
 // Package config loads strictcode.toml through the strictspec-generated
 // reader and implements the consumer-native checks the schema cannot
-// express (DESIGN.md section 12.3):
+// express (.stricttools/docs/config.md):
 //
 //   - rule-ID validity against the registry, with tombstone rendering — a
 //     config referencing a retired ID hard-errors with the tombstone's
@@ -10,7 +10,7 @@
 //     natural target shape; shape "none" accepts no suppressions at all).
 //
 // Disk/registry staleness of suppression targets is NOT a load error — it is
-// the stale-suppression rule (CATALOG.md), evaluated during analysis with
+// the stale-suppression rule (.stricttools/docs/rules/stale-suppression.md), evaluated during analysis with
 // the workspace in hand.
 //
 // A missing config file yields the registry defaults: every rule enabled at

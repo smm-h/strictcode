@@ -5,7 +5,7 @@ document_syntax = "toml"
 role = "schema"
 root = "Profile"
 targets = ["go"]
-description = "Gates schema/profiles/*.toml: per-language construct mappings and capability statuses. node_kind/row_kind arms are SOURCED from schema/vocabulary.toml (strictspec decision 32) — vocabulary content changes surface here as baked-arm staleness."
+description = "Validates schema/profiles/*.toml: per-language construct mappings and capability statuses. node_kind/row_kind arms are SOURCED from schema/vocabulary.toml (strictspec decision 32) — vocabulary content changes surface here as baked-arm staleness."
 
 [types.Profile]
 type = "record"

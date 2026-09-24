@@ -1,5 +1,5 @@
 // Package relation implements the interaction relation — the primary
-// artifact of extraction (schema/SPEC.md). A flat typed relation of rows
+// artifact of extraction (.stricttools/docs/graph-model.md). A flat typed relation of rows
 // plus a companion node table; the algorithm graph and the site feed are
 // pure deterministic projections; canonical form (sorted rows, SHA-256) is
 // defined once, here.
@@ -20,7 +20,7 @@ import (
 )
 
 // Span is a byte range over the file's LF-normalized UTF-8 bytes
-// (schema/SPEC.md section 3). Line/column are derived at output time, never
+// (.stricttools/docs/graph-model.md, spans and positions). Line/column are derived at output time, never
 // stored as truth.
 type Span struct {
 	Start uint32
@@ -224,7 +224,7 @@ func (b *Builder) Build() (*Relation, error) {
 	sort.Slice(rel.Rows, func(i, j int) bool {
 		return rowKey(rel.Rows[i]) < rowKey(rel.Rows[j])
 	})
-	// The relation is an ordered SET of rows (SPEC.md section 1): identical
+	// The relation is an ordered SET of rows (.stricttools/docs/graph-model.md): identical
 	// rows collapse to one element. Extraction can legitimately produce
 	// duplicates (e.g. `import os, os` yields two identical rows).
 	deduped := rel.Rows[:0]

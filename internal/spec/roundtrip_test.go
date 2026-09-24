@@ -79,7 +79,7 @@ func TestProfileDocumentsValidate(t *testing.T) {
 }
 
 func TestProfilesDeclareEveryVocabularyCapability(t *testing.T) {
-	// SPEC.md section 5: vocabulary and profiles are closed sets; a profile must
+	// .stricttools/docs/capabilities-and-profiles.md: vocabulary and profiles are closed sets; a profile must
 	// declare a status for every capability the vocabulary defines, and must not
 	// declare unknown capabilities.
 	vdoc := readFile(t, "schema/vocabulary.toml")

@@ -5,7 +5,7 @@ document_syntax = "toml"
 role = "schema"
 root = "Config"
 targets = ["go"]
-description = "Gates strictcode.toml: the single configuration file (DESIGN.md section 12.3) — rule toggles/severities/thresholds, analysis modes, group toggles, and per-rule-shaped suppressions with mandatory reasons. Rule-ID validity (including tombstone rendering) and suppression-shape-vs-rule matching are consumer-native checks against the registry; path staleness is the stale-suppression rule."
+description = "Validates strictcode.toml, the single configuration file (see .stricttools/docs/config.md): rule toggles, severities, thresholds, and allow lists; analysis modes; group toggles; and suppressions in each rule's declared shape, each with a mandatory reason. Rule-ID validity (a retired rule's error shows its retirement record) and matching suppressions to their rule's shape are checked by the loader against the registry; suppressions naming things that no longer exist are the stale-suppression rule."
 
 [types.Config]
 type = "record"
@@ -38,7 +38,7 @@ description = "Explicit analysis-mode selection. The presence of a mode key IS t
 type = "enum"
 required = false
 values = ["syntactic", "type-checker"]
-description = "Python call-resolution layer (DESIGN.md section 8). Absent = the always-on syntactic layer only; type-checker requires python_type_checker."
+description = "Python call-resolution layer (see .stricttools/docs/call-resolution.md). Absent = the always-on syntactic layer only; type-checker requires python_type_checker."
 
 [types.Analysis.fields.python_type_checker]
 type = "enum"
@@ -137,7 +137,7 @@ non_empty = true
 type = "string"
 required = false
 non_empty = true
-description = "A file path (Python, TS/JS) or package directory (Go), relative to the project root."
+description = "A file path (Python, TS/JS) or package directory (Go), relative to the workspace root."
 
 [types.Suppression.fields.project]
 type = "string"

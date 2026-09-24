@@ -9,7 +9,7 @@ import (
 	"github.com/smm-h/strictcode/internal/workspace"
 )
 
-// excludedDirs is the always-excluded set from DESIGN.md section 6.6
+// excludedDirs is the always-excluded set from .stricttools/docs/check-semantics.md (source-walk exclusions)
 // (lesson 29). *.egg-info is handled separately as a suffix pattern.
 var excludedDirs = map[string]bool{
 	".venv":         true,

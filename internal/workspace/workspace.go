@@ -1,5 +1,5 @@
 // Package workspace loads the analysis inputs strictcode reconstructs from
-// disk (DESIGN.md section 6.6): the rlsbl workspace file
+// disk (.stricttools/docs/check-semantics.md, workspace and manifest inputs): the rlsbl workspace file
 // (.rlsbl-monorepo/workspace.toml) when present, the per-member manifests
 // (pyproject.toml, package.json, go.mod), declared dependency scopes, and
 // manifest-declared entry points. Nothing is passed at runtime by any

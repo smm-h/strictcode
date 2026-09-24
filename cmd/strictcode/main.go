@@ -12,7 +12,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/stricttools/strictcli/go/strictcli"
 	strictcode "github.com/smm-h/strictcode"
 	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/engine"
@@ -21,6 +20,7 @@ import (
 	"github.com/smm-h/strictcode/internal/fix"
 	"github.com/smm-h/strictcode/internal/registrydump"
 	"github.com/smm-h/strictcode/internal/workspace"
+	"github.com/stricttools/strictcli/go/strictcli"
 )
 
 func main() {
