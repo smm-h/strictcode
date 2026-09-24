@@ -258,11 +258,11 @@
   "groups": {
     "registry": {
       "name": "registry",
-      "help": "Rule registry artifacts (mint-once IDs, tombstones)",
+      "help": "Rule registry artifacts (mint-once IDs and retired-rule records)",
       "commands": {
         "dump": {
           "name": "dump",
-          "help": "Write the committed registry dump (rules with their per-language support cells, groups, tombstones) as JSON",
+          "help": "Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON",
           "effect": "mutating",
           "dry_run_supported": false,
           "dry_run_unsupported_reason": "the dump is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
