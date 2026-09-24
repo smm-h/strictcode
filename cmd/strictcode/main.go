@@ -116,8 +116,8 @@ func newApp() *strictcli.App {
 		),
 	)
 
-	registry := app.Group("registry", "Rule registry artifacts (mint-once IDs, tombstones)")
-	registry.Command("dump", "Write the committed registry dump (rules with their per-language support cells, groups, tombstones) as JSON",
+	registry := app.Group("registry", "Rule registry artifacts (mint-once IDs and retired-rule records)")
+	registry.Command("dump", "Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON",
 		registryDumpHandler,
 		// mutating: it writes the dump file named by --out.
 		strictcli.WithEffect(strictcli.EffectMutating),
