@@ -4,7 +4,7 @@ go 1.26.3
 
 require (
 	github.com/stricttools/strictcli/go v0.36.0
-	github.com/stricttools/strictspec/go v0.3.0
+	github.com/stricttools/strictspec/go v0.4.0
 	github.com/tree-sitter/go-tree-sitter v0.25.0
 	github.com/tree-sitter/tree-sitter-go v0.25.0
 	github.com/tree-sitter/tree-sitter-python v0.25.0
