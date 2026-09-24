@@ -39,6 +39,14 @@ description = "Validates schema/registry.json: the committed rule-registry dump 
 [types.Registry]
 type = "record"
 
+[types.Registry.fields.languages]
+type = "array"
+required = true
+min_len = 1
+description = "The languages of the support matrix, in column order, with the display names from their profiles."
+[types.Registry.fields.languages.item]
+type = "LanguageDecl"
+
 [types.Registry.fields.rules]
 type = "array"
 required = true
@@ -73,6 +81,19 @@ form = "unique-by"
 collection = "tombstones"
 field = "id"
 normalization = "none"
+
+[types.LanguageDecl]
+type = "record"
+
+[types.LanguageDecl.fields.id]
+type = "enum"
+required = true
+values = ["py", "go", "ts"]
+
+[types.LanguageDecl.fields.display_name]
+type = "string"
+required = true
+non_empty = true
 
 [types.RuleId]
 type = "string"
@@ -311,6 +332,7 @@ func ValidateBytesWithEvidence(input []byte, syntax string, evidence map[string]
 // Registry is the frozen typed binding of the "Registry" record. Fields are immutable by
 // convention (shallow-plus-generated-immutability); use With* for copy-on-write.
 type Registry struct {
+	Languages  []*LanguageDecl
 	Rules      []*RuleDecl
 	Groups     strictspec.Value
 	Tombstones []*TombstoneDecl
@@ -321,6 +343,9 @@ func bindRegistry(v strictspec.Value) *Registry {
 		return nil
 	}
 	out := &Registry{}
+	if fv, ok := v.Field("languages"); ok {
+		out.Languages = bindSlice(fv, func(e strictspec.Value) *LanguageDecl { return bindLanguageDecl(e) })
+	}
 	if fv, ok := v.Field("rules"); ok {
 		out.Rules = bindSlice(fv, func(e strictspec.Value) *RuleDecl { return bindRuleDecl(e) })
 	}
@@ -331,6 +356,13 @@ func bindRegistry(v strictspec.Value) *Registry {
 		out.Tombstones = bindSlice(fv, func(e strictspec.Value) *TombstoneDecl { return bindTombstoneDecl(e) })
 	}
 	return out
+}
+
+// WithLanguages returns a copy of Registry with Languages set to the given value.
+func (x *Registry) WithLanguages(v []*LanguageDecl) *Registry {
+	c := *x
+	c.Languages = v
+	return &c
 }
 
 // WithRules returns a copy of Registry with Rules set to the given value.
@@ -351,6 +383,41 @@ func (x *Registry) WithGroups(v strictspec.Value) *Registry {
 func (x *Registry) WithTombstones(v []*TombstoneDecl) *Registry {
 	c := *x
 	c.Tombstones = v
+	return &c
+}
+
+// LanguageDecl is the frozen typed binding of the "LanguageDecl" record. Fields are immutable by
+// convention (shallow-plus-generated-immutability); use With* for copy-on-write.
+type LanguageDecl struct {
+	Id          string
+	DisplayName string
+}
+
+func bindLanguageDecl(v strictspec.Value) *LanguageDecl {
+	if v.Kind() != strictspec.KindRecord {
+		return nil
+	}
+	out := &LanguageDecl{}
+	if fv, ok := v.Field("id"); ok {
+		out.Id = func() string { r, _ := fv.AsString(); return r }()
+	}
+	if fv, ok := v.Field("display_name"); ok {
+		out.DisplayName = func() string { r, _ := fv.AsString(); return r }()
+	}
+	return out
+}
+
+// WithId returns a copy of LanguageDecl with Id set to the given value.
+func (x *LanguageDecl) WithId(v string) *LanguageDecl {
+	c := *x
+	c.Id = v
+	return &c
+}
+
+// WithDisplayName returns a copy of LanguageDecl with DisplayName set to the given value.
+func (x *LanguageDecl) WithDisplayName(v string) *LanguageDecl {
+	c := *x
+	c.DisplayName = v
 	return &c
 }
 
