@@ -89,7 +89,7 @@ type = "record"
 type = "string"
 required = true
 non_empty = true
-description = "Serialized qualified node ID (SPEC.md section 2)."
+description = "Serialized qualified node ID (see .stricttools/docs/node-identity.md)."
 
 [types.Target.fields.kind]
 type = "enum"

@@ -195,7 +195,7 @@
     {
       "id": "dead-modules",
       "severity": "warning",
-      "description": "Source units unreachable or unreferenced, per the per-language algorithms pinned in DESIGN.md section 6.2.",
+      "description": "Source units unreachable or unreferenced, per the per-language algorithms on the check semantics page.",
       "requires": [
         "module-enumeration",
         "import-extraction",
