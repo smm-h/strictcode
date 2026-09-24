@@ -2,7 +2,6 @@
 title = "strictcode registry"
 description = "Rule registry artifacts (mint-once IDs, tombstones)"
 generated = true
-seeded = true
 nav_group = "CLI Reference"
 nav_order = 3
 +++
@@ -10,11 +9,11 @@ nav_order = 3
 
 # strictcode registry
 
-Rule registry artifacts (mint-once IDs, tombstones)
+Rule registry artifacts (mint-once IDs and retired-rule records)
 
 ## registry dump
 
-Write the committed registry dump (rules with their per-language support cells, groups, tombstones) as JSON
+Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON
 
 **Effect:** mutating
 

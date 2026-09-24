@@ -36,8 +36,8 @@ strictcode fix . --apply       # apply them, verified against the re-extracted g
 | --- | --- |
 | `analyze` | Analyze a project or workspace directory and report findings |
 | `fix` | Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification |
-| **registry** | Rule registry artifacts (mint-once IDs, tombstones) |
-| `registry dump` | Write the committed registry dump (rules with their per-language support cells, groups, tombstones) as JSON |
+| **registry** | Rule registry artifacts (mint-once IDs and retired-rule records) |
+| `registry dump` | Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON |
 
 Configuration lives in `strictcode.toml` at the analyzed directory: rule toggles, severities,
 analysis modes, and suppressions, each with a mandatory reason.

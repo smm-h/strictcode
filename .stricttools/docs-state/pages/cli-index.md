@@ -21,7 +21,7 @@ Version: :-: var key="project.version"
 
 ## Command Groups
 
-- [registry](../cli-registry/) -- Rule registry artifacts (mint-once IDs, tombstones)
+- [registry](../cli-registry/) -- Rule registry artifacts (mint-once IDs and retired-rule records)
 
 ## Framework flags
 
