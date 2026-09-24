@@ -1,8 +1,7 @@
 +++
 title = "strictcode analyze"
-description = "Analyze a project or workspace directory and report findings"
+description = "strictcode analyze: build the graph for a project or workspace, run every enabled rule, and report findings as text or JSON, exiting 1 on any error."
 generated = true
-seeded = true
 nav_group = "CLI Reference"
 nav_order = 1
 +++

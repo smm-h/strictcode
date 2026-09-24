@@ -1,6 +1,6 @@
 +++
 title = "Graph model"
-description = "strictcode's source of truth is a flat typed interaction relation plus a node table; the algorithm graph, findings, and JSON output are deterministic projections of it."
+description = "strictcode's source of truth is a typed interaction relation plus a node table; the algorithm graph, findings, and JSON output are projections."
 nav_order = 100
 +++
 

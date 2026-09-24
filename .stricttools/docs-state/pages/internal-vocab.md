@@ -1,8 +1,7 @@
 +++
 title = "internal/vocab"
-description = "API reference for the internal/vocab module — auto-generated documentation covering public functions, classes, and type signatures."
+description = "Package vocab holds the Go constants generated from the vocabulary and profiles: kinds, capabilities, layers, enums, and capability statuses."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 20
 +++

@@ -1,8 +1,7 @@
 +++
 title = "internal/engine"
-description = "Package engine is the stateless batch pipeline (.stricttools/docs/implementation.md, runtime model): load config (hard errors), read the workspace from disk, extract the one shared relation, run the enabled checks, produce findings."
+description = "Package engine is the stateless batch pipeline: load config, read the workspace, extract the relation, run the rules, and build the findings."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 5
 +++

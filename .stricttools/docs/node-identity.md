@@ -1,6 +1,6 @@
 +++
 title = "Node identity"
-description = "How strictcode names every node: hierarchical qualified IDs from logical module names, with rules for anonymous units, overloads, Go receivers, escaping, and collisions."
+description = "How strictcode names nodes: qualified IDs from logical module names, with rules for anonymous units, overloads, receivers, escaping, and collisions."
 nav_order = 110
 +++
 

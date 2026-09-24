@@ -1,6 +1,6 @@
 +++
 title = "Vocabulary"
-description = "The node kinds, row kinds, attributes, and enumerations strictcode's graph is built from, rendered from schema/vocabulary.toml, plus how subtyping and import attributes work."
+description = "The node kinds, row kinds, attributes, and enumerations of strictcode's graph, rendered from schema/vocabulary.toml, and how subtyping works."
 nav_order = 120
 +++
 

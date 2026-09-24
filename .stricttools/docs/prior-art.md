@@ -1,6 +1,6 @@
 +++
 title = "Prior art"
-description = "Tools that model code as graphs, as surveyed while designing strictcode: competitors, possible foundations and their licenses, index formats, and why strictcode builds its own graph."
+description = "Tools that model code as graphs, as surveyed while designing strictcode: competitors, possible foundations and their licenses, and index formats."
 nav_order = 430
 +++
 

@@ -1,6 +1,6 @@
 +++
 title = "Implementation"
-description = "How strictcode is built: Go, the official tree-sitter C runtime through CGo, strictspec-generated readers, strictcli, what is built in-house, the runtime model, and the package layout."
+description = "How strictcode is built: Go, the official tree-sitter C runtime through CGo, strictspec readers, strictcli, the runtime model, and packages."
 nav_order = 400
 +++
 

@@ -1,8 +1,7 @@
 +++
 title = "internal/config"
-description = "Package config loads strictcode.toml through the strictspec-generated reader and implements the consumer-native checks the schema cannot express (.stricttools/docs/config.md):"
+description = "Package config loads strictcode.toml through its generated reader and checks rule IDs, groups, and suppression shapes against the registry."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 4
 +++

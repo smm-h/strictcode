@@ -1,8 +1,7 @@
 +++
 title = "internal/relation"
-description = "Package relation implements the interaction relation — the primary artifact of extraction (.stricttools/docs/graph-model.md)."
+description = "Package relation implements the node table and interaction relation: qualified IDs, validated rows, canonical form, hashing, and projections."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 11
 +++

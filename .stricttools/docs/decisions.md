@@ -1,6 +1,6 @@
 +++
 title = "Decisions"
-description = "Why strictcode is built the way it is: every design decision with the alternatives it rejected, the dated build record with its deviations, the experiments and their measurements, and the open defects."
+description = "Why strictcode is built as it is: each design decision with its rejected alternatives, the dated build record, experiments, and open defects."
 nav_order = 420
 +++
 

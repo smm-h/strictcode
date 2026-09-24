@@ -1,6 +1,6 @@
 +++
 title = "Versioning"
-description = "Every strictcode schema artifact is a strictspec document with an exact-match format_version; vocabulary content changes are versioned through strictspec enum sourcing."
+description = "Every strictcode schema artifact is a strictspec document with an exact-match format_version; vocabulary changes version through enum sourcing."
 nav_order = 150
 +++
 

@@ -1,6 +1,6 @@
 +++
 title = "Non-goals"
-description = "What strictcode deliberately does not do: no LLM, no security scanning, no user rule language, no daemon, no fallbacks, no speculative languages, and no release duties."
+description = "What strictcode deliberately does not do: no LLM, no security scanning, no user rule language, no daemon, no fallbacks, and no release duties."
 nav_order = 40
 +++
 

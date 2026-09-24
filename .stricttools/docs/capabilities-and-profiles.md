@@ -1,6 +1,6 @@
 +++
 title = "Capabilities and profiles"
-description = "How strictcode decides what it supports per language: fine-grained capabilities bundled into layers, per-language profiles declaring construct mappings and statuses, and rules requiring capabilities."
+description = "How support per language is computed: capabilities bundled into layers, per-language profiles of constructs and statuses, and rule requirements."
 nav_order = 130
 +++
 

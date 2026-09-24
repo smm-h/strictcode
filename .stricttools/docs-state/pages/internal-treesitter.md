@@ -1,8 +1,7 @@
 +++
 title = "internal/treesitter"
-description = "Package treesitter is strictcode's single parsing path: a thin, disciplined layer over the official tree-sitter CGo bindings (the binding-benchmark winner; see .stricttools/docs/decisions.md)."
+description = "Package treesitter is strictcode's single parsing path over the official CGo bindings: grammar choice, LF normalization, and resource lifecycle."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 19
 +++

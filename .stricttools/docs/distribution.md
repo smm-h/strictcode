@@ -1,6 +1,6 @@
 +++
 title = "Distribution"
-description = "strictcode releases are source-only Go modules; prebuilt binaries become necessary at the rlsbl handoff, built with zig cc under goreleaser or on native CI runners."
+description = "Releases are source-only Go modules; binaries become necessary at the rlsbl handoff, built with zig cc under goreleaser or on native CI runners."
 nav_order = 410
 +++
 

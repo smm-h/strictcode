@@ -1,6 +1,6 @@
 +++
 title = "dead-modules"
-description = "dead-modules reports source units that nothing reaches: unreferenced Python modules and Go internal packages, and TypeScript/JavaScript files unreachable from any entry point."
+description = "dead-modules reports unreferenced Python modules and Go internal packages, and TypeScript files no entry point reaches."
 nav_group = "Rule reference"
 nav_order = 60
 +++

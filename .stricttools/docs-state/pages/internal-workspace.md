@@ -1,8 +1,7 @@
 +++
 title = "internal/workspace"
-description = "Package workspace loads the analysis inputs strictcode reconstructs from disk (.stricttools/docs/check-semantics.md, workspace and manifest inputs): the rlsbl workspace file (.rlsbl-monorepo/workspace.toml) when present, the per-member manifests (pyproject.toml, package.json, go.mod), declared dependency scopes, and manifest-declared entry points."
+description = "Package workspace reads workspace.toml and each member's manifest into members, module paths, namespace maps, and scoped declared dependencies."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 22
 +++

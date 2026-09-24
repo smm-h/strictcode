@@ -1,8 +1,7 @@
 +++
 title = "cmd/strictcode"
-description = "Command strictcode is the strictcode CLI, built on strictcli (flag conventions enforced at registration; --dump-schema auto-injected)."
+description = "The strictcode command-line entry point: registers analyze, fix, and registry dump on strictcli, with handler-side fallbacks for paths."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 1
 +++

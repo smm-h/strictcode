@@ -1,6 +1,6 @@
 +++
 title = "strictcode registry"
-description = "Rule registry artifacts (mint-once IDs, tombstones)"
+description = "strictcode registry dump: write schema/registry.json, the committed rule registry with per-language support cells, groups, and retired rules."
 generated = true
 nav_group = "CLI Reference"
 nav_order = 3

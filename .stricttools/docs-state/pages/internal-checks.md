@@ -1,8 +1,7 @@
 +++
 title = "internal/checks"
-description = "API reference for the internal/checks module — auto-generated documentation covering public functions, classes, and type signatures."
+description = "Package checks implements every rule as a query over the relation projections, with suppressions, severities, and not-applicable language cells."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 3
 +++

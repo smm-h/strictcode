@@ -1,8 +1,7 @@
 +++
 title = "internal/fix"
-description = "Package fix is the tier-1 fix engine (.stricttools/docs/fixes.md): a whitelist of hand-proven transforms plus mechanical re-verification."
+description = "Package fix is the tier-1 fix engine: plans whitelisted transforms, applies them, re-extracts the graph, and rolls back on any mismatch."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 8
 +++

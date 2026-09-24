@@ -1,6 +1,6 @@
 +++
 title = "strictcode"
-description = "strictcode is a deterministic, non-LLM linter for architecture: it builds a graph of a codebase and enforces dependency, dead-code, cycle, and library-boundary rules, with tiered auto-fixes."
+description = "strictcode is a deterministic linter for architecture: it builds a graph of a codebase, enforces structural rules, and offers tiered auto-fixes."
 nav_order = 10
 +++
 

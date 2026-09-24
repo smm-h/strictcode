@@ -1,8 +1,7 @@
 +++
 title = "internal/extract"
-description = "Package extract builds the interaction relation from a loaded workspace: the import-graph extractors for the language trio (.stricttools/docs/check-semantics.md and .stricttools/docs/graph-model.md)."
+description = "Package extract builds the interaction relation from a workspace: import-graph extractors for Python, Go, and TypeScript, and Python semantics."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 6
 +++

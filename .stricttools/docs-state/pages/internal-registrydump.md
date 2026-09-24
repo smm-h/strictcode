@@ -1,8 +1,7 @@
 +++
 title = "internal/registrydump"
-description = "Package registrydump renders the committed registry artifact, schema/registry.json: the machine-readable rule registry the release diff classifies version bumps from, carrying each rule's computed support-matrix cells so the docs site renders the matrix from data instead of repeating the calculus."
+description = "Package registrydump renders schema/registry.json from the rule registry, including each rule's computed per-language support cells."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 10
 +++

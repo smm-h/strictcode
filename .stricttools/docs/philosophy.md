@@ -1,6 +1,6 @@
 +++
 title = "Philosophy"
-description = "strictcode enforces discipline through hard constraints: deterministic, stateless, no silent degradation, hard errors, honest about limits, and every suppression justified."
+description = "strictcode enforces discipline through hard constraints: deterministic, stateless, no silent degradation, hard errors, and justified suppressions."
 nav_order = 30
 +++
 

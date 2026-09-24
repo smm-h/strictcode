@@ -1,8 +1,7 @@
 +++
 title = "internal/testctx"
-description = "Package testctx implements the shared test-context predicate (.stricttools/docs/check-semantics.md, test context): one definition of \"non-production\", computed on the slash-separated path relative to the project root, shared by every check and every extractor."
+description = "Package testctx implements the shared test-context predicate every rule uses to tell test and example code from production code."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 18
 +++

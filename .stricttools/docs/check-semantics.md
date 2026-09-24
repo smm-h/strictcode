@@ -1,6 +1,6 @@
 +++
 title = "Check semantics"
-description = "The semantics strictcode's rules share: the boundary with rlsbl, workspace and manifest inputs, per-language import resolution, the test-context predicate, dead-module algorithms, and library-boundary rules."
+description = "Semantics the rules share: the boundary with rlsbl, workspace inputs, import resolution per language, test context, dead modules, and library rules."
 nav_order = 210
 +++
 

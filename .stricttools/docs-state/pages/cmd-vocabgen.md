@@ -1,8 +1,7 @@
 +++
 title = "cmd/vocabgen"
-description = "Command vocabgen regenerates internal/vocab/vocab_gen.go from schema/vocabulary.toml and schema/profiles/."
+description = "The development command that regenerates internal/vocab's Go constants from schema/vocabulary.toml and the language profiles."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 2
 +++

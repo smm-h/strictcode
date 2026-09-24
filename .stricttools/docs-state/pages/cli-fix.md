@@ -1,8 +1,7 @@
 +++
 title = "strictcode fix"
-description = "Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification"
+description = "strictcode fix: plan tier-1 fixes and either preview them or apply them, verifying the re-extracted graph and rolling back on any mismatch."
 generated = true
-seeded = true
 nav_group = "CLI Reference"
 nav_order = 2
 +++

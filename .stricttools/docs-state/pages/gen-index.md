@@ -1,8 +1,7 @@
 +++
 title = "API Reference"
-description = "API reference index covering 22 modules"
+description = "Index of strictcode's Go packages, generated from their doc comments: extraction, the relation, rules, checks, fixes, config, and generated readers."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 90
 +++

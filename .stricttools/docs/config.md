@@ -1,6 +1,6 @@
 +++
 title = "Configuration"
-description = "strictcode.toml: rule toggles, severities, thresholds, and allow lists; group toggles; analysis modes; and suppressions shaped per rule, each with a mandatory reason."
+description = "strictcode.toml: rule and group toggles, severities, allow lists, analysis modes, and per-rule suppressions, each with a mandatory reason."
 nav_order = 300
 +++
 

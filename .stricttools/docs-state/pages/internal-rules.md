@@ -1,8 +1,7 @@
 +++
 title = "internal/rules"
-description = "Package rules is the rule registry: the Go declarations documented in .stricttools/docs/rules.md."
+description = "Package rules is the rule registry: every rule's ID, severity, capabilities, groups, suppression shape, fixes, and the support-matrix calculus."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 12
 +++

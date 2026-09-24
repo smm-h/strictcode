@@ -1,8 +1,7 @@
 +++
 title = "strictcode CLI Reference"
-description = "Complete CLI reference for strictcode — all available commands, subcommands, flags, arguments, and usage examples with detailed descriptions."
+description = "Reference for every strictcode command, generated from the strictcli schema: analyze, fix, and registry dump, with their arguments and flags."
 generated = true
-seeded = true
 nav_group = "CLI Reference"
 nav_order = 91
 +++

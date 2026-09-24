@@ -1,6 +1,6 @@
 +++
 title = "Glossary"
-description = "The terms strictcode's documentation uses: interaction relation, projection, capability, layer, profile, maturity, lesson, suppression shape, retirement record, group, fix tier, and side table."
+description = "The terms strictcode's documentation uses, from interaction relation and projection to capability, profile, lesson, and suppression shape."
 nav_order = 440
 +++
 

@@ -1,8 +1,7 @@
 +++
 title = "internal/findings"
-description = "Package findings is the output layer: the findings model, the schema-valid machine document (self-validated through the strictspec findings reader before it is handed to the framework, which validates it again against the declared payload schema), the human-readable text rendering, and the exit-code rule."
+description = "Package findings models findings and renders them as sorted human text or as the schema-validated JSON findings document."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 7
 +++

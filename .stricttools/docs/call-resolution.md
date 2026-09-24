@@ -1,6 +1,6 @@
 +++
 title = "Call resolution"
-description = "How strictcode resolves Python calls: an always-on syntactic, import-aware layer that records unresolvable calls honestly, and a planned opt-in type-checker layer that is a hard error if unavailable."
+description = "How strictcode resolves Python calls: a syntactic, import-aware layer that records unresolvable calls, and a planned opt-in type-checker layer."
 nav_order = 160
 +++
 

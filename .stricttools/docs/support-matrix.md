@@ -1,6 +1,6 @@
 +++
 title = "Support matrix"
-description = "Which strictcode rules and capabilities are supported, planned, or not applicable in Python, Go, and TypeScript/JavaScript, rendered from the committed registry and profiles."
+description = "Which strictcode rules and capabilities are supported, planned, or not applicable in Python, Go, and TypeScript/JavaScript."
 nav_order = 140
 +++
 

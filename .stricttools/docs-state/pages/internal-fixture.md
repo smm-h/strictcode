@@ -1,8 +1,7 @@
 +++
 title = "internal/fixture"
-description = "Package fixture builds on-disk workspace fixtures for tests: a map of relative paths to file contents, written into a temp directory."
+description = "Package fixture writes on-disk workspace fixtures for tests from a map of relative paths to file contents."
 generated = true
-seeded = true
 nav_group = "API Reference"
 nav_order = 9
 +++
