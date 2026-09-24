@@ -262,37 +262,14 @@
       "commands": {
         "dump": {
           "name": "dump",
-          "help": "Write the committed registry dump (rules, groups, tombstones) as JSON",
+          "help": "Write the committed registry dump (rules with their per-language support cells, groups, tombstones) as JSON",
           "effect": "mutating",
           "dry_run_supported": false,
           "dry_run_unsupported_reason": "the dump is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
           "flags": [
             {
               "name": "out",
-              "help": "Output path for the registry dump; omitted means REGISTRY.json",
-              "value_schema": {
-                "type": "string"
-              },
-              "presence": "optional"
-            }
-          ]
-        }
-      }
-    },
-    "matrix": {
-      "name": "matrix",
-      "help": "Language x feature support matrix",
-      "commands": {
-        "gen": {
-          "name": "gen",
-          "help": "Write the generated support matrix (rules and capabilities per language)",
-          "effect": "mutating",
-          "dry_run_supported": false,
-          "dry_run_unsupported_reason": "the matrix is written with a direct file write, outside the effects handle, so a preview would report nothing while the real run rewrites the file",
-          "flags": [
-            {
-              "name": "out",
-              "help": "Output path for the matrix; omitted means docs/MATRIX.md",
+              "help": "Output path for the registry dump; omitted means schema/registry.json",
               "value_schema": {
                 "type": "string"
               },
