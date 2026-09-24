@@ -1,13 +1,20 @@
 // Binding evaluation harness: gotreesitter (pure Go) vs the official CGo
 // bindings, per the pinned criteria in DESIGN.md section 12.4.
 //
-// Absolute criteria (gates):
-//  1. identical  — byte-identical parse trees vs the C grammar on the corpus.
+// Absolute criteria:
+//  1. identical  — byte-identical parse trees vs the C grammar on the input files.
 //  2. queries    — support for every tree-sitter query form strictcode needs,
-//                  with equal results from both engines on the corpus.
+//                  with equal results from both engines on the input files.
 //
-// If both gates pass: gotreesitter wins when its parse throughput is >= 75%
+// If both criteria pass: gotreesitter wins when its parse throughput is >= 75%
 // of the CGo bindings' throughput (mode: throughput), else CGo wins.
+//
+// A diagnostic mode (not part of the verdict):
+//  4. normalized -- mirror gotreesitter's documented Python wrapper removal
+//                  onto the C tree, compare, and group whatever still differs
+//                  by the node kinds at the first divergence. What remains is
+//                  divergence the documented normalization does not explain,
+//                  that is, misparses worth reporting upstream.
 //
 // This is a standalone Go module so the main strictcode module only ever
 // depends on the winning binding. Methodology and verdict: BUILDLOG.md.
@@ -33,7 +40,7 @@ import (
 // queryForms is the closed list of tree-sitter query forms strictcode's
 // extractors need, each exercised by a realistic Python query. Forms covered:
 // named nodes, fields, captures, anonymous leaves, alternation [..],
-// wildcard (_), quantifiers ? * +, anchor ., negated field !field,
+// wildcard (_), quantifiers ? * +, the . position operator, negated field !field,
 // grouping (..), and the text predicates #eq? #not-eq? #match? #any-of?.
 var queryForms = []struct {
 	name  string
@@ -49,7 +56,7 @@ var queryForms = []struct {
 	{"dunder-all", `(assignment left: (identifier) @lhs (#eq? @lhs "__all__"))`},
 	{"not-private-def", `(function_definition name: (identifier) @name (#not-eq? @name "__init__"))`},
 	{"decorated", `(decorated_definition (decorator)+ @dec)`},
-	{"docstring-anchor", `(block . (expression_statement (string)) @docstring)`},
+	{"docstring-first-statement", `(block . (expression_statement (string)) @docstring)`},
 	{"return-wildcard", `(return_statement (_) @val)`},
 	{"stdout-calls", `((identifier) @id (#any-of? @id "print" "exec" "eval"))`},
 	{"unannotated-def", `(function_definition !return_type name: (identifier) @name)`},
@@ -57,24 +64,26 @@ var queryForms = []struct {
 }
 
 func main() {
-	mode := flag.String("mode", "", "identical | queries | throughput (required)")
+	mode := flag.String("mode", "", "identical | queries | throughput | normalized (required)")
 	rounds := flag.Int("rounds", 3, "throughput rounds (best-of)")
 	flag.Parse()
 	if *mode == "" || flag.NArg() == 0 {
-		fmt.Fprintln(os.Stderr, "usage: binding-eval -mode identical|queries|throughput <corpus-dir>...")
+		fmt.Fprintln(os.Stderr, "usage: binding-eval -mode identical|queries|throughput|normalized <dir>...")
 		os.Exit(2)
 	}
 	files := collectPython(flag.Args())
 	if len(files) == 0 {
-		fmt.Fprintln(os.Stderr, "no .py files found in corpus")
+		fmt.Fprintln(os.Stderr, "no .py files found in the input directories")
 		os.Exit(2)
 	}
-	fmt.Printf("corpus: %d Python files\n", len(files))
+	fmt.Printf("input: %d Python files\n", len(files))
 	switch *mode {
 	case "identical":
 		runIdentical(files)
 	case "queries":
 		runQueries(files)
+	case "normalized":
+		runNormalized(files)
 	case "throughput":
 		runThroughput(files, *rounds)
 	default:
@@ -193,12 +202,12 @@ func runIdentical(files []string) {
 			reportFirstDivergence(path, csb.String(), gsb.String())
 		}
 	}
-	fmt.Printf("identical-trees gate: %d files checked, %d mismatched\n", checked, mismatched)
+	fmt.Printf("identical-trees criterion: %d files checked, %d mismatched\n", checked, mismatched)
 	if mismatched > 0 {
-		fmt.Println("GATE: FAIL")
+		fmt.Println("CRITERION: FAIL")
 		os.Exit(1)
 	}
-	fmt.Println("GATE: PASS")
+	fmt.Println("CRITERION: PASS")
 }
 
 func reportFirstDivergence(path, a, b string) {
@@ -238,7 +247,7 @@ func runQueries(files []string) {
 	gtsLang := gtsgrammars.PythonLanguage()
 	gtsParser := gts.NewParser(gtsLang)
 
-	// Gate part 1: every query form must compile on both engines.
+	// Criterion part 1: every query form must compile on both engines.
 	cgoQueries := make([]*cgo.Query, len(queryForms))
 	gtsQueries := make([]*gts.Query, len(queryForms))
 	compileFailed := false
@@ -257,12 +266,12 @@ func runQueries(files []string) {
 		gtsQueries[i] = gq
 	}
 	if compileFailed {
-		fmt.Println("GATE: FAIL (query form not supported)")
+		fmt.Println("CRITERION: FAIL (query form not supported)")
 		os.Exit(1)
 	}
 	fmt.Printf("all %d query forms compile on both engines\n", len(queryForms))
 
-	// Gate part 2: equal results on the corpus.
+	// Criterion part 2: equal results on the input files.
 	filesWithDiffs := 0
 	for _, path := range files {
 		src, err := os.ReadFile(path)
@@ -292,12 +301,12 @@ func runQueries(files []string) {
 			fmt.Printf("DIFF %s\n%s\n", path, strings.Join(diffs, "\n"))
 		}
 	}
-	fmt.Printf("query-results gate: %d files checked, %d with differing results\n", len(files), filesWithDiffs)
+	fmt.Printf("query-results criterion: %d files checked, %d with differing results\n", len(files), filesWithDiffs)
 	if filesWithDiffs > 0 {
-		fmt.Println("GATE: FAIL")
+		fmt.Println("CRITERION: FAIL")
 		os.Exit(1)
 	}
-	fmt.Println("GATE: PASS")
+	fmt.Println("CRITERION: PASS")
 }
 
 // cgoQueryResults returns a sorted list of "pattern|capture|start..end" strings.
@@ -380,7 +389,7 @@ func runThroughput(files []string, rounds int) {
 		docs = append(docs, doc{path, src})
 		totalBytes += int64(len(src))
 	}
-	fmt.Printf("corpus size: %.2f MB\n", float64(totalBytes)/1e6)
+	fmt.Printf("input size: %.2f MB\n", float64(totalBytes)/1e6)
 
 	// CGo engine.
 	cgoLang := cgo.NewLanguage(cgopython.Language())
