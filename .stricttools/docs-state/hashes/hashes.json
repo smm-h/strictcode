@@ -1,0 +1,151 @@
+{
+  "_hash_version": 3,
+  "en/call-resolution.md": {
+    "content": "2c2abd497a703db77f9efd8643949a9221b8b5f15178f6826c9cb8ee1e50c6fd",
+    "description": "78647664733481aa34ba50d05378c27269d14cf99eb68f5795463dd3cb5fe628"
+  },
+  "en/capabilities-and-profiles.md": {
+    "content": "66e96dc35788593edb861a7e3e7501fe9c1ae28b67d242613814f9ab8bb1e016",
+    "description": "31d99b7a44af01cda3c14be30214abdbafc383ff522b48e634d1136611808650"
+  },
+  "en/check-semantics.md": {
+    "content": "1b311dc811c85f3cce96f591581b89b0b56360588b587a1fdfbde709515965dd",
+    "description": "366ed8ebac6244c3f84a79825f9d72a3a1eca91299779c2d78526556f2b3b4b4"
+  },
+  "en/cli-and-output.md": {
+    "content": "762ace7949223f38c2a090401671cc39fd2b3e57d4f03d3211817f88bfdb52b7",
+    "description": "82493f67b0e5954adfa1657239ff43506996973974687f8599fa63b676019ebb"
+  },
+  "en/config.md": {
+    "content": "920560c43da8f8d4382fb61314abd8a3058dd9a8ac08232c8dbc8b61cd6d0e16",
+    "description": "c84c4e17f65632b89934495665a5276fc41f3917602e45287dbdfde15a8109a3"
+  },
+  "en/decisions.md": {
+    "content": "486f417dfafaccd03c6af2f483eded919f3546a17c402d835506f815eadde977",
+    "description": "c361d09fffe5ef56a65602d8fe0814d116c8b5a63d350c53d16f0a00712971ac"
+  },
+  "en/distribution.md": {
+    "content": "6fbea0978fb52a0db6acd6e8cae82d8f5d20727e63671ee78ea0cca42b9e9476",
+    "description": "9cbdc65c739df70a39a8dbd94ae006da9e63b3335c569d3ae28f0f25dd541437"
+  },
+  "en/fixes.md": {
+    "content": "de51fd517abac80ad2f68c0a82a9188b4e3c5d5444f90d8bef30336d8289b88a",
+    "description": "a2b575cdee0715ec7c53fd39b90e06870cb8d9812fa6ce9af844b4722e9b1d3c"
+  },
+  "en/glossary.md": {
+    "content": "ee5f6b54918fea24d8dcb56ef5cafcf9f8d3c0515f23c2b60bc8b7169df6ab49",
+    "description": "3d49e620d93c6daf10bfa4e2bc7009f6c44e09c6b2cada2ff0822ac4bc59ec3a"
+  },
+  "en/graph-model.md": {
+    "content": "7e6e4433c155bc178a9c66e57a84b3f2e8558838a94539319511acb4ff157f00",
+    "description": "4d33044752736d95af3c2b99ec3644f6d69c0252f9034b2b5b1103ac47da0f5c"
+  },
+  "en/implementation.md": {
+    "content": "7c91d78a32d592a1f0648ae83add0760fca10fab6c6563e8eb2113628b29440d",
+    "description": "c31922e6f75644bbe025f9e9e1d575d6373c4ef7d55df60634f42308b234632a"
+  },
+  "en/index.md": {
+    "content": "94e97f57ea21885b16dc6e2b6b61bf48beba505e2befce4652f0120ee3222d71",
+    "description": "e144d8a8feb627602fc1fab7ae545140ebf6adde621439a14c2901bad241ca3f"
+  },
+  "en/installation.md": {
+    "content": "7b0769277c4d6257502d3a83bd7b9e50bef80c51641fb2a5212e2f8057a1d8f9",
+    "description": "27d87fcfb050fd8cb86e6d3ee4d2eb87c2741ca8fb7248368b24ebd8118b56aa"
+  },
+  "en/lessons.md": {
+    "content": "4378337fd9abd4dd935f5aadc11d3a6e0a447d90df81b8e942b6f98acdc0ec8c",
+    "description": "354a2311d5c50d6956fd2ee07170f15911720e27c8385f4a0321022923861154"
+  },
+  "en/node-identity.md": {
+    "content": "b38c59897b9d691e8caf0227712fa5c3daf84508eef5e017f76ff62c24adb43b",
+    "description": "6b42d034e394c417ca1598dc04af1def39975c78c887592893a152aa9f1e50bb"
+  },
+  "en/non-goals.md": {
+    "content": "a7017c40752ce144a55d4800c4def41f8b8a915980b0a418af6ec5eb4f7095c6",
+    "description": "75ffc109e8edb5fd496b68ed425759ab2bd45e8707e347f5780303b2264b80eb"
+  },
+  "en/philosophy.md": {
+    "content": "b6c393d31ac6414f21b23fcc8b6c8935b842bce324eff38785ff3abadc68f665",
+    "description": "04b93135519d7c6fe129e8af8aeba97bd1c762f6705a47132328e58a6487a2a8"
+  },
+  "en/prior-art.md": {
+    "content": "520d781cedb498d01cc246168150697315691bb0df7d5f1b3ed735c4088fc334",
+    "description": "f29eeed0f189842efd7d66eda24219da716f5d092b00e45b697ad57cec9d0aa6"
+  },
+  "en/rlsbl-integration.md": {
+    "content": "c8bdab2c152b3498360b4fd77b6924927298cc713aeb7d9ddab3661a1c55010c",
+    "description": "0338f9b3816dfcaf2d153a6f3fa9273702efe1fe5515c9dae3352133b830e7c1"
+  },
+  "en/rules.md": {
+    "content": "e1a5af7f873add5a4d8849e355b723ff1211a6e46f7c6c160324b048cb9b7d30",
+    "description": "f60db467dff945bf6ba6b31ef662e44d54e11ea7c3f77e91629405157a6417dd"
+  },
+  "en/rules/dead-modules.md": {
+    "content": "f3dbb5ef2d726cebfe904f695b37e39e36d41a8766a8a0c5e265d702e128e275",
+    "description": "41a465067a623bb1a9f19e74000bb34f12428f1dc0ac2c9dfa43dfc64f330708"
+  },
+  "en/rules/dead-workspace-packages.md": {
+    "content": "a217c8ca9e2e90978fd0675e199faec2ce6d114e4171ff927425ac68ff1ec1d5",
+    "description": "315409b734464eed8ddfa33fec951829b6a364cee1b69d06c72e20e8540773cb"
+  },
+  "en/rules/deps-dev-in-production.md": {
+    "content": "e30b55cc5822ea424dd9d3b33d42e1fa8650698f941a3e9c95bdf6c22c3e9ce1",
+    "description": "7a4032b60f69a6a1f638b25659c80caa449fd69a23dd361c8d21fa949cbab04a"
+  },
+  "en/rules/deps-hard-guarded-only.md": {
+    "content": "bd1247c3e3112dea8aba2a67025315201fc3b58735051b104c0a22450b40b85e",
+    "description": "ee84b04090435304217f249f3f4b8cf0c0c1306317c79301fa7be10d5f079c96"
+  },
+  "en/rules/deps-runtime-test-only.md": {
+    "content": "30783cd41e1d7527bd59f5523425a1b1caf9c7b674288aeb74ac1f8e7861823d",
+    "description": "09fa02da2f77d2ed223db4ceb7bfc45da6b4cdad32c3337ff3028f97bbc7d312"
+  },
+  "en/rules/deps-undeclared.md": {
+    "content": "ff437e6d16d6670321f93468a6dc47c8eb72ab0e08d7cdc2c89fb36cc166743a",
+    "description": "7717831e8d2c06676f00a619dad0ef09e8d50c2aa55e80e728229cd5bcd1fc3d"
+  },
+  "en/rules/deps-unused.md": {
+    "content": "61ca892fe7c56f8187c809115f2a608f7ac2262b72843d0405155976a75d70d8",
+    "description": "bb20e42cbe25febfd264fafdd187763b6b83b02f9368e3b09fc84326f5911434"
+  },
+  "en/rules/import-cycles.md": {
+    "content": "0403f117791c393e5ef0df11f72050ebacfe42ef483a994ededb9cc897407677",
+    "description": "0bed67733cec93539cc5668f73f8d93c8a1e01e7017bc7d21888f13f642cbd36"
+  },
+  "en/rules/library-direct-logging.md": {
+    "content": "c985a0fc2874ea844ade3790d79c403b5a5a8de0873ab211ddd2daf3002cfd42",
+    "description": "0ffe71cce0a0a7f4751ea208fbd072f3cbd7472fc6e61d3e9ec6aaba60f41baf"
+  },
+  "en/rules/library-entry-point.md": {
+    "content": "bbc2cd7a2ab8a4777ad8403170b71f45f055199f7d95c3d3a81adae4f80c1093",
+    "description": "30697a6a10346a50eb1c4be680095f773ef6daa4b4c7dafd824c44cf14436eef"
+  },
+  "en/rules/library-forbidden-imports.md": {
+    "content": "9baf705f6fea9d6a327634ab1004d93f2238ed337279cdd59d9bb6c7a6f818e3",
+    "description": "11506038f785baeb2a4aa16b0b4a5fe38eb97a4774e8a2fd28dcc9e2fd25692a"
+  },
+  "en/rules/library-stdout.md": {
+    "content": "746d9070b4d971871882916667f5b8f63ce0b768ceb313c07b5d78353291d443",
+    "description": "1fdd88ac953c94f6db0b1f7e8cb6588a7cbb952628c1fb00f274129961b384f0"
+  },
+  "en/rules/stale-suppression.md": {
+    "content": "ed197752f70592a177c68f46b9baa6ac85b001ae74960b14dbd427e9fb140f1f",
+    "description": "1badcf81689c423c0a74f2bf479f92f298bf30b4058644f5819bc0240bf41bf8"
+  },
+  "en/rules/unreachable-code.md": {
+    "content": "ac4c4fc5f9df14bdfb8a24745082efb95b60320761e3ff1bff46da4906faa4eb",
+    "description": "003045704d8bedead0823e4c60bdea26cc20d69946a9a51048c1494bc196569e"
+  },
+  "en/support-matrix.md": {
+    "content": "fae198935ba3def0cd66758d29ddb0beee0dbe791d579a46576f8c843aea3df1",
+    "description": "3508edafdfa537390a48045acc1170241d456f4df97b2d99e0b6b27c73bd1dcf"
+  },
+  "en/versioning.md": {
+    "content": "48225620169ecab2cbde8fd4420bf4a0c40bb5d4eb8582e795c286fbc8ed1596",
+    "description": "2606a2ada854eafb0f7edc412112303ed8dbbac519e8d81eb58bad03311b8299"
+  },
+  "en/vocabulary.md": {
+    "content": "64fd0b0d33645fbd293ac04ef902ae9914ad9184051929daa9b77e9f2e599c64",
+    "description": "e9cbab2481684782d578c0ac443399dbfb8b8a689ba98c9e9e2c62be1f6d89d1"
+  }
+}
