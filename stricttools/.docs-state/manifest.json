@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "name": "strictcode",
   "slug": "strictcode",
   "version": "0.2.0",
@@ -3703,5 +3703,9 @@
   ],
   "posts": [],
   "last_gen": "2026-09-24T01:22:51.271268+00:00",
-  "theme": "minimal"
+  "theme": "minimal",
+  "vocabulary": {
+    "accepted": [],
+    "rejected": []
+  }
 }
