@@ -1,4 +1,4 @@
-// The lessons register (.stricttools/docs/lessons.md) as the acceptance suite:
+// The lessons register (stricttools/docs/lessons.md) as the acceptance suite:
 // each applicable item is a regression test, written before the checks were
 // implemented (red-green). Lesson numbers are cited inline. Lessons 6-8 and
 // 17-19 are additionally covered at their home packages (testctx, extract);

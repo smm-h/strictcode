@@ -106,7 +106,7 @@ func buildPyResolutionIndex(ws *workspace.Workspace) (*pyResolutionIndex, error)
 	return idx, nil
 }
 
-// resolveMember applies the import resolution order in .stricttools/docs/check-semantics.md to an absolute
+// resolveMember applies the import resolution order in stricttools/docs/check-semantics.md to an absolute
 // dotted import. Returns nil for stdlib and external imports.
 func (idx *pyResolutionIndex) resolveMember(dotted string) *workspace.Member {
 	parts := strings.Split(dotted, ".")
@@ -139,7 +139,7 @@ func (idx *pyResolutionIndex) resolveMember(dotted string) *workspace.Member {
 }
 
 // discoverPyLayout walks a member's .py files and derives package roots and
-// module logical names (.stricttools/docs/node-identity.md, module segment: dotted path from the discovered
+// module logical names (stricttools/docs/node-identity.md, module segment: dotted path from the discovered
 // package root; the same discovery feeds the namespace map).
 func discoverPyLayout(ws *workspace.Workspace, m *workspace.Member) (*pyMemberLayout, error) {
 	files, err := walkMember(ws, m, func(name string) bool { return strings.HasSuffix(name, ".py") })

@@ -2,7 +2,7 @@ package testctx
 
 import "testing"
 
-// The shared test-context predicate (.stricttools/docs/check-semantics.md, test context). One predicate,
+// The shared test-context predicate (stricttools/docs/check-semantics.md, test context). One predicate,
 // computed on the path relative to the project root, shared by every check.
 // Lessons 6, 7, 8 of the register are encoded here.
 func TestIsTestContext(t *testing.T) {

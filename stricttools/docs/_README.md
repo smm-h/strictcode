@@ -42,7 +42,7 @@ analysis modes, and suppressions, each with a mandatory reason.
 
 The documentation site covers the graph model, every rule, configuration, the support matrix by
 language, and the decisions behind the design, including the alternatives that were rejected. Its
-source is in `.stricttools/docs/`.
+source is in `stricttools/docs/`.
 
 ## License
 

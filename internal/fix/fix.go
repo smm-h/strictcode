@@ -1,4 +1,4 @@
-// Package fix is the tier-1 fix engine (.stricttools/docs/fixes.md): a whitelist of hand-proven transforms plus mechanical
+// Package fix is the tier-1 fix engine (stricttools/docs/fixes.md): a whitelist of hand-proven transforms plus mechanical
 // re-verification. A transform declares its relation delta; after applying
 // the edits, the workspace is re-extracted and the actual post-fix relation
 // must equal the expected one (canonical-form comparison, span attributes
@@ -61,7 +61,7 @@ func PlanUnreachableRemovals(res *extract.Result, cfg *config.Effective) []Plann
 	// Drop regions nested inside another region of the same file, and
 	// refuse regions whose removal would renumber same-name (or same-hint)
 	// siblings outside the region — ordinal drift the pruning delta cannot
-	// express (.stricttools/docs/node-identity.md, overloads and redefinitions); those stay detection-only.
+	// express (stricttools/docs/node-identity.md, overloads and redefinitions); those stay detection-only.
 	var out []Planned
 	for i, u := range regions {
 		nested := false
@@ -149,7 +149,7 @@ type Report struct {
 }
 
 // Apply performs the planned fixes and runs the post-fix verification
-// described in .stricttools/docs/fixes.md. On a verification mismatch every edited file is restored
+// described in stricttools/docs/fixes.md. On a verification mismatch every edited file is restored
 // and an error describing the tool bug is returned.
 func Apply(ws *workspace.Workspace, pre *extract.Result, plans []Planned) (*Report, error) {
 	if len(plans) == 0 {
@@ -303,7 +303,7 @@ func pruneExpected(rel *relation.Relation, byFile map[string][]Planned) ([]relat
 // ignored across the whole edited file, not only after the edit point,
 // because a shrunk enclosing span can end just before the edit point post-fix
 // while its pre-fix span reached beyond it, so a point-relative predicate
-// cannot correlate the two sides (.stricttools/docs/fixes.md). Rows in non-edited files keep full span verification, and
+// cannot correlate the two sides (stricttools/docs/fixes.md). Rows in non-edited files keep full span verification, and
 // structural identity (kinds, IDs, attributes) is verified everywhere.
 func maskRows(rows []relation.Row, editStart map[string]uint32) []relation.Row {
 	out := make([]relation.Row, len(rows))

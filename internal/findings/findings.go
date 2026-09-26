@@ -19,7 +19,7 @@ import (
 
 // Target is what a finding points at: a node plus its site.
 type Target struct {
-	// ID is the serialized qualified node ID (.stricttools/docs/node-identity.md).
+	// ID is the serialized qualified node ID (stricttools/docs/node-identity.md).
 	ID string
 	// Kind is the node kind.
 	Kind vocab.NodeKind

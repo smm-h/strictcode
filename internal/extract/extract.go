@@ -1,6 +1,6 @@
 // Package extract builds the interaction relation from a loaded workspace:
-// the import-graph extractors for the language trio (.stricttools/docs/check-semantics.md
-// and .stricttools/docs/graph-model.md). One extraction pass populates one relation
+// the import-graph extractors for the language trio (stricttools/docs/check-semantics.md
+// and stricttools/docs/graph-model.md). One extraction pass populates one relation
 // shared by every check (lesson 30).
 package extract
 
@@ -35,7 +35,7 @@ type Result struct {
 	// relation row), external (builtins/stdlib/external packages — the
 	// library-stdout surface), and unresolved (honestly unknown). The
 	// relation itself carries only resolved local-to-local rows because
-	// rows demand both endpoints exist as nodes; see .stricttools/docs/graph-model.md, side tables.
+	// rows demand both endpoints exist as nodes; see stricttools/docs/graph-model.md, side tables.
 	Calls []CallSite
 	// Unreachable carries dead statement regions (the unreachable-code
 	// rule and the tier-1 removal transform).

@@ -5,7 +5,7 @@ document_syntax = "json"
 role = "schema"
 root = "Registry"
 targets = ["go"]
-description = "Validates schema/registry.json: the committed rule-registry dump (rules, groups, and retired-rule records; see the rules page in .stricttools/docs/rules.md). The release diff classifies version bumps from this artifact, and the docs site renders its rule and support-matrix tables from it. Capability enums are sourced from schema/vocabulary.toml (strictspec decision 32)."
+description = "Validates schema/registry.json: the committed rule-registry dump (rules, groups, and retired-rule records; see the rules page in stricttools/docs/rules.md). The release diff classifies version bumps from this artifact, and the docs site renders its rule and support-matrix tables from it. Capability enums are sourced from schema/vocabulary.toml (strictspec decision 32)."
 
 [types.Registry]
 type = "record"
@@ -142,7 +142,7 @@ regex = "^[a-z][a-z0-9-]*$"
 type = "enum"
 required = true
 values = ["none", "path", "project-dep", "member-set", "member"]
-description = "The rule's suppression target shape (see .stricttools/docs/config.md)."
+description = "The rule's suppression target shape (see stricttools/docs/config.md)."
 
 [types.RuleDecl.fields.fix_tier]
 type = "integer"

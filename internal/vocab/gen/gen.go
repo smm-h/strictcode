@@ -65,7 +65,7 @@ func Generate(repoRoot string) ([]byte, error) {
 	}
 
 	// Closed-set check: profiles must declare exactly the vocabulary's
-	// capabilities (.stricttools/docs/capabilities-and-profiles.md: unknown capability names are hard
+	// capabilities (stricttools/docs/capabilities-and-profiles.md: unknown capability names are hard
 	// errors at generation time).
 	capSet := map[string]bool{}
 	for _, c := range v.Capabilities {

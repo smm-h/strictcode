@@ -1,5 +1,5 @@
 // Binding evaluation harness: gotreesitter (pure Go) vs the official CGo
-// bindings, per the pinned criteria recorded in .stricttools/docs/decisions.md.
+// bindings, per the pinned criteria recorded in stricttools/docs/decisions.md.
 //
 // Absolute criteria:
 //  1. identical  — byte-identical parse trees vs the C grammar on the input files.
@@ -17,7 +17,7 @@
 //     that is, misparses worth reporting upstream.
 //
 // This is a standalone Go module so the main strictcode module only ever
-// depends on the winning binding. Methodology and verdicts: .stricttools/docs/decisions.md (experiments).
+// depends on the winning binding. Methodology and verdicts: stricttools/docs/decisions.md (experiments).
 package main
 
 import (

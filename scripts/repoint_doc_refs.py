@@ -2,7 +2,7 @@
 """One-off rewrite of references to the retired root design documents.
 
 DESIGN.md, schema/SPEC.md, CATALOG.md, BUILDLOG.md, and docs/MATRIX.md were
-replaced by pages under .stricttools/docs/. Each entry below names a file, the
+replaced by pages under stricttools/docs/. Each entry below names a file, the
 exact old text, and the new text; every entry must match once, so a typo stops
 the run instead of silently changing nothing.
 
@@ -11,7 +11,7 @@ Usage: scripts/repoint_doc_refs.py --dry-run | --apply
 import sys
 from pathlib import Path
 
-D = ".stricttools/docs/"
+D = "stricttools/docs/"
 R = [
 ("benchmark/binding-eval/main.go", "per the pinned criteria in DESIGN.md section 12.4.", f"per the pinned criteria recorded in {D}decisions.md."),
 ("benchmark/binding-eval/main.go", "Methodology and verdict: BUILDLOG.md.", f"Methodology and verdicts: {D}decisions.md (experiments)."),
@@ -76,7 +76,7 @@ R = [
 ("internal/treesitter/treesitter.go", "span over LF-normalized UTF-8 (schema/SPEC.md section 3);", f"span over LF-normalized UTF-8 ({D}graph-model.md);"),
 ("internal/treesitter/treesitter.go", "Extension mapping follows DESIGN.md\n// section 6.2 (TS/JS resolution", f"Extension mapping follows {D}check-semantics.md\n// (TS/JS resolution"),
 ("internal/treesitter/treesitter.go", "(schema/SPEC.md section 3).", f"({D}graph-model.md, spans and positions)."),
-("schema/vocabulary.toml", "# Identity (the qualified ID, SPEC.md section 2) and span are universal and", "# Identity (the qualified ID, .stricttools/docs/node-identity.md) and span are universal and"),
+("schema/vocabulary.toml", "# Identity (the qualified ID, SPEC.md section 2) and span are universal and", "# Identity (the qualified ID, stricttools/docs/node-identity.md) and span are universal and"),
 ("schema/vocabulary.toml", 'description = "An anonymous callable capturing scope; identity per SPEC.md section 2.3."', 'description = "An anonymous callable capturing scope, identified by name hint, ordinal, and signature fingerprint."'),
 ("schema/profiles/go.toml", "pointer-ness normalized (SPEC.md 2.5).", "pointer-ness normalized, so changing a receiver between value and pointer keeps the ID."),
 ("schema/profiles/go.toml", 'notes = "Identity per SPEC.md 2.3."', 'notes = "Identified by name hint, ordinal, and signature fingerprint."'),
@@ -85,15 +85,15 @@ R = [
 ("schema/profiles/ts-js.toml", "index collapsed (SPEC.md 2.2).", "index collapsed."),
 ("schema/profiles/ts-js.toml", "disambiguated by source-order index (SPEC.md 2.4).", "disambiguated by source-order index."),
 ("schema/profiles/ts-js.toml", "Specifier reduction per DESIGN.md 6.3 (TS/JS);", "Specifiers reduce to bare package names;"),
-("schema/strictspec/findings.schema.toml", 'description = "Serialized qualified node ID (SPEC.md section 2)."', 'description = "Serialized qualified node ID (see .stricttools/docs/node-identity.md)."'),
-("schema/strictspec/config.schema.toml", 'description = "Gates strictcode.toml: the single configuration file (DESIGN.md section 12.3) — rule toggles/severities/thresholds, analysis modes, group toggles, and per-rule-shaped suppressions with mandatory reasons. Rule-ID validity (including tombstone rendering) and suppression-shape-vs-rule matching are consumer-native checks against the registry; path staleness is the stale-suppression rule."', 'description = "Validates strictcode.toml, the single configuration file (see .stricttools/docs/config.md): rule toggles, severities, thresholds, and allow lists; analysis modes; group toggles; and suppressions in each rule\'s declared shape, each with a mandatory reason. Rule-ID validity (a retired rule\'s error shows its retirement record) and matching suppressions to their rule\'s shape are checked by the loader against the registry; suppressions naming things that no longer exist are the stale-suppression rule."'),
+("schema/strictspec/findings.schema.toml", 'description = "Serialized qualified node ID (SPEC.md section 2)."', 'description = "Serialized qualified node ID (see stricttools/docs/node-identity.md)."'),
+("schema/strictspec/config.schema.toml", 'description = "Gates strictcode.toml: the single configuration file (DESIGN.md section 12.3) — rule toggles/severities/thresholds, analysis modes, group toggles, and per-rule-shaped suppressions with mandatory reasons. Rule-ID validity (including tombstone rendering) and suppression-shape-vs-rule matching are consumer-native checks against the registry; path staleness is the stale-suppression rule."', 'description = "Validates strictcode.toml, the single configuration file (see stricttools/docs/config.md): rule toggles, severities, thresholds, and allow lists; analysis modes; group toggles; and suppressions in each rule\'s declared shape, each with a mandatory reason. Rule-ID validity (a retired rule\'s error shows its retirement record) and matching suppressions to their rule\'s shape are checked by the loader against the registry; suppressions naming things that no longer exist are the stale-suppression rule."'),
 ("schema/strictspec/vocabulary.schema.toml", 'description = "Gates schema/vocabulary.toml:', 'description = "Validates schema/vocabulary.toml:'),
 ("schema/strictspec/profile.schema.toml", 'description = "Gates schema/profiles/*.toml:', 'description = "Validates schema/profiles/*.toml:'),
 ("schema/vocabulary.toml", "# A strictspec-gated document (schema/strictspec/vocabulary.schema.toml).", "# A strictspec document, validated by schema/strictspec/vocabulary.schema.toml."),
 ("schema/profiles/python.toml", "# A strictspec-gated document (schema/strictspec/profile.schema.toml).", "# A strictspec document, validated by schema/strictspec/profile.schema.toml."),
 ("schema/profiles/go.toml", "# A strictspec-gated document (schema/strictspec/profile.schema.toml).", "# A strictspec document, validated by schema/strictspec/profile.schema.toml."),
 ("schema/profiles/ts-js.toml", "# A strictspec-gated document (schema/strictspec/profile.schema.toml).", "# A strictspec document, validated by schema/strictspec/profile.schema.toml."),
-("schema/strictspec/config.schema.toml", "Python call-resolution layer (DESIGN.md section 8).", "Python call-resolution layer (see .stricttools/docs/call-resolution.md)."),
+("schema/strictspec/config.schema.toml", "Python call-resolution layer (DESIGN.md section 8).", "Python call-resolution layer (see stricttools/docs/call-resolution.md)."),
 ("schema/strictspec/config.schema.toml", 'description = "A file path (Python, TS/JS) or package directory (Go), relative to the project root."', 'description = "A file path (Python, TS/JS) or package directory (Go), relative to the workspace root."'),
 ]
 

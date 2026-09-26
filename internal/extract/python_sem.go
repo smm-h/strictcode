@@ -2,10 +2,10 @@ package extract
 
 // Python full-semantic extraction (round 3): callables, types, containment,
 // decorates, declared conformance, instantiation, and syntactic call
-// resolution via a two-pass symbol table (.stricttools/docs/call-resolution.md, the syntactic layer).
+// resolution via a two-pass symbol table (stricttools/docs/call-resolution.md, the syntactic layer).
 //
 // Pass 1 (per file, same parse as the import extractor): emit
-// function/closure/type nodes with the identity rules in .stricttools/docs/node-identity.md (anonymous
+// function/closure/type nodes with the identity rules in stricttools/docs/node-identity.md (anonymous
 // hint~ordinal~fp8, overload #n, receiver-free Python chains), contains
 // rows, and record bindings, call sites, decorator sites, base references,
 // and unreachable regions.
@@ -662,7 +662,7 @@ func (w *pySemWalker) analyzeUnreachable(block *sitter.Node, chain []relation.Se
 }
 
 // alwaysTerminates implements the unconditional-terminator predicate
-// (.stricttools/docs/rules/unreachable-code.md): return/raise/break/continue; an if/elif/else where every
+// (stricttools/docs/rules/unreachable-code.md): return/raise/break/continue; an if/elif/else where every
 // branch (including a present else) terminates; a block whose last
 // statement terminates.
 func alwaysTerminates(stmt *sitter.Node) bool {
@@ -784,7 +784,7 @@ func decoratorExpr(d *sitter.Node, src []byte) string {
 
 // lambdaHint derives the name hint: the assigned variable, property, or
 // keyword/parameter name when syntactically derivable, else "anon"
-// (.stricttools/docs/node-identity.md, anonymous units).
+// (stricttools/docs/node-identity.md, anonymous units).
 func lambdaHint(n *sitter.Node, src []byte) string {
 	parent := n.Parent()
 	if parent == nil {
@@ -810,7 +810,7 @@ func lambdaHint(n *sitter.Node, src []byte) string {
 }
 
 // signatureFingerprint: first 8 hex chars of SHA-256 over the normalized
-// signature text (whitespace collapsed); see .stricttools/docs/node-identity.md, anonymous units.
+// signature text (whitespace collapsed); see stricttools/docs/node-identity.md, anonymous units.
 func signatureFingerprint(params string) string {
 	normalized := strings.Join(strings.Fields(params), " ")
 	sum := sha256.Sum256([]byte(normalized))

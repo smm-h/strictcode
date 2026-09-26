@@ -1,7 +1,7 @@
 // Python stdlib module-name table.
 //
 // Generated once from CPython 3.14.5 sys.stdlib_module_names.
-// Used by step 1 of the import resolution order (.stricttools/docs/check-semantics.md): stdlib imports
+// Used by step 1 of the import resolution order (stricttools/docs/check-semantics.md): stdlib imports
 // never resolve to workspace members. Hand-committed data table; regenerate
 // with the generating command from this file's git history if the interpreter baseline moves.
 package extract

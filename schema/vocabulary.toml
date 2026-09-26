@@ -66,7 +66,7 @@ values = ["supported", "planned", "not-applicable"]
 
 # ---------------------------------------------------------------------------
 # Node kinds. Attribute types: "string" | "boolean" | "integer" | "enum:<id>".
-# Identity (the qualified ID, .stricttools/docs/node-identity.md) and span are universal and
+# Identity (the qualified ID, stricttools/docs/node-identity.md) and span are universal and
 # not repeated per kind.
 # ---------------------------------------------------------------------------
 
