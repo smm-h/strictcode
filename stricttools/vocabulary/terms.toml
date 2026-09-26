@@ -1,1 +1,25 @@
 format_version = 1
+
+[[accepted]]
+word = "arcan"
+meaning = "Arcan, an academic and commercial architecture-analysis tool for Java, C, and C++, listed in strictcode's prior art."
+
+[[accepted]]
+word = "rlsbl"
+meaning = "The release orchestration tool that delegates source analysis to strictcode and runs its checks at release time."
+
+[[accepted]]
+word = "scc"
+meaning = "Strongly connected component: a set of modules that all reach each other through imports, the unit strictcode reports as one import cycle."
+
+[[accepted]]
+word = "scip"
+meaning = "SCIP, Sourcegraph's language-agnostic code index of definitions, references, and symbols, listed in strictcode's prior art."
+
+[[accepted]]
+word = "strictcode"
+meaning = "This project: a source-analysis tool that builds an import and call graph for Python, Go, and TypeScript and checks it against declared rules."
+
+[[accepted]]
+word = "strictspec"
+meaning = "The StrictTools schema tool whose TOML schemas validate every machine-read artifact strictcode owns and generate its Go readers."
