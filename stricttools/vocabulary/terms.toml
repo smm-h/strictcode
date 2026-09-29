@@ -9,6 +9,10 @@ word = "cgofree"
 meaning = "The StrictTools tooling that translates C libraries to pure Go through WebAssembly; strictcode parses with its tree-sitter runtime and grammar packages."
 
 [[accepted]]
+word = "goroutine"
+meaning = "A Go thread of execution; a tree-sitter Parser and its trees are used from one at a time."
+
+[[accepted]]
 word = "rlsbl"
 meaning = "The release orchestration tool that delegates source analysis to strictcode and runs its checks at release time."
 
