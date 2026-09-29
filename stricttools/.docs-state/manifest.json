@@ -381,6 +381,11 @@
         },
         {
           "level": 3,
+          "text": "Parser binding: cgofree's pure-Go translation of the official runtime",
+          "anchor": "parser-binding-cgofrees-pure-go-translation-of-the-official-runtime"
+        },
+        {
+          "level": 3,
           "text": "Graph model: an interaction relation",
           "anchor": "graph-model-an-interaction-relation"
         },
@@ -478,6 +483,11 @@
           "level": 3,
           "text": "2026-09-24: new module paths, the matrix from data, and selfdoc",
           "anchor": "2026-09-24-new-module-paths-the-matrix-from-data-and-selfdoc"
+        },
+        {
+          "level": 3,
+          "text": "2026-09-29: pure-Go tree-sitter",
+          "anchor": "2026-09-29-pure-go-tree-sitter"
         },
         {
           "level": 2,
@@ -653,8 +663,8 @@
         },
         {
           "level": 2,
-          "text": "Parsing: tree-sitter through the official C runtime",
-          "anchor": "parsing-tree-sitter-through-the-official-c-runtime"
+          "text": "Parsing: tree-sitter, the official runtime translated to pure Go",
+          "anchor": "parsing-tree-sitter-the-official-runtime-translated-to-pure-go"
         },
         {
           "level": 2,
@@ -719,11 +729,6 @@
           "level": 2,
           "text": "Requirements",
           "anchor": "requirements"
-        },
-        {
-          "level": 2,
-          "text": "When the build fails with \"build constraints exclude all Go files\"",
-          "anchor": "when-the-build-fails-with-build-constraints-exclude-all-go-files"
         },
         {
           "level": 2,
@@ -2316,6 +2321,11 @@
         },
         {
           "level": 3,
+          "text": "`Node`",
+          "anchor": "node"
+        },
+        {
+          "level": 3,
           "text": "`Grammar`",
           "anchor": "grammar"
         },
@@ -2373,16 +2383,6 @@
           "level": 3,
           "text": "`Tree.HasParseErrors`",
           "anchor": "treehasparseerrors"
-        },
-        {
-          "level": 3,
-          "text": "`Tree.Close`",
-          "anchor": "treeclose"
-        },
-        {
-          "level": 3,
-          "text": "`Query.Close`",
-          "anchor": "queryclose"
         },
         {
           "level": 3,
@@ -3702,10 +3702,35 @@
     }
   ],
   "posts": [],
-  "last_gen": "2026-09-24T01:22:51.271268+00:00",
+  "last_gen": "2026-09-29T14:35:32.434023+00:00",
   "theme": "minimal",
   "vocabulary": {
-    "accepted": [],
+    "accepted": [
+      {
+        "word": "arcan",
+        "aliases": []
+      },
+      {
+        "word": "rlsbl",
+        "aliases": []
+      },
+      {
+        "word": "scc",
+        "aliases": []
+      },
+      {
+        "word": "scip",
+        "aliases": []
+      },
+      {
+        "word": "strictcode",
+        "aliases": []
+      },
+      {
+        "word": "strictspec",
+        "aliases": []
+      }
+    ],
     "rejected": []
   }
 }
