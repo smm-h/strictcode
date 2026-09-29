@@ -31,3 +31,7 @@ meaning = "This project: a source-analysis tool that builds an import and call g
 [[accepted]]
 word = "strictspec"
 meaning = "The StrictTools schema tool whose TOML schemas validate every machine-read artifact strictcode owns and generate its Go readers."
+
+[[accepted]]
+word = "stricttools"
+meaning = "StrictTools, the tool family strictcode belongs to, whose repositories live under stricttools/tools."
