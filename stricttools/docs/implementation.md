@@ -28,11 +28,11 @@ tree-sitter is the parsing foundation: MIT-licensed, with grammars for hundreds 
 error-tolerant, and very actively maintained. There is one parsing path, the graph extractor over
 tree-sitter trees, and no regular-expression fallback anywhere.
 
-strictcode uses **cgofree's tree-sitter**: the official C runtime (`github.com/cgofree/tree-sitter`)
-and the official grammars for Python, Go, TypeScript, and TSX, each compiled to WebAssembly and
-translated to Go, with every translation checked against a native C build of the same upstream
-tag. The result is pure Go: building needs no C compiler and works with `CGO_ENABLED=0`. The
-`internal/treesitter` package is the single integration layer. It:
+strictcode uses **the cgofree tree-sitter packages**: the official C runtime
+(`github.com/cgofree/tree-sitter`) and the official grammars for Python, Go, TypeScript, and TSX,
+each compiled to WebAssembly and translated to Go, with every translation checked against a native
+C build of the same upstream tag. The result is pure Go: building needs no C compiler and works
+with `CGO_ENABLED=0`. The `internal/treesitter` package is the single integration layer. It:
 
 - selects the grammar for each file (the TypeScript/JavaScript profile spans both the
   `typescript` and `tsx` grammars, because JSX conflicts with TypeScript type assertions);

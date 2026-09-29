@@ -19,7 +19,7 @@ go install github.com/smm-h/strictcode/cmd/strictcode@v0
 ```
 
 Building needs only Go: the tree-sitter runtime and grammars strictcode parses with are pure Go
-(cgofree's translations of the official C sources), so no C compiler is needed and
+(the cgofree translations of the official C sources), so no C compiler is needed and
 `CGO_ENABLED=0` works. Releases publish no prebuilt binaries.
 
 ## Use

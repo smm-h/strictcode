@@ -77,14 +77,14 @@ construction, since it is the same C code; its speed is unmeasured. The existing
 harness could measure it. (The route taken instead translates the WebAssembly to Go; see the
 next decision.)
 
-### Parser binding: cgofree's pure-Go translation of the official runtime
+### Parser binding: the cgofree translation of the official runtime to pure Go
 
-strictcode switched from the CGo bindings to cgofree's packages: tree-sitter's official C runtime
+strictcode switched from the CGo bindings to the cgofree packages: tree-sitter's official C runtime
 and the official Python, Go, and TypeScript/TSX grammars, compiled to WebAssembly and translated
 to Go, each translation checked against a native C build of the same upstream tag. Builds need no
 C compiler and work with `CGO_ENABLED=0`. The owner's rulings for the switch:
 
-- strictcode uses cgofree's packages, and builds must work with `CGO_ENABLED=0`;
+- strictcode uses the cgofree packages, and builds must work with `CGO_ENABLED=0`;
 - strictcode keeps one Parser per grammar, not one per file, because each Parser owns a runtime
   instance and instances cost memory;
 - character classification is Unicode, as in tree-sitter's own WebAssembly builds, where the CGo
@@ -98,10 +98,10 @@ known extractor crash, strictcode's test inputs, and snapshots of the stricttool
 repositories): the JSON output was byte-identical for every tree. The complete extraction result
 (the relation, external imports, call sites, unreachable regions, and line indexes) was identical
 too, 1.2 million lines across the same trees. Interleaved runs, median of three, pure-Go against
-CGo: Kubernetes 43.4 s against 40.3 s, tilt 22.0 s against 19.9 s, wundergraph cosmo 6.4 s against
-5.8 s, gamehome 4.1 s against 4.0 s, Django 18.3 s against 18.7 s, and rlsbl 8.7 s against 9.1 s;
-about 5% slower in total. Peak memory (maximum resident set, worst of the three runs) is higher by
-40 to 240 MB, and by 570 MB on tilt (917 MB against 346 MB).
+CGo: Kubernetes 43.4 s against 40.3 s, tilt 22.0 s against 19.9 s, Django 18.3 s against 18.7 s,
+and rlsbl 8.7 s against 9.1 s; about 5% slower in total over these and two smaller repositories.
+Peak memory (maximum resident set, worst of the three runs) is higher by 40 to 240 MB, and by 570
+MB on tilt (917 MB against 346 MB).
 
 ### Graph model: an interaction relation
 
@@ -372,7 +372,7 @@ out, and `matrix gen` was removed. The registry dump moved from the root `REGIST
 
 ### 2026-09-29: pure-Go tree-sitter
 
-- The CGo bindings were replaced by cgofree's tree-sitter packages; see the parser binding
+- The CGo bindings were replaced by the cgofree tree-sitter packages; see the parser binding
   decision above. `internal/treesitter` keeps one Parser per grammar, and the extractors use the
   generated API's names and value nodes.
 

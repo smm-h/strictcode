@@ -12,7 +12,7 @@ Go toolchain; see [installation](../installation/).
 
 ## Why source-only is enough for now
 
-strictcode is pure Go (its tree-sitter runtime and grammars are cgofree's translations of the C
+strictcode is pure Go (its tree-sitter runtime and grammars are the cgofree translations of the C
 sources), so wherever Go exists, the build costs a few seconds, not minutes; the Go toolchain
 requirement, not the build time, is the cost. [Decisions](../decisions/) records the measurement.
 Until strictcode moved to cgofree, building also needed a C compiler, which was painful on
