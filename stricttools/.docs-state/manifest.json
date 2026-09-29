@@ -381,8 +381,8 @@
         },
         {
           "level": 3,
-          "text": "Parser binding: cgofree's pure-Go translation of the official runtime",
-          "anchor": "parser-binding-cgofrees-pure-go-translation-of-the-official-runtime"
+          "text": "Parser binding: the cgofree translation of the official runtime to pure Go",
+          "anchor": "parser-binding-the-cgofree-translation-of-the-official-runtime-to-pure-go"
         },
         {
           "level": 3,
@@ -3702,12 +3702,20 @@
     }
   ],
   "posts": [],
-  "last_gen": "2026-09-29T14:35:32.434023+00:00",
+  "last_gen": "2026-09-29T14:37:25.906251+00:00",
   "theme": "minimal",
   "vocabulary": {
     "accepted": [
       {
         "word": "arcan",
+        "aliases": []
+      },
+      {
+        "word": "cgofree",
+        "aliases": []
+      },
+      {
+        "word": "goroutine",
         "aliases": []
       },
       {
@@ -3728,6 +3736,10 @@
       },
       {
         "word": "strictspec",
+        "aliases": []
+      },
+      {
+        "word": "stricttools",
         "aliases": []
       }
     ],
