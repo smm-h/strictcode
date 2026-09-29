@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
-
 	"github.com/smm-h/strictcode/internal/relation"
 	"github.com/smm-h/strictcode/internal/testctx"
 	"github.com/smm-h/strictcode/internal/treesitter"
@@ -338,7 +336,6 @@ func (ex *extraction) extractPyFile(m *workspace.Member, layout *pyMemberLayout,
 	if err != nil {
 		return err
 	}
-	defer tree.Close()
 
 	logical := layout.logicalName(file)
 	srcID := moduleNodeID(vocab.LangPy, m.Name, logical)
@@ -346,7 +343,7 @@ func (ex *extraction) extractPyFile(m *workspace.Member, layout *pyMemberLayout,
 
 	for _, match := range pyQueries.imports.Matches(tree) {
 		for _, cap := range match.Captures {
-			imp := analyzePyImport(&cap.Node, tree.Source, logical, layout)
+			imp := analyzePyImport(cap.Node, logical, layout)
 			if err := ex.emitPyImportRows(m, layout, srcID, wsPath, isTest, imp); err != nil {
 				return err
 			}
@@ -364,7 +361,7 @@ func (ex *extraction) extractPyFile(m *workspace.Member, layout *pyMemberLayout,
 	// Full-semantic pass 1 (same parse): callables, types, containment,
 	// and the site records pass 2 resolves after every member is walked.
 	sem, err := ex.extractPySemantics(m, layout, file, wsPath, &pyTree{
-		src: tree.Source, root: tree.Root(), isTest: isTest,
+		root: tree.Root(), isTest: isTest,
 	})
 	if err != nil {
 		return err
@@ -470,12 +467,12 @@ func (ex *extraction) emitPyExports(m *workspace.Member, layout *pyMemberLayout,
 			}
 			n := cap.Node
 			count := n.NamedChildCount()
-			for i := uint(0); i < count; i++ {
-				item := n.NamedChild(i)
-				if item.Kind() != "string" {
+			for i := uint32(0); i < count; i++ {
+				item := namedChildAt(n, i)
+				if item.Type() != "string" {
 					continue
 				}
-				name := pyStringContent(item, tree.Source)
+				name := pyStringContent(item)
 				if name == "" {
 					continue
 				}
@@ -490,15 +487,15 @@ func (ex *extraction) emitPyExports(m *workspace.Member, layout *pyMemberLayout,
 	for _, match := range pyQueries.imports.Matches(tree) {
 		for _, cap := range match.Captures {
 			n := cap.Node
-			if n.Kind() != "import_from_statement" {
+			if n.Type() != "import_from_statement" {
 				continue
 			}
-			mod := n.ChildByFieldName("module_name")
-			if mod == nil || mod.Kind() != "relative_import" || nodeText(mod, tree.Source) != "." {
+			mod, ok := n.ChildByFieldName("module_name")
+			if !ok || mod.Type() != "relative_import" || mod.Text() != "." {
 				continue
 			}
-			for _, nameNode := range fieldChildren(&n, "name") {
-				name := importedName(nameNode, tree.Source)
+			for _, nameNode := range fieldChildren(n, "name") {
+				name := importedName(nameNode)
 				if name == "" {
 					continue
 				}
@@ -553,39 +550,39 @@ func (ex *extraction) emitPyEntryPoints(m *workspace.Member, layout *pyMemberLay
 
 // analyzePyImport derives the dotted-name candidates and the
 // guarded/type_checking classification for one import statement.
-func analyzePyImport(n *sitter.Node, src []byte, moduleLogical string, layout *pyMemberLayout) pyImport {
+func analyzePyImport(n treesitter.Node, moduleLogical string, layout *pyMemberLayout) pyImport {
 	imp := pyImport{span: spanOf(n)}
-	imp.guarded = pyIsGuarded(n, src)
-	imp.typeOnly = pyIsTypeChecking(n, src)
+	imp.guarded = pyIsGuarded(n)
+	imp.typeOnly = pyIsTypeChecking(n)
 
-	switch n.Kind() {
+	switch n.Type() {
 	case "import_statement":
 		for _, nameNode := range fieldChildren(n, "name") {
-			dotted := importedName(nameNode, src)
+			dotted := importedName(nameNode)
 			if dotted != "" {
 				imp.dotted = append(imp.dotted, splitPrefixes(dotted)...)
 			}
 		}
 	case "import_from_statement":
-		mod := n.ChildByFieldName("module_name")
-		if mod == nil {
+		mod, ok := n.ChildByFieldName("module_name")
+		if !ok {
 			break
 		}
 		var base string
-		if mod.Kind() == "relative_import" {
+		if mod.Type() == "relative_import" {
 			imp.relative = true
-			base = resolveRelativeBase(nodeText(mod, src), moduleLogical, layout)
+			base = resolveRelativeBase(mod.Text(), moduleLogical, layout)
 			if base == "" {
 				break // beyond the package root: no resolvable candidates
 			}
 		} else {
-			base = nodeText(mod, src)
+			base = mod.Text()
 		}
 		// Candidates: base.name for each imported name (most specific), then
 		// the base itself and its prefixes.
 		var specific []string
 		for _, nameNode := range fieldChildren(n, "name") {
-			if name := importedName(nameNode, src); name != "" {
+			if name := importedName(nameNode); name != "" {
 				specific = append(specific, base+"."+name)
 			}
 		}
@@ -653,55 +650,56 @@ func (l *pyMemberLayout) packageIsDir(logical string) bool {
 // pyIsGuarded reports whether the import sits in the TRY BODY of a
 // try/except catching ImportError or ModuleNotFoundError (lessons 1-3: the
 // except body — a fallback import — is NOT guarded).
-func pyIsGuarded(n *sitter.Node, src []byte) bool {
-	child := n
-	for parent := child.Parent(); parent != nil; child, parent = parent, parent.Parent() {
-		if parent.Kind() != "try_statement" {
+func pyIsGuarded(n treesitter.Node) bool {
+	for child, parent, ok := n, n, false; ; child = parent {
+		if parent, ok = child.Parent(); !ok {
+			return false
+		}
+		if parent.Type() != "try_statement" {
 			continue
 		}
-		body := parent.ChildByFieldName("body")
-		if body == nil || child.Id() != body.Id() {
+		body, ok := parent.ChildByFieldName("body")
+		if !ok || child != body {
 			continue // inside an except/else/finally clause, keep ascending
 		}
 		count := parent.ChildCount()
-		for i := uint(0); i < count; i++ {
-			clause := parent.Child(i)
-			if clause.Kind() == "except_clause" && exceptCatchesImportError(clause, src) {
+		for i := uint32(0); i < count; i++ {
+			clause := childAt(parent, i)
+			if clause.Type() == "except_clause" && exceptCatchesImportError(clause) {
 				return true
 			}
 		}
 	}
-	return false
 }
 
 // exceptCatchesImportError matches `except ImportError`, tuple forms, and
 // as-bound forms; the matched identifiers may be dotted (builtins.ImportError).
-func exceptCatchesImportError(clause *sitter.Node, src []byte) bool {
+func exceptCatchesImportError(clause treesitter.Node) bool {
 	count := clause.NamedChildCount()
-	for i := uint(0); i < count; i++ {
-		c := clause.NamedChild(i)
-		if c.Kind() == "block" {
+	for i := uint32(0); i < count; i++ {
+		c := namedChildAt(clause, i)
+		if c.Type() == "block" {
 			continue
 		}
-		if exprNamesImportError(c, src) {
+		if exprNamesImportError(c) {
 			return true
 		}
 	}
 	return false
 }
 
-func exprNamesImportError(n *sitter.Node, src []byte) bool {
-	switch n.Kind() {
+func exprNamesImportError(n treesitter.Node) bool {
+	switch n.Type() {
 	case "identifier":
-		t := nodeText(n, src)
+		t := n.Text()
 		return t == "ImportError" || t == "ModuleNotFoundError"
 	case "attribute":
-		attr := n.ChildByFieldName("attribute")
-		return attr != nil && exprNamesImportError(attr, src)
+		attr, ok := n.ChildByFieldName("attribute")
+		return ok && exprNamesImportError(attr)
 	case "tuple", "parenthesized_expression", "as_pattern", "expression_list":
 		count := n.NamedChildCount()
-		for i := uint(0); i < count; i++ {
-			if exprNamesImportError(n.NamedChild(i), src) {
+		for i := uint32(0); i < count; i++ {
+			if exprNamesImportError(namedChildAt(n, i)) {
 				return true
 			}
 		}
@@ -711,34 +709,34 @@ func exprNamesImportError(n *sitter.Node, src []byte) bool {
 
 // pyIsTypeChecking reports whether the import sits in the consequence of an
 // `if TYPE_CHECKING:` (bare or typing-qualified) block (lesson 5).
-func pyIsTypeChecking(n *sitter.Node, src []byte) bool {
-	child := n
-	for parent := child.Parent(); parent != nil; child, parent = parent, parent.Parent() {
-		if parent.Kind() != "if_statement" {
+func pyIsTypeChecking(n treesitter.Node) bool {
+	for child, parent, ok := n, n, false; ; child = parent {
+		if parent, ok = child.Parent(); !ok {
+			return false
+		}
+		if parent.Type() != "if_statement" {
 			continue
 		}
-		consequence := parent.ChildByFieldName("consequence")
-		if consequence == nil || child.Id() != consequence.Id() {
+		consequence, ok := parent.ChildByFieldName("consequence")
+		if !ok || child != consequence {
 			continue
 		}
-		cond := parent.ChildByFieldName("condition")
-		if cond != nil && condIsTypeChecking(cond, src) {
+		if cond, ok := parent.ChildByFieldName("condition"); ok && condIsTypeChecking(cond) {
 			return true
 		}
 	}
-	return false
 }
 
-func condIsTypeChecking(n *sitter.Node, src []byte) bool {
-	switch n.Kind() {
+func condIsTypeChecking(n treesitter.Node) bool {
+	switch n.Type() {
 	case "identifier":
-		return nodeText(n, src) == "TYPE_CHECKING"
+		return n.Text() == "TYPE_CHECKING"
 	case "attribute":
-		attr := n.ChildByFieldName("attribute")
-		return attr != nil && nodeText(attr, src) == "TYPE_CHECKING"
+		attr, ok := n.ChildByFieldName("attribute")
+		return ok && attr.Text() == "TYPE_CHECKING"
 	case "parenthesized_expression":
 		if n.NamedChildCount() == 1 {
-			return condIsTypeChecking(n.NamedChild(0), src)
+			return condIsTypeChecking(namedChildAt(n, 0))
 		}
 	}
 	return false
@@ -746,21 +744,17 @@ func condIsTypeChecking(n *sitter.Node, src []byte) bool {
 
 // --- node helpers ---------------------------------------------------------
 
-func spanOf(n *sitter.Node) relation.Span {
-	return relation.Span{Start: uint32(n.StartByte()), End: uint32(n.EndByte())}
-}
-
-func nodeText(n *sitter.Node, src []byte) string {
-	return string(src[n.StartByte():n.EndByte()])
+func spanOf(n treesitter.Node) relation.Span {
+	return relation.Span{Start: n.StartByte(), End: n.EndByte()}
 }
 
 // fieldChildren returns every child of n assigned to the given field.
-func fieldChildren(n *sitter.Node, field string) []*sitter.Node {
-	var out []*sitter.Node
+func fieldChildren(n treesitter.Node, field string) []treesitter.Node {
+	var out []treesitter.Node
 	count := n.ChildCount()
-	for i := uint(0); i < count; i++ {
-		if n.FieldNameForChild(uint32(i)) == field {
-			out = append(out, n.Child(i))
+	for i := uint32(0); i < count; i++ {
+		if name, ok := n.FieldNameForChild(i); ok && name == field {
+			out = append(out, childAt(n, i))
 		}
 	}
 	return out
@@ -768,26 +762,39 @@ func fieldChildren(n *sitter.Node, field string) []*sitter.Node {
 
 // importedName extracts the dotted name from a dotted_name or
 // aliased_import node.
-func importedName(n *sitter.Node, src []byte) string {
-	switch n.Kind() {
+func importedName(n treesitter.Node) string {
+	switch n.Type() {
 	case "dotted_name", "identifier":
-		return nodeText(n, src)
+		return n.Text()
 	case "aliased_import":
-		if name := n.ChildByFieldName("name"); name != nil {
-			return nodeText(name, src)
+		if name, ok := n.ChildByFieldName("name"); ok {
+			return name.Text()
 		}
 	}
 	return ""
 }
 
 // pyStringContent returns the content of a plain string literal node.
-func pyStringContent(n *sitter.Node, src []byte) string {
+func pyStringContent(n treesitter.Node) string {
 	count := n.NamedChildCount()
-	for i := uint(0); i < count; i++ {
-		c := n.NamedChild(i)
-		if c.Kind() == "string_content" {
-			return nodeText(c, src)
+	for i := uint32(0); i < count; i++ {
+		c := namedChildAt(n, i)
+		if c.Type() == "string_content" {
+			return c.Text()
 		}
 	}
 	return ""
+}
+
+// childAt returns n's i-th child; i must be below n.ChildCount().
+func childAt(n treesitter.Node, i uint32) treesitter.Node {
+	c, _ := n.Child(i)
+	return c
+}
+
+// namedChildAt returns n's i-th named child; i must be below
+// n.NamedChildCount().
+func namedChildAt(n treesitter.Node, i uint32) treesitter.Node {
+	c, _ := n.NamedChild(i)
+	return c
 }

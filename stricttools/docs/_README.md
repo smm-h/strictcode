@@ -18,11 +18,9 @@ suggestion only.
 go install github.com/smm-h/strictcode/cmd/strictcode@v0
 ```
 
-Building needs Go, a C compiler (gcc or clang), and CGo enabled (`CGO_ENABLED=1`), because
-strictcode links the official tree-sitter runtime and grammars, which are C. Without a C compiler
-the build fails with `build constraints exclude all Go files in .../tree-sitter-python@.../bindings/go`:
-install a C compiler; setting `CGO_ENABLED=0` never works around it. Releases publish no prebuilt
-binaries.
+Building needs only Go: the tree-sitter runtime and grammars strictcode parses with are pure Go
+(cgofree's translations of the official C sources), so no C compiler is needed and
+`CGO_ENABLED=0` works. Releases publish no prebuilt binaries.
 
 ## Use
 

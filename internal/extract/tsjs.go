@@ -5,8 +5,6 @@ import (
 	"sort"
 	"strings"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
-
 	"github.com/smm-h/strictcode/internal/relation"
 	"github.com/smm-h/strictcode/internal/testctx"
 	"github.com/smm-h/strictcode/internal/treesitter"
@@ -197,7 +195,6 @@ func (ex *extraction) extractTSFile(m *workspace.Member, layout *tsLayout, file 
 	if err != nil {
 		return err
 	}
-	defer tree.Close()
 
 	query := tsQueries.imports
 	if grammar == treesitter.GrammarTSX {
@@ -209,18 +206,18 @@ func (ex *extraction) extractTSFile(m *workspace.Member, layout *tsLayout, file 
 	fromDir := path.Dir(file)
 
 	for _, match := range query.Matches(tree) {
-		var specNode *sitter.Node
+		var specNode treesitter.Node
 		var capName string
-		for i := range match.Captures {
-			if match.Captures[i].Name != "fn" {
-				specNode = &match.Captures[i].Node
-				capName = match.Captures[i].Name
+		found := false
+		for _, c := range match.Captures {
+			if c.Name != "fn" {
+				specNode, capName, found = c.Node, c.Name, true
 			}
 		}
-		if specNode == nil {
+		if !found {
 			continue
 		}
-		spec := tsStringContent(specNode, tree.Source)
+		spec := tsStringContent(specNode)
 		if spec == "" {
 			continue
 		}
@@ -417,21 +414,21 @@ func (ex *extraction) emitTSEntryPoints(m *workspace.Member, layout *tsLayout) e
 // --- node helpers ---------------------------------------------------------
 
 // tsStringContent extracts the content of a string literal node.
-func tsStringContent(n *sitter.Node, src []byte) string {
+func tsStringContent(n treesitter.Node) string {
 	count := n.NamedChildCount()
-	for i := uint(0); i < count; i++ {
-		c := n.NamedChild(i)
-		if c.Kind() == "string_fragment" {
-			return nodeText(c, src)
+	for i := uint32(0); i < count; i++ {
+		c := namedChildAt(n, i)
+		if c.Type() == "string_fragment" {
+			return c.Text()
 		}
 	}
 	return ""
 }
 
 // statementAncestor ascends from a captured string to its statement node.
-func statementAncestor(n *sitter.Node) *sitter.Node {
-	for cur := n; cur != nil; cur = cur.Parent() {
-		switch cur.Kind() {
+func statementAncestor(n treesitter.Node) treesitter.Node {
+	for cur, ok := n, true; ok; cur, ok = cur.Parent() {
+		switch cur.Type() {
 		case "import_statement", "export_statement", "expression_statement",
 			"lexical_declaration", "variable_declaration":
 			return cur
@@ -442,13 +439,13 @@ func statementAncestor(n *sitter.Node) *sitter.Node {
 
 // tsIsTypeOnly reports whether an import statement is a type-only import
 // (`import type ... from "..."`).
-func tsIsTypeOnly(stmt *sitter.Node) bool {
-	if stmt == nil || stmt.Kind() != "import_statement" {
+func tsIsTypeOnly(stmt treesitter.Node) bool {
+	if stmt.Type() != "import_statement" {
 		return false
 	}
 	count := stmt.ChildCount()
-	for i := uint(0); i < count; i++ {
-		if stmt.Child(i).Kind() == "type" {
+	for i := uint32(0); i < count; i++ {
+		if childAt(stmt, i).Type() == "type" {
 			return true
 		}
 	}

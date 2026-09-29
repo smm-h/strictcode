@@ -1,26 +1,35 @@
 // Package treesitter is strictcode's single parsing path: a thin, disciplined
-// layer over the official tree-sitter CGo bindings (the binding-benchmark
-// winner; see stricttools/docs/decisions.md). It owns the three responsibilities the rest of
-// the codebase must never re-implement:
+// layer over cgofree's pure-Go tree-sitter (the official C runtime and
+// grammars translated to Go through WebAssembly; builds need no C compiler
+// and work with CGO_ENABLED=0). It owns the three responsibilities the rest
+// of the codebase must never re-implement:
 //
 //   - grammar selection for the language trio (Python, Go, TS/JS);
 //   - LF normalization before parsing, so every byte span in the system is a
 //     span over LF-normalized UTF-8 (stricttools/docs/graph-model.md);
-//   - CGo resource lifecycle (Close on parsers, trees, queries, cursors),
-//     so extractors cannot leak C memory.
+//   - the Parsers: one per grammar for the whole process, because each
+//     Parser owns a runtime instance and instances cost memory.
+//
+// Parse, and every Tree, Node, and Query result derived from it, must be used
+// from one goroutine at a time (strictcode's extraction is sequential).
 //
 // There is no fallback parser and no regex path; a parse failure is an error.
 package treesitter
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
-	tsgo "github.com/tree-sitter/tree-sitter-go/bindings/go"
-	tspython "github.com/tree-sitter/tree-sitter-python/bindings/go"
-	tsts "github.com/tree-sitter/tree-sitter-typescript/bindings/go"
+	ts "github.com/cgofree/tree-sitter"
+	tsgo "github.com/cgofree/tree-sitter-go"
+	tspython "github.com/cgofree/tree-sitter-python"
+	"github.com/cgofree/tree-sitter-typescript/tsx"
+	"github.com/cgofree/tree-sitter-typescript/typescript"
 )
+
+// Node is a syntax node: a comparable value that keeps its tree alive.
+type Node = ts.Node
 
 // Grammar identifies a concrete tree-sitter grammar. The TS/JS profile column
 // ("ts") spans two grammar variants: the typescript grammar parses .ts and
@@ -49,21 +58,40 @@ func (g Grammar) String() string {
 	return fmt.Sprintf("Grammar(%d)", int(g))
 }
 
-// language returns the sitter.Language for a grammar. Panics on an undefined
-// grammar value: grammar selection is a closed set fixed at compile time, and
-// an out-of-range value is a programming error, not an input condition.
-func (g Grammar) language() *sitter.Language {
+// language returns the grammar's Language. Panics on an undefined grammar
+// value: grammar selection is a closed set fixed at compile time, and an
+// out-of-range value is a programming error, not an input condition.
+func (g Grammar) language() *ts.Language {
 	switch g {
 	case GrammarPython:
-		return sitter.NewLanguage(tspython.Language())
+		return tspython.Language()
 	case GrammarGo:
-		return sitter.NewLanguage(tsgo.Language())
+		return tsgo.Language()
 	case GrammarTypeScript:
-		return sitter.NewLanguage(tsts.LanguageTypescript())
+		return typescript.Language()
 	case GrammarTSX:
-		return sitter.NewLanguage(tsts.LanguageTSX())
+		return tsx.Language()
 	}
 	panic(fmt.Sprintf("treesitter: undefined grammar %d", int(g)))
+}
+
+// parsers holds one Parser per grammar, created on first use and kept for
+// the life of the process: a Parser owns a runtime instance, which it
+// replaces on its own once it has grown past the runtime's memory budget.
+var parsers [GrammarTSX + 1]*ts.Parser
+
+// parser returns the grammar's Parser, creating it the first time.
+func (g Grammar) parser() (*ts.Parser, error) {
+	lang := g.language()
+	if p := parsers[g]; p != nil {
+		return p, nil
+	}
+	p := ts.NewParser()
+	if err := p.SetLanguage(lang); err != nil {
+		return nil, fmt.Errorf("treesitter: grammar %s rejected by runtime: %w", g, err)
+	}
+	parsers[g] = p
+	return p, nil
 }
 
 // GrammarForFile maps a filename to its grammar. The boolean is false for
@@ -110,36 +138,33 @@ func NormalizeLF(src []byte) []byte {
 }
 
 // Tree is a parsed file: the LF-normalized source and the syntax tree over
-// it. Node byte offsets index Source. Callers must Close it.
+// it. Node byte offsets index Source.
 type Tree struct {
 	// Source is the LF-normalized UTF-8 the tree was parsed from. All node
-	// spans index into this slice, never into the raw file bytes.
+	// spans index into this slice, never into the raw file bytes. It must
+	// not be modified: the syntax tree keeps it for Node.Text.
 	Source  []byte
 	Grammar Grammar
 
-	tree *sitter.Tree
+	tree *ts.Tree
 }
 
-// Parse normalizes src to LF and parses it with the given grammar. The
-// returned tree must be Closed. A nil tree from the runtime (the only
-// failure mode of ts_parser_parse without timeouts/cancellation, e.g. a
-// grammar/runtime version mismatch) is a hard error.
+// Parse normalizes src to LF and parses it with the grammar's Parser.
 func Parse(g Grammar, src []byte) (*Tree, error) {
 	normalized := NormalizeLF(src)
-	parser := sitter.NewParser()
-	defer parser.Close()
-	if err := parser.SetLanguage(g.language()); err != nil {
-		return nil, fmt.Errorf("treesitter: grammar %s rejected by runtime: %w", g, err)
+	parser, err := g.parser()
+	if err != nil {
+		return nil, err
 	}
-	t := parser.Parse(normalized, nil)
-	if t == nil {
-		return nil, fmt.Errorf("treesitter: parser returned no tree for grammar %s", g)
+	t, err := parser.Parse(normalized)
+	if err != nil {
+		return nil, fmt.Errorf("treesitter: grammar %s: %w", g, err)
 	}
 	return &Tree{Source: normalized, Grammar: g, tree: t}, nil
 }
 
-// Root returns the root node. Valid only until Close.
-func (t *Tree) Root() *sitter.Node {
+// Root returns the root node.
+func (t *Tree) Root() Node {
 	return t.tree.RootNode()
 }
 
@@ -150,45 +175,38 @@ func (t *Tree) HasParseErrors() bool {
 	return t.tree.RootNode().HasError()
 }
 
-// Close releases the underlying C tree. Idempotent.
-func (t *Tree) Close() {
-	if t.tree != nil {
-		t.tree.Close()
-		t.tree = nil
-	}
-}
-
-// Query is a compiled tree-sitter query for one grammar. Callers must Close
-// it. Queries are compiled once and reused across many trees.
+// Query is a compiled tree-sitter query for one grammar. Queries are
+// compiled once and reused across many trees.
 type Query struct {
 	Grammar Grammar
 
-	query *sitter.Query
+	query *ts.Query
 	names []string
 }
 
-// CompileQuery compiles a query pattern against a grammar. Pattern errors are
-// hard errors carrying the tree-sitter diagnostic.
+// CompileQuery compiles a query pattern against a grammar. Only the standard
+// text filters (#eq?, #match?, #any-of?, ...) are accepted as predicates.
+// Pattern errors are hard errors carrying the tree-sitter diagnostic.
 func CompileQuery(g Grammar, pattern string) (*Query, error) {
-	q, qerr := sitter.NewQuery(g.language(), pattern)
-	if qerr != nil {
-		return nil, fmt.Errorf("treesitter: query for grammar %s: %s (row %d, column %d)", g, qerr.Message, qerr.Row, qerr.Column)
+	q, err := ts.NewQuery(g.language(), pattern)
+	if err != nil {
+		var qerr *ts.QueryError
+		if errors.As(err, &qerr) {
+			return nil, fmt.Errorf("treesitter: query for grammar %s: %s (row %d, column %d)", g, qerr.Message, qerr.Row, qerr.Column)
+		}
+		return nil, fmt.Errorf("treesitter: query for grammar %s: %w", g, err)
 	}
-	return &Query{Grammar: g, query: q, names: q.CaptureNames()}, nil
-}
-
-// Close releases the underlying C query. Idempotent.
-func (q *Query) Close() {
-	if q.query != nil {
-		q.query.Close()
-		q.query = nil
+	names := make([]string, q.CaptureCount())
+	for i := range names {
+		names[i] = q.CaptureNameForID(uint32(i))
 	}
+	return &Query{Grammar: g, query: q, names: names}, nil
 }
 
 // Capture is one captured node with its capture name.
 type Capture struct {
 	Name string
-	Node sitter.Node
+	Node Node
 }
 
 // Match is one query match: the pattern index within the query and its
@@ -199,20 +217,16 @@ type Match struct {
 }
 
 // Matches runs the query over the tree and returns all matches with text
-// predicates (#eq?, #match?, #any-of?, ...) applied. The cursor is created
-// and closed internally; returned nodes are valid until the tree is Closed.
+// predicates (#eq?, #match?, #any-of?, ...) applied.
 // Matches panics if the query and tree grammars differ — that is a
 // programming error in the caller, never an input condition.
 func (q *Query) Matches(t *Tree) []Match {
 	if q.Grammar != t.Grammar {
 		panic(fmt.Sprintf("treesitter: query grammar %s run against tree grammar %s", q.Grammar, t.Grammar))
 	}
-	cursor := sitter.NewQueryCursor()
-	defer cursor.Close()
 	var out []Match
-	matches := cursor.Matches(q.query, t.Root(), t.Source)
-	for m := matches.Next(); m != nil; m = matches.Next() {
-		match := Match{PatternIndex: m.PatternIndex}
+	for m := range q.query.Matches(t.Root()) {
+		match := Match{PatternIndex: uint(m.PatternIndex)}
 		for _, c := range m.Captures {
 			match.Captures = append(match.Captures, Capture{Name: q.names[c.Index], Node: c.Node})
 		}

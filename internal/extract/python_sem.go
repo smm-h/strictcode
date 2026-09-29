@@ -22,9 +22,8 @@ import (
 	"regexp"
 	"strings"
 
-	sitter "github.com/tree-sitter/go-tree-sitter"
-
 	"github.com/smm-h/strictcode/internal/relation"
+	"github.com/smm-h/strictcode/internal/treesitter"
 	"github.com/smm-h/strictcode/internal/vocab"
 	"github.com/smm-h/strictcode/internal/workspace"
 )
@@ -177,7 +176,7 @@ func (ex *extraction) extractPySemantics(m *workspace.Member, layout *pyMemberLa
 		nestedDefs:     map[string]map[string]int{},
 	}
 	w := &pySemWalker{
-		ex: ex, m: m, layout: layout, sem: sem, src: tree.src,
+		ex: ex, m: m, layout: layout, sem: sem,
 		nameCounters: map[string]int{},
 		anonCounters: map[string]int{},
 	}
@@ -192,8 +191,7 @@ func (ex *extraction) extractPySemantics(m *workspace.Member, layout *pyMemberLa
 
 // pyTree bundles the parse results extractPyFile already has.
 type pyTree struct {
-	src    []byte
-	root   *sitter.Node
+	root   treesitter.Node
 	isTest bool
 }
 
@@ -211,7 +209,6 @@ type pySemWalker struct {
 	m      *workspace.Member
 	layout *pyMemberLayout
 	sem    *pyModSem
-	src    []byte
 
 	// nameCounters: containerKey + "\x00" + name -> next overload index.
 	nameCounters map[string]int
@@ -257,10 +254,10 @@ func (w *pySemWalker) containsSrc(chain []relation.Segment) relation.NodeID {
 // walkBlock walks the statements of a block (or the module root) with the
 // given container chain. localScope is the innermost callable's local-name
 // set (nil at module/class level).
-func (w *pySemWalker) walkBlock(block *sitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
+func (w *pySemWalker) walkBlock(block treesitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
 	count := block.ChildCount()
-	for i := uint(0); i < count; i++ {
-		child := block.Child(i)
+	for i := uint32(0); i < count; i++ {
+		child := childAt(block, i)
 		if err := w.walkStatement(child, chain, kind, localScope); err != nil {
 			return err
 		}
@@ -269,8 +266,8 @@ func (w *pySemWalker) walkBlock(block *sitter.Node, chain []relation.Segment, ki
 	return nil
 }
 
-func (w *pySemWalker) walkStatement(n *sitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
-	switch n.Kind() {
+func (w *pySemWalker) walkStatement(n treesitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
+	switch n.Type() {
 	case "comment":
 		return nil
 	case "function_definition":
@@ -278,24 +275,25 @@ func (w *pySemWalker) walkStatement(n *sitter.Node, chain []relation.Segment, ki
 	case "class_definition":
 		return w.walkClassDef(n, chain, kind, nil)
 	case "decorated_definition":
-		var decos []*sitter.Node
-		var def *sitter.Node
+		var decos []treesitter.Node
+		var def treesitter.Node
+		hasDef := false
 		cc := n.ChildCount()
-		for i := uint(0); i < cc; i++ {
-			c := n.Child(i)
-			switch c.Kind() {
+		for i := uint32(0); i < cc; i++ {
+			c := childAt(n, i)
+			switch c.Type() {
 			case "decorator":
 				decos = append(decos, c)
 			case "function_definition":
-				def = c
+				def, hasDef = c, true
 			case "class_definition":
-				def = c
+				def, hasDef = c, true
 			}
 		}
-		if def == nil {
+		if !hasDef {
 			return nil
 		}
-		if def.Kind() == "function_definition" {
+		if def.Type() == "function_definition" {
 			return w.walkFunctionDef(def, chain, kind, decos)
 		}
 		return w.walkClassDef(def, chain, kind, decos)
@@ -311,8 +309,8 @@ func (w *pySemWalker) walkStatement(n *sitter.Node, chain []relation.Segment, ki
 
 // walkExprTree recursively visits a non-definition statement/expression,
 // recording call sites and lambdas, and descending into nested blocks.
-func (w *pySemWalker) walkExprTree(n *sitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
-	switch n.Kind() {
+func (w *pySemWalker) walkExprTree(n treesitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
+	switch n.Type() {
 	case "comment":
 		return nil
 	case "function_definition":
@@ -328,26 +326,26 @@ func (w *pySemWalker) walkExprTree(n *sitter.Node, chain []relation.Segment, kin
 		// Recurse into arguments (nested calls/lambdas).
 	case "assignment", "augmented_assignment":
 		if localScope != nil {
-			if left := n.ChildByFieldName("left"); left != nil && left.Kind() == "identifier" {
-				localScope[nodeText(left, w.src)] = true
+			if left, ok := n.ChildByFieldName("left"); ok && left.Type() == "identifier" {
+				localScope[left.Text()] = true
 			}
 		}
 	}
 	count := n.ChildCount()
-	for i := uint(0); i < count; i++ {
-		if err := w.walkExprTree(n.Child(i), chain, kind, localScope); err != nil {
+	for i := uint32(0); i < count; i++ {
+		if err := w.walkExprTree(childAt(n, i), chain, kind, localScope); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func (w *pySemWalker) walkFunctionDef(n *sitter.Node, chain []relation.Segment, parentKind containerKind, decos []*sitter.Node) error {
-	nameNode := n.ChildByFieldName("name")
-	if nameNode == nil {
+func (w *pySemWalker) walkFunctionDef(n treesitter.Node, chain []relation.Segment, parentKind containerKind, decos []treesitter.Node) error {
+	nameNode, ok := n.ChildByFieldName("name")
+	if !ok {
 		return nil
 	}
-	name := nodeText(nameNode, w.src)
+	name := nameNode.Text()
 	ck := chainKey(chain)
 	overload := w.nameCounters[ck+"\x00"+name]
 	w.nameCounters[ck+"\x00"+name]++
@@ -358,8 +356,8 @@ func (w *pySemWalker) walkFunctionDef(n *sitter.Node, chain []relation.Segment, 
 	isMethod := parentKind == inClass
 	isAsync := false
 	cc := n.ChildCount()
-	for i := uint(0); i < cc; i++ {
-		if n.Child(i).Kind() == "async" {
+	for i := uint32(0); i < cc; i++ {
+		if childAt(n, i).Type() == "async" {
 			isAsync = true
 		}
 	}
@@ -402,30 +400,30 @@ func (w *pySemWalker) walkFunctionDef(n *sitter.Node, chain []relation.Segment, 
 
 	// Decorators.
 	for _, d := range decos {
-		if expr := decoratorExpr(d, w.src); expr != "" {
+		if expr := decoratorExpr(d); expr != "" {
 			w.sem.decos = append(w.sem.decos, pyDecoRec{expr: expr, targetChain: funcChain, span: spanOf(d)})
 		}
 	}
 
 	// Local scope: parameters + assignments.
 	locals := map[string]bool{}
-	if params := n.ChildByFieldName("parameters"); params != nil {
-		collectParamNames(params, w.src, locals)
+	if params, ok := n.ChildByFieldName("parameters"); ok {
+		collectParamNames(params, locals)
 	}
 	w.sem.callableLocals[fk] = locals
 
-	if body := n.ChildByFieldName("body"); body != nil {
+	if body, ok := n.ChildByFieldName("body"); ok {
 		return w.walkBlock(body, funcChain, inCallable, locals)
 	}
 	return nil
 }
 
-func (w *pySemWalker) walkClassDef(n *sitter.Node, chain []relation.Segment, parentKind containerKind, decos []*sitter.Node) error {
-	nameNode := n.ChildByFieldName("name")
-	if nameNode == nil {
+func (w *pySemWalker) walkClassDef(n treesitter.Node, chain []relation.Segment, parentKind containerKind, decos []treesitter.Node) error {
+	nameNode, ok := n.ChildByFieldName("name")
+	if !ok {
 		return nil
 	}
-	name := nodeText(nameNode, w.src)
+	name := nameNode.Text()
 	ck := chainKey(chain)
 	overload := w.nameCounters[ck+"\x00"+name]
 	w.nameCounters[ck+"\x00"+name]++
@@ -436,11 +434,11 @@ func (w *pySemWalker) walkClassDef(n *sitter.Node, chain []relation.Segment, par
 	info := &pyClassInfo{chain: classChain, methods: map[string]int{}}
 	var baseExprs []pyBaseRef
 	form := "class"
-	if sup := n.ChildByFieldName("superclasses"); sup != nil {
+	if sup, ok := n.ChildByFieldName("superclasses"); ok {
 		sc := sup.NamedChildCount()
-		for i := uint(0); i < sc; i++ {
-			b := sup.NamedChild(i)
-			expr := dottedExpr(b, w.src)
+		for i := uint32(0); i < sc; i++ {
+			b := namedChildAt(sup, i)
+			expr := dottedExpr(b)
 			if expr == "" {
 				continue
 			}
@@ -485,26 +483,26 @@ func (w *pySemWalker) walkClassDef(n *sitter.Node, chain []relation.Segment, par
 	w.sem.funcs[plainKey] = overload + 1
 
 	for _, d := range decos {
-		if expr := decoratorExpr(d, w.src); expr != "" {
+		if expr := decoratorExpr(d); expr != "" {
 			w.sem.decos = append(w.sem.decos, pyDecoRec{expr: expr, targetChain: classChain, span: spanOf(d)})
 		}
 	}
 
-	if body := n.ChildByFieldName("body"); body != nil {
+	if body, ok := n.ChildByFieldName("body"); ok {
 		return w.walkBlock(body, classChain, inClass, nil)
 	}
 	return nil
 }
 
-func (w *pySemWalker) walkLambda(n *sitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
-	hint := lambdaHint(n, w.src)
+func (w *pySemWalker) walkLambda(n treesitter.Node, chain []relation.Segment, kind containerKind, localScope map[string]bool) error {
+	hint := lambdaHint(n)
 	ck := chainKey(chain)
 	ordinal := w.anonCounters[ck+"\x00"+hint]
 	w.anonCounters[ck+"\x00"+hint]++
 
 	paramsText := ""
-	if params := n.ChildByFieldName("parameters"); params != nil {
-		paramsText = nodeText(params, w.src)
+	if params, ok := n.ChildByFieldName("parameters"); ok {
+		paramsText = params.Text()
 	}
 	fp := signatureFingerprint(paramsText)
 
@@ -534,26 +532,26 @@ func (w *pySemWalker) walkLambda(n *sitter.Node, chain []relation.Segment, kind 
 	}
 
 	locals := map[string]bool{}
-	if params := n.ChildByFieldName("parameters"); params != nil {
-		collectParamNames(params, w.src, locals)
+	if params, ok := n.ChildByFieldName("parameters"); ok {
+		collectParamNames(params, locals)
 	}
-	if body := n.ChildByFieldName("body"); body != nil {
+	if body, ok := n.ChildByFieldName("body"); ok {
 		return w.walkExprTree(body, lamChain, inCallable, locals)
 	}
 	return nil
 }
 
 // recordCall stores a call site for pass-2 resolution.
-func (w *pySemWalker) recordCall(n *sitter.Node, chain []relation.Segment, kind containerKind) {
-	fn := n.ChildByFieldName("function")
-	if fn == nil {
+func (w *pySemWalker) recordCall(n treesitter.Node, chain []relation.Segment, kind containerKind) {
+	fn, ok := n.ChildByFieldName("function")
+	if !ok {
 		return
 	}
-	callee := dottedExpr(fn, w.src)
+	callee := dottedExpr(fn)
 	firstArg := ""
-	if args := n.ChildByFieldName("arguments"); args != nil && args.NamedChildCount() > 0 {
-		if a := args.NamedChild(0); a.Kind() == "identifier" {
-			firstArg = nodeText(a, w.src)
+	if args, ok := n.ChildByFieldName("arguments"); ok && args.NamedChildCount() > 0 {
+		if a := namedChildAt(args, 0); a.Type() == "identifier" {
+			firstArg = a.Text()
 		}
 	}
 	w.sem.calls = append(w.sem.calls, pyCallRec{
@@ -567,56 +565,56 @@ func (w *pySemWalker) recordCall(n *sitter.Node, chain []relation.Segment, kind 
 
 // recordImportBindings derives module-level name bindings from an import
 // statement (module aliases and from-import names).
-func (w *pySemWalker) recordImportBindings(n *sitter.Node) {
-	switch n.Kind() {
+func (w *pySemWalker) recordImportBindings(n treesitter.Node) {
+	switch n.Type() {
 	case "import_statement":
 		for _, nameNode := range fieldChildren(n, "name") {
-			switch nameNode.Kind() {
+			switch nameNode.Type() {
 			case "dotted_name":
-				dotted := nodeText(nameNode, w.src)
+				dotted := nameNode.Text()
 				head, _, _ := strings.Cut(dotted, ".")
 				w.sem.bindings[head] = pyBinding{kind: bindModule, module: head}
 			case "aliased_import":
-				name := nameNode.ChildByFieldName("name")
-				alias := nameNode.ChildByFieldName("alias")
-				if name != nil && alias != nil {
-					w.sem.bindings[nodeText(alias, w.src)] = pyBinding{kind: bindModule, module: nodeText(name, w.src)}
+				name, hasName := nameNode.ChildByFieldName("name")
+				alias, hasAlias := nameNode.ChildByFieldName("alias")
+				if hasName && hasAlias {
+					w.sem.bindings[alias.Text()] = pyBinding{kind: bindModule, module: name.Text()}
 				}
 			}
 		}
 	case "import_from_statement":
-		mod := n.ChildByFieldName("module_name")
-		if mod == nil {
+		mod, ok := n.ChildByFieldName("module_name")
+		if !ok {
 			return
 		}
 		var base string
-		if mod.Kind() == "relative_import" {
-			base = resolveRelativeBase(nodeText(mod, w.src), w.sem.logical, w.layout)
+		if mod.Type() == "relative_import" {
+			base = resolveRelativeBase(mod.Text(), w.sem.logical, w.layout)
 			if base == "" {
 				return
 			}
 		} else {
-			base = nodeText(mod, w.src)
+			base = mod.Text()
 		}
 		cc := n.ChildCount()
-		for i := uint(0); i < cc; i++ {
-			if n.Child(i).Kind() == "wildcard_import" {
+		for i := uint32(0); i < cc; i++ {
+			if childAt(n, i).Type() == "wildcard_import" {
 				w.sem.star = true
 				return
 			}
 		}
 		for _, nameNode := range fieldChildren(n, "name") {
-			switch nameNode.Kind() {
+			switch nameNode.Type() {
 			case "dotted_name", "identifier":
-				name := nodeText(nameNode, w.src)
+				name := nameNode.Text()
 				if !strings.Contains(name, ".") {
 					w.sem.bindings[name] = pyBinding{kind: bindName, source: base, orig: name}
 				}
 			case "aliased_import":
-				name := nameNode.ChildByFieldName("name")
-				alias := nameNode.ChildByFieldName("alias")
-				if name != nil && alias != nil {
-					w.sem.bindings[nodeText(alias, w.src)] = pyBinding{kind: bindName, source: base, orig: nodeText(name, w.src)}
+				name, hasName := nameNode.ChildByFieldName("name")
+				alias, hasAlias := nameNode.ChildByFieldName("alias")
+				if hasName && hasAlias {
+					w.sem.bindings[alias.Text()] = pyBinding{kind: bindName, source: base, orig: name.Text()}
 				}
 			}
 		}
@@ -628,13 +626,13 @@ func (w *pySemWalker) recordImportBindings(n *sitter.Node) {
 // analyzeUnreachable finds statements after an unconditional terminator in
 // one block. Comment nodes are not statements (lesson 24); nested scopes
 // were walked independently (lesson 25) — this looks at THIS block only.
-func (w *pySemWalker) analyzeUnreachable(block *sitter.Node, chain []relation.Segment) {
+func (w *pySemWalker) analyzeUnreachable(block treesitter.Node, chain []relation.Segment) {
 	terminated := false
-	var region []*sitter.Node
+	var region []treesitter.Node
 	count := block.ChildCount()
-	for i := uint(0); i < count; i++ {
-		stmt := block.Child(i)
-		if !stmt.IsNamed() || stmt.Kind() == "comment" {
+	for i := uint32(0); i < count; i++ {
+		stmt := childAt(block, i)
+		if !stmt.IsNamed() || stmt.Type() == "comment" {
 			continue
 		}
 		if terminated {
@@ -665,29 +663,29 @@ func (w *pySemWalker) analyzeUnreachable(block *sitter.Node, chain []relation.Se
 // (stricttools/docs/rules/unreachable-code.md): return/raise/break/continue; an if/elif/else where every
 // branch (including a present else) terminates; a block whose last
 // statement terminates.
-func alwaysTerminates(stmt *sitter.Node) bool {
-	switch stmt.Kind() {
+func alwaysTerminates(stmt treesitter.Node) bool {
+	switch stmt.Type() {
 	case "return_statement", "raise_statement", "break_statement", "continue_statement":
 		return true
 	case "if_statement":
-		cons := stmt.ChildByFieldName("consequence")
-		if cons == nil || !blockTerminates(cons) {
+		cons, ok := stmt.ChildByFieldName("consequence")
+		if !ok || !blockTerminates(cons) {
 			return false
 		}
 		hasElse := false
 		cc := stmt.ChildCount()
-		for i := uint(0); i < cc; i++ {
-			c := stmt.Child(i)
-			switch c.Kind() {
+		for i := uint32(0); i < cc; i++ {
+			c := childAt(stmt, i)
+			switch c.Type() {
 			case "elif_clause":
-				ec := c.ChildByFieldName("consequence")
-				if ec == nil || !blockTerminates(ec) {
+				ec, ok := c.ChildByFieldName("consequence")
+				if !ok || !blockTerminates(ec) {
 					return false
 				}
 			case "else_clause":
 				hasElse = true
-				eb := c.ChildByFieldName("body")
-				if eb == nil || !blockTerminates(eb) {
+				eb, ok := c.ChildByFieldName("body")
+				if !ok || !blockTerminates(eb) {
 					return false
 				}
 			}
@@ -698,16 +696,17 @@ func alwaysTerminates(stmt *sitter.Node) bool {
 }
 
 // blockTerminates: the last non-comment statement always terminates.
-func blockTerminates(block *sitter.Node) bool {
-	var last *sitter.Node
+func blockTerminates(block treesitter.Node) bool {
+	var last treesitter.Node
+	hasLast := false
 	count := block.ChildCount()
-	for i := uint(0); i < count; i++ {
-		c := block.Child(i)
-		if c.IsNamed() && c.Kind() != "comment" {
-			last = c
+	for i := uint32(0); i < count; i++ {
+		c := childAt(block, i)
+		if c.IsNamed() && c.Type() != "comment" {
+			last, hasLast = c, true
 		}
 	}
-	return last != nil && alwaysTerminates(last)
+	return hasLast && alwaysTerminates(last)
 }
 
 // --- small helpers --------------------------------------------------------
@@ -740,25 +739,25 @@ func classForm(baseExpr string) string {
 
 // dottedExpr renders an identifier/attribute chain as a dotted string;
 // non-dotted expressions yield "".
-func dottedExpr(n *sitter.Node, src []byte) string {
-	switch n.Kind() {
+func dottedExpr(n treesitter.Node) string {
+	switch n.Type() {
 	case "identifier":
-		return nodeText(n, src)
+		return n.Text()
 	case "attribute":
-		obj := n.ChildByFieldName("object")
-		attr := n.ChildByFieldName("attribute")
-		if obj == nil || attr == nil {
+		obj, hasObj := n.ChildByFieldName("object")
+		attr, hasAttr := n.ChildByFieldName("attribute")
+		if !hasObj || !hasAttr {
 			return ""
 		}
-		base := dottedExpr(obj, src)
+		base := dottedExpr(obj)
 		if base == "" {
 			return ""
 		}
-		return base + "." + nodeText(attr, src)
+		return base + "." + attr.Text()
 	case "subscript":
 		// Generic bases like Protocol[T] classify by their value part.
-		if v := n.ChildByFieldName("value"); v != nil {
-			return dottedExpr(v, src)
+		if v, ok := n.ChildByFieldName("value"); ok {
+			return dottedExpr(v)
 		}
 	}
 	return ""
@@ -766,16 +765,16 @@ func dottedExpr(n *sitter.Node, src []byte) string {
 
 // decoratorExpr extracts the dotted expression of a decorator (through a
 // call: @app.route("/x") -> app.route).
-func decoratorExpr(d *sitter.Node, src []byte) string {
+func decoratorExpr(d treesitter.Node) string {
 	count := d.NamedChildCount()
-	for i := uint(0); i < count; i++ {
-		c := d.NamedChild(i)
-		switch c.Kind() {
+	for i := uint32(0); i < count; i++ {
+		c := namedChildAt(d, i)
+		switch c.Type() {
 		case "identifier", "attribute":
-			return dottedExpr(c, src)
+			return dottedExpr(c)
 		case "call":
-			if fn := c.ChildByFieldName("function"); fn != nil {
-				return dottedExpr(fn, src)
+			if fn, ok := c.ChildByFieldName("function"); ok {
+				return dottedExpr(fn)
 			}
 		}
 	}
@@ -785,25 +784,25 @@ func decoratorExpr(d *sitter.Node, src []byte) string {
 // lambdaHint derives the name hint: the assigned variable, property, or
 // keyword/parameter name when syntactically derivable, else "anon"
 // (stricttools/docs/node-identity.md, anonymous units).
-func lambdaHint(n *sitter.Node, src []byte) string {
-	parent := n.Parent()
-	if parent == nil {
+func lambdaHint(n treesitter.Node) string {
+	parent, ok := n.Parent()
+	if !ok {
 		return "anon"
 	}
-	switch parent.Kind() {
+	switch parent.Type() {
 	case "assignment":
-		if left := parent.ChildByFieldName("left"); left != nil && left.Kind() == "identifier" {
-			if right := parent.ChildByFieldName("right"); right != nil && right.Id() == n.Id() {
-				return nodeText(left, src)
+		if left, ok := parent.ChildByFieldName("left"); ok && left.Type() == "identifier" {
+			if right, ok := parent.ChildByFieldName("right"); ok && right == n {
+				return left.Text()
 			}
 		}
 	case "keyword_argument":
-		if name := parent.ChildByFieldName("name"); name != nil {
-			return nodeText(name, src)
+		if name, ok := parent.ChildByFieldName("name"); ok {
+			return name.Text()
 		}
 	case "default_parameter", "typed_default_parameter":
-		if name := parent.ChildByFieldName("name"); name != nil {
-			return nodeText(name, src)
+		if name, ok := parent.ChildByFieldName("name"); ok {
+			return name.Text()
 		}
 	}
 	return "anon"
@@ -818,24 +817,24 @@ func signatureFingerprint(params string) string {
 }
 
 // collectParamNames adds parameter identifiers to the local-scope set.
-func collectParamNames(params *sitter.Node, src []byte, out map[string]bool) {
+func collectParamNames(params treesitter.Node, out map[string]bool) {
 	count := params.NamedChildCount()
-	for i := uint(0); i < count; i++ {
-		p := params.NamedChild(i)
-		switch p.Kind() {
+	for i := uint32(0); i < count; i++ {
+		p := namedChildAt(params, i)
+		switch p.Type() {
 		case "identifier":
-			out[nodeText(p, src)] = true
+			out[p.Text()] = true
 		case "typed_parameter", "default_parameter", "typed_default_parameter",
 			"list_splat_pattern", "dictionary_splat_pattern", "keyword_separator", "positional_separator":
 			cc := p.NamedChildCount()
-			for j := uint(0); j < cc; j++ {
-				if c := p.NamedChild(j); c.Kind() == "identifier" {
-					out[nodeText(c, src)] = true
+			for j := uint32(0); j < cc; j++ {
+				if c := namedChildAt(p, j); c.Type() == "identifier" {
+					out[c.Text()] = true
 					break
 				}
 			}
-			if name := p.ChildByFieldName("name"); name != nil {
-				out[nodeText(name, src)] = true
+			if name, ok := p.ChildByFieldName("name"); ok {
+				out[name.Text()] = true
 			}
 		}
 	}

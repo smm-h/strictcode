@@ -187,7 +187,6 @@ func (ex *extraction) extractGoFile(m *workspace.Member, resolveIntra func(strin
 	if err != nil {
 		return err
 	}
-	defer tree.Close()
 
 	srcID := moduleNodeID(vocab.LangGo, m.Name, pkgDir)
 	isTest := strings.HasSuffix(file, "_test.go") || testctx.IsTestContext(file)
@@ -201,9 +200,9 @@ func (ex *extraction) extractGoFile(m *workspace.Member, resolveIntra func(strin
 
 	for _, match := range goQueries.imports.Matches(tree) {
 		for _, cap := range match.Captures {
-			lit := nodeText(&cap.Node, tree.Source)
+			lit := cap.Node.Text()
 			p := strings.Trim(lit, "`\"")
-			span := spanOf(&cap.Node)
+			span := spanOf(cap.Node)
 			resolvedToMember := false
 
 			// Intra-member package resolution (nearest enclosing module).
@@ -314,7 +313,7 @@ func goRelPackage(modPath, importPath string) (string, bool) {
 func goPackageName(tree *treesitter.Tree) string {
 	for _, match := range goQueries.pkg.Matches(tree) {
 		for _, cap := range match.Captures {
-			return nodeText(&cap.Node, tree.Source)
+			return cap.Node.Text()
 		}
 	}
 	return ""

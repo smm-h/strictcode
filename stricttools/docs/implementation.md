@@ -1,6 +1,6 @@
 +++
 title = "Implementation"
-description = "How strictcode is built: Go, the official tree-sitter C runtime through CGo, strictspec readers, strictcli, the runtime model, and packages."
+description = "How strictcode is built: Go, the official tree-sitter runtime translated to pure Go by cgofree, strictspec readers, strictcli, the runtime model, and packages."
 nav_order = 400
 +++
 
@@ -22,31 +22,35 @@ the missing exhaustiveness checking is a bounded risk.
 
 [Decisions](../decisions/) records the comparison with Rust and Zig in full.
 
-## Parsing: tree-sitter through the official C runtime
+## Parsing: tree-sitter, the official runtime translated to pure Go
 
 tree-sitter is the parsing foundation: MIT-licensed, with grammars for hundreds of languages,
 error-tolerant, and very actively maintained. There is one parsing path, the graph extractor over
 tree-sitter trees, and no regular-expression fallback anywhere.
 
-strictcode uses the **official CGo bindings**, `github.com/tree-sitter/go-tree-sitter`, with the
-official grammars for Python, Go, TypeScript, and TSX, at the versions `go.mod` pins. The
+strictcode uses **cgofree's tree-sitter**: the official C runtime (`github.com/cgofree/tree-sitter`)
+and the official grammars for Python, Go, TypeScript, and TSX, each compiled to WebAssembly and
+translated to Go, with every translation checked against a native C build of the same upstream
+tag. The result is pure Go: building needs no C compiler and works with `CGO_ENABLED=0`. The
 `internal/treesitter` package is the single integration layer. It:
 
 - selects the grammar for each file (the TypeScript/JavaScript profile spans both the
   `typescript` and `tsx` grammars, because JSX conflicts with TypeScript type assertions);
 - normalizes line endings to LF before parsing, so every byte span indexes the same bytes;
-- owns the C resource lifecycle, closing every parser, tree, query, and cursor;
+- keeps one Parser per grammar for the whole run, because each Parser owns a runtime instance
+  and instances cost memory (the runtime replaces an instance on its own once it grows past its
+  memory budget, so there is nothing to close);
 - exposes error-tolerant parses honestly, so extractors decide what a parse error means.
+
+Character classification in the translated runtime is Unicode, as in tree-sitter's own
+WebAssembly builds, where the earlier CGo build used glibc's. Switching changed none of
+strictcode's findings where the two builds were compared; [decisions](../decisions/) has the
+record. Extraction is sequential, and a Parser and its trees are used from one goroutine at a
+time.
 
 The pure-Go rewrite of the runtime, gotreesitter, was measured twice against pinned criteria and
 rejected both times: it produces different trees from the official grammars by design, and parses
-Python several times slower. Its misparses were reported upstream. [Decisions](../decisions/) has
-the measurements and the reasoning, including why strictcode does not write its own runtime and
-what would reopen the question.
-
-The costs of CGo are that building needs a C compiler (see [installation](../installation/)),
-that cross-compiling needs a C cross-toolchain (see [distribution](../distribution/)), and that
-the race detector cannot see across the C boundary.
+Python several times slower. [Decisions](../decisions/) has the measurements and the reasoning.
 
 ## Build versus depend
 

@@ -81,8 +81,7 @@ func TestParseAllGrammars(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Parse: %v", err)
 			}
-			defer tree.Close()
-			if kind := tree.Root().Kind(); kind != c.rootKind {
+			if kind := tree.Root().Type(); kind != c.rootKind {
 				t.Fatalf("root kind = %q, want %q", kind, c.rootKind)
 			}
 			if tree.HasParseErrors() {
@@ -99,15 +98,17 @@ func TestParseNormalizesBeforeParsing(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	defer tree.Close()
 	if bytes.ContainsRune(tree.Source, '\r') {
 		t.Fatal("tree.Source still contains CR")
 	}
 	root := tree.Root()
-	if got, want := root.ChildCount(), uint(2); got != want {
+	if got, want := root.ChildCount(), uint32(2); got != want {
 		t.Fatalf("child count = %d, want %d", got, want)
 	}
-	second := root.Child(1)
+	second, ok := root.Child(1)
+	if !ok {
+		t.Fatal("root has no second child")
+	}
 	// "import sys" starts at byte 10 of the LF-normalized source.
 	if second.StartByte() != 10 {
 		t.Fatalf("second import starts at %d in normalized source, want 10", second.StartByte())
@@ -122,7 +123,6 @@ func TestParseErrorsAreReported(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	defer tree.Close()
 	if !tree.HasParseErrors() {
 		t.Fatal("HasParseErrors = false for syntactically broken source")
 	}
@@ -134,13 +134,11 @@ func TestQueryMatches(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	defer tree.Close()
 
 	q, err := CompileQuery(GrammarPython, `(function_definition name: (identifier) @name)`)
 	if err != nil {
 		t.Fatalf("CompileQuery: %v", err)
 	}
-	defer q.Close()
 
 	matches := q.Matches(tree)
 	if len(matches) != 2 {
@@ -166,13 +164,11 @@ func TestQueryTextPredicatesApplied(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	defer tree.Close()
 
 	q, err := CompileQuery(GrammarPython, `(assignment left: (identifier) @lhs (#eq? @lhs "__all__"))`)
 	if err != nil {
 		t.Fatalf("CompileQuery: %v", err)
 	}
-	defer q.Close()
 
 	matches := q.Matches(tree)
 	if len(matches) != 1 {
@@ -196,12 +192,10 @@ func TestQueryGrammarMismatchPanics(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Parse: %v", err)
 	}
-	defer tree.Close()
 	q, err := CompileQuery(GrammarPython, `(module) @m`)
 	if err != nil {
 		t.Fatalf("CompileQuery: %v", err)
 	}
-	defer q.Close()
 	defer func() {
 		if recover() == nil {
 			t.Fatal("no panic on query/tree grammar mismatch")
@@ -210,18 +204,21 @@ func TestQueryGrammarMismatchPanics(t *testing.T) {
 	q.Matches(tree)
 }
 
-func TestCloseIdempotent(t *testing.T) {
-	tree, err := Parse(GrammarPython, []byte("x = 1\n"))
-	if err != nil {
-		t.Fatalf("Parse: %v", err)
+func TestOneParserPerGrammar(t *testing.T) {
+	for _, g := range []Grammar{GrammarPython, GrammarGo, GrammarTypeScript, GrammarTSX} {
+		first, err := g.parser()
+		if err != nil {
+			t.Fatalf("%s: %v", g, err)
+		}
+		if _, err := Parse(g, []byte("\n")); err != nil {
+			t.Fatalf("%s: Parse: %v", g, err)
+		}
+		again, err := g.parser()
+		if err != nil {
+			t.Fatalf("%s: %v", g, err)
+		}
+		if first != again {
+			t.Fatalf("%s: a second Parser was created; strictcode keeps one Parser per grammar", g)
+		}
 	}
-	tree.Close()
-	tree.Close() // must not panic or double-free
-
-	q, err := CompileQuery(GrammarPython, `(module) @m`)
-	if err != nil {
-		t.Fatalf("CompileQuery: %v", err)
-	}
-	q.Close()
-	q.Close()
 }

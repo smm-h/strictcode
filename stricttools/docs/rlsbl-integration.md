@@ -25,5 +25,5 @@ ordering; a `freeform` command entry works without it. Which one, and when, is r
 
 The handoff has not happened: rlsbl still runs its own source scanners. Two things stand between
 them: the adapter entry on rlsbl's side, and prebuilt strictcode binaries, since rlsbl is a Python
-tool and a source-only strictcode would force a Go toolchain and a C compiler on every project
+tool and a source-only strictcode would force a Go toolchain on every project
 rlsbl manages. See [distribution](../distribution/).

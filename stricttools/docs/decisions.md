@@ -37,9 +37,9 @@ Compared with Rust and Zig, through the lens that AI agents write and read most 
   stay well under the sizes where Go's historic pause problems appeared.
 
 The comparison originally counted a pure-Go tree-sitter runtime as a Go advantage over Zig's C
-interop. The benchmarks below showed that runtime unsuitable, so strictcode links C through CGo
-after all. Go still wins: the remaining reasons hold, and CGo's cost is confined to one package
-and the build.
+interop. The benchmarks below showed that runtime unsuitable, so strictcode linked C through CGo
+for a while, and now uses the official C runtime translated to pure Go (see the parser binding
+decision below). Go still wins: the remaining reasons hold.
 
 ### Parser: tree-sitter, through the official C runtime
 
@@ -74,7 +74,34 @@ including its difficulties, as a second product.
 **The pure-Go fallback, if one is ever needed,** is the official C runtime compiled to
 WebAssembly and run under wazero, a pure-Go WebAssembly runtime. Its trees would match by
 construction, since it is the same C code; its speed is unmeasured. The existing benchmark
-harness could measure it.
+harness could measure it. (The route taken instead translates the WebAssembly to Go; see the
+next decision.)
+
+### Parser binding: cgofree's pure-Go translation of the official runtime
+
+strictcode switched from the CGo bindings to cgofree's packages: tree-sitter's official C runtime
+and the official Python, Go, and TypeScript/TSX grammars, compiled to WebAssembly and translated
+to Go, each translation checked against a native C build of the same upstream tag. Builds need no
+C compiler and work with `CGO_ENABLED=0`. The owner's rulings for the switch:
+
+- strictcode uses cgofree's packages, and builds must work with `CGO_ENABLED=0`;
+- strictcode keeps one Parser per grammar, not one per file, because each Parser owns a runtime
+  instance and instances cost memory;
+- character classification is Unicode, as in tree-sitter's own WebAssembly builds, where the CGo
+  build used glibc's; if any finding changed, the switch would stop and the differences would go
+  to the owner before any release.
+
+No finding changed. Before the switch, the CGo build and the pure-Go build ran `analyze --json`
+over 56 source trees (63,124 parsed Python, Go, TypeScript, and JavaScript files: the repositories
+of the earlier WebAssembly experiment that still exist, Django without the two files that trip a
+known extractor crash, strictcode's test inputs, and snapshots of the stricttools family
+repositories): the JSON output was byte-identical for every tree. The complete extraction result
+(the relation, external imports, call sites, unreachable regions, and line indexes) was identical
+too, 1.2 million lines across the same trees. Interleaved runs, median of three, pure-Go against
+CGo: Kubernetes 43.4 s against 40.3 s, tilt 22.0 s against 19.9 s, wundergraph cosmo 6.4 s against
+5.8 s, gamehome 4.1 s against 4.0 s, Django 18.3 s against 18.7 s, and rlsbl 8.7 s against 9.1 s;
+about 5% slower in total. Peak memory (maximum resident set, worst of the three runs) is higher by
+40 to 240 MB, and by 570 MB on tilt (917 MB against 346 MB).
 
 ### Graph model: an interaction relation
 
@@ -342,6 +369,12 @@ out, and `matrix gen` was removed. The registry dump moved from the root `REGIST
   list in column order. It moved to `schema/registry.json`, and its format version went to 2.
   `matrix gen` was removed.
 - Documentation moved onto selfdoc (see the decision above).
+
+### 2026-09-29: pure-Go tree-sitter
+
+- The CGo bindings were replaced by cgofree's tree-sitter packages; see the parser binding
+  decision above. `internal/treesitter` keeps one Parser per grammar, and the extractors use the
+  generated API's names and value nodes.
 
 ## Experiments
 
