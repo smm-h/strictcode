@@ -21,11 +21,11 @@ import (
 	"errors"
 	"fmt"
 
-	ts "github.com/cgofree/tree-sitter"
-	tsgo "github.com/cgofree/tree-sitter-go"
-	tspython "github.com/cgofree/tree-sitter-python"
-	"github.com/cgofree/tree-sitter-typescript/tsx"
-	"github.com/cgofree/tree-sitter-typescript/typescript"
+	ts "github.com/stricttools/cgofree/generated/tree-sitter"
+	tsgo "github.com/stricttools/cgofree/generated/tree-sitter-go"
+	tspython "github.com/stricttools/cgofree/generated/tree-sitter-python"
+	"github.com/stricttools/cgofree/generated/tree-sitter-typescript/tsx"
+	"github.com/stricttools/cgofree/generated/tree-sitter-typescript/typescript"
 )
 
 // Node is a syntax node: a comparable value that keeps its tree alive.
