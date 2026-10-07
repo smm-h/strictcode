@@ -38,11 +38,33 @@ const (
 // dev/peer deps are optional; runtime/explicit are hard).
 func (s DepScope) Optional() bool { return s == ScopeDev || s == ScopePeer }
 
+// DepSource is where a declared dependency is resolved from.
+type DepSource string
+
+const (
+	// SourceRegistry: a version constraint resolved against a registry (the
+	// constraint may be empty, meaning any version).
+	SourceRegistry DepSource = "registry"
+	// SourcePath: a local path or file URL (pyproject "name @ file:...",
+	// package.json "file:...").
+	SourcePath DepSource = "path"
+	// SourceWorkspace: a package manager's workspace protocol
+	// (package.json "workspace:...").
+	SourceWorkspace DepSource = "workspace"
+)
+
 // DeclaredDep is one manifest-declared dependency, as written (registry
-// name) with its scope.
+// name) with its scope, its source, and its version constraint.
 type DeclaredDep struct {
 	Name  string
 	Scope DepScope
+	// Source is where the dependency resolves from.
+	Source DepSource
+	// Constraint is the version constraint as written, without extras and
+	// environment markers: ">=1.2" for pyproject, "^1.2.0" for package.json,
+	// the required version for go.mod. Empty when the declaration states
+	// none; the path or protocol text for a path or workspace source.
+	Constraint string
 }
 
 // EntryPoint is one manifest-declared entry point.
@@ -68,6 +90,10 @@ type Manifest struct {
 	Name string
 	// GoModulePath is the module path from go.mod (Go only).
 	GoModulePath string
+	// Version is the manifest-declared version: pyproject [project].version,
+	// package.json version. Empty when the manifest declares none (a
+	// dynamic pyproject version, go.mod).
+	Version string
 	Deps         []DeclaredDep
 	EntryPoints  []EntryPoint
 }

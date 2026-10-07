@@ -29,6 +29,7 @@ func loadPyproject(ws *Workspace, m *Member, relPath string) (*Manifest, error) 
 	project, hasProject := doc.Field("project")
 	if hasProject {
 		mf.Name, _ = stringField(project, "name")
+		mf.Version, _ = stringField(project, "version")
 
 		if deps, ok := project.Field("dependencies"); ok {
 			for _, item := range deps.Items() {
@@ -71,11 +72,45 @@ func addRequirement(mf *Manifest, item strictspec.Value, scope DepScope) {
 	if !ok {
 		return
 	}
-	name := pep508Name.FindString(strings.TrimSpace(s))
+	name, source, constraint := ParseRequirement(s)
 	if name == "" {
 		return
 	}
-	mf.Deps = append(mf.Deps, DeclaredDep{Name: name, Scope: scope})
+	mf.Deps = append(mf.Deps, DeclaredDep{Name: name, Scope: scope, Source: source, Constraint: constraint})
+}
+
+// ParseRequirement splits a PEP 508 requirement into its distribution name,
+// its source, and its version constraint. "name @ <url>" is a path source
+// whose constraint is the URL. Otherwise the constraint is what follows the
+// name and its extras, before any environment marker, with the parentheses
+// of the old "name (>=1.0)" form removed. An unparsable requirement has an
+// empty name.
+func ParseRequirement(req string) (name string, source DepSource, constraint string) {
+	req = strings.TrimSpace(req)
+	name = pep508Name.FindString(req)
+	if name == "" {
+		return "", "", ""
+	}
+	rest := strings.TrimSpace(req[len(name):])
+	if strings.HasPrefix(rest, "[") {
+		if end := strings.Index(rest, "]"); end >= 0 {
+			rest = strings.TrimSpace(rest[end+1:])
+		}
+	}
+	if strings.HasPrefix(rest, "@") {
+		url := strings.TrimSpace(rest[1:])
+		if i := strings.Index(url, ";"); i >= 0 {
+			url = strings.TrimSpace(url[:i])
+		}
+		return name, SourcePath, url
+	}
+	if i := strings.Index(rest, ";"); i >= 0 {
+		rest = strings.TrimSpace(rest[:i])
+	}
+	if strings.HasPrefix(rest, "(") && strings.HasSuffix(rest, ")") {
+		rest = strings.TrimSpace(rest[1 : len(rest)-1])
+	}
+	return name, SourceRegistry, rest
 }
 
 // loadPackageJSON parses a package.json: name, dependency scopes
@@ -89,6 +124,7 @@ func loadPackageJSON(ws *Workspace, m *Member, relPath string) (*Manifest, error
 	}
 	mf := &Manifest{Lang: vocab.LangTS, Path: relPath}
 	mf.Name, _ = stringField(doc, "name")
+	mf.Version, _ = stringField(doc, "version")
 
 	depFields := []struct {
 		key   string
@@ -102,7 +138,15 @@ func loadPackageJSON(ws *Workspace, m *Member, relPath string) (*Manifest, error
 	for _, df := range depFields {
 		if deps, ok := doc.Field(df.key); ok {
 			for _, kv := range sortedEntries(deps) {
-				mf.Deps = append(mf.Deps, DeclaredDep{Name: kv.Key, Scope: df.scope})
+				spec, _ := kv.Value.AsString()
+				source := SourceRegistry
+				switch {
+				case strings.HasPrefix(spec, "workspace:"):
+					source = SourceWorkspace
+				case strings.HasPrefix(spec, "file:"), strings.HasPrefix(spec, "link:"):
+					source = SourcePath
+				}
+				mf.Deps = append(mf.Deps, DeclaredDep{Name: kv.Key, Scope: df.scope, Source: source, Constraint: spec})
 			}
 		}
 	}
@@ -170,7 +214,7 @@ func ParseGoMod(wsRoot, relPath string) (*Manifest, error) {
 		mf.GoModulePath = f.Module.Mod.Path
 	}
 	for _, req := range f.Require {
-		mf.Deps = append(mf.Deps, DeclaredDep{Name: req.Mod.Path, Scope: ScopeRuntime})
+		mf.Deps = append(mf.Deps, DeclaredDep{Name: req.Mod.Path, Scope: ScopeRuntime, Source: SourceRegistry, Constraint: req.Mod.Version})
 	}
 	return mf, nil
 }

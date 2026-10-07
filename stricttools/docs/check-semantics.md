@@ -34,10 +34,14 @@ Deliberate departures from the donor:
   malformed configuration, and staleness detection.
 - **Maven and JVM lint delegation** stays with rlsbl as an external check, if rlsbl wants it.
 
-rlsbl keeps everything that is not source analysis: manifest-level dependency checks over declared
-dependencies (layering over declared dependencies, stale dependencies, version, name, and license
-consistency), checks that delegate to subprocesses, changelog and release machinery, and the
-`__version__` bump, which is a targeted write rather than analysis.
+Besides source analysis, strictcode took over the code-quality checks rlsbl ran: the stale
+intra-workspace dependency constraints ([`deps-stale`](../rules/deps-stale/)), the Python tools
+([`lint`](../rules/lint/), [`format`](../rules/format/), and [`type-check`](../rules/type-check/),
+with their scope guards), and the strictspec certificate
+([`strictspec-certificate`](../rules/strictspec-certificate/)). rlsbl keeps everything else:
+version, name, and license consistency, changelog and release machinery, its test suites, and the
+`__version__` bump, which is a targeted write rather than analysis. rlsbl runs strictcode as one of
+its checks; see [rlsbl integration](../rlsbl-integration/).
 
 ## Workspace and manifest inputs
 

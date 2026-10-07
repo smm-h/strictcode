@@ -292,3 +292,60 @@ func TestDepScopeOptional(t *testing.T) {
 		t.Fatal("optional scopes reported hard")
 	}
 }
+
+func TestParseRequirement(t *testing.T) {
+	cases := []struct {
+		req, name, constraint string
+		source                DepSource
+	}{
+		{"requests>=2", "requests", ">=2", SourceRegistry},
+		{"my-lib[extra,fast] >= 1.0 ; python_version < '3.12'", "my-lib", ">= 1.0", SourceRegistry},
+		{"foo (>=1.0)", "foo", ">=1.0", SourceRegistry},
+		{"bare", "bare", "", SourceRegistry},
+		{"foo @ file:///work/foo", "foo", "file:///work/foo", SourcePath},
+		{"foo[x] @ {root:uri}/foo ; os_name == 'posix'", "foo", "{root:uri}/foo", SourcePath},
+		{"", "", "", ""},
+	}
+	for _, c := range cases {
+		name, source, constraint := ParseRequirement(c.req)
+		if name != c.name || source != c.source || constraint != c.constraint {
+			t.Errorf("ParseRequirement(%q) = (%q, %q, %q), want (%q, %q, %q)",
+				c.req, name, source, constraint, c.name, c.source, c.constraint)
+		}
+	}
+}
+
+func TestManifestVersionsAndDependencySources(t *testing.T) {
+	root := fixture.Write(t, map[string]string{
+		DeclarationsFile: decl("workspace",
+			"path = \"py\"\nname = \"py\"\nreleasable = false\n",
+			"path = \"js\"\nname = \"js\"\nreleasable = false\n",
+			"path = \"go\"\nname = \"go\"\nreleasable = false\n"),
+		"py/pyproject.toml": "[project]\nname = \"py\"\nversion = \"1.2.3\"\ndependencies = [\"lib>=1\"]\n",
+		"js/package.json":   `{"name": "js", "version": "0.4.0", "dependencies": {"a": "^1.0.0", "b": "workspace:*", "c": "file:../c"}}`,
+		"go/go.mod":         "module example.com/go\n\ngo 1.22\n\nrequire example.com/lib v1.4.0\n",
+	})
+	ws, err := Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	py := ws.MemberByName("py").Manifests[vocab.LangPy]
+	if py.Version != "1.2.3" || py.Deps[0].Constraint != ">=1" || py.Deps[0].Source != SourceRegistry {
+		t.Errorf("pyproject: %+v", py)
+	}
+	js := ws.MemberByName("js").Manifests[vocab.LangTS]
+	if js.Version != "0.4.0" {
+		t.Errorf("package.json version %q", js.Version)
+	}
+	sources := map[string]DepSource{}
+	for _, d := range js.Deps {
+		sources[d.Name] = d.Source
+	}
+	if sources["a"] != SourceRegistry || sources["b"] != SourceWorkspace || sources["c"] != SourcePath {
+		t.Errorf("package.json sources: %+v", sources)
+	}
+	gomod := ws.MemberByName("go").Manifests[vocab.LangGo]
+	if gomod.Version != "" || gomod.Deps[0].Constraint != "v1.4.0" {
+		t.Errorf("go.mod: %+v", gomod)
+	}
+}

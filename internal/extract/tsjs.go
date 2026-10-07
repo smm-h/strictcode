@@ -136,14 +136,7 @@ func (ex *extraction) extractTS(m *workspace.Member) error {
 	if _, err := ex.memberNodeID(vocab.LangTS, m); err != nil {
 		return err
 	}
-	if err := ex.emitDeclaredDeps(vocab.LangTS, m, m.Manifests[vocab.LangTS], func(dep string, cand *workspace.Member) bool {
-		n := strings.ToLower(dep)
-		if n == strings.ToLower(cand.Name) {
-			return true
-		}
-		rn := cand.RegistryName(vocab.LangTS)
-		return rn != "" && n == strings.ToLower(rn)
-	}); err != nil {
+	if err := ex.emitDeclaredDeps(vocab.LangTS, m, m.Manifests[vocab.LangTS], tsDepMatches); err != nil {
 		return err
 	}
 

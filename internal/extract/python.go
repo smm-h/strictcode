@@ -24,6 +24,13 @@ func pyNorm(s string) string {
 	return s
 }
 
+// pyDepMatches reports whether a pyproject dependency names the candidate
+// member: its member name or its registry name, under PyPI normalization.
+func pyDepMatches(dep string, cand *workspace.Member) bool {
+	n := pyNorm(dep)
+	return n == pyNorm(cand.Name) || (cand.RegistryName(vocab.LangPy) != "" && n == pyNorm(cand.RegistryName(vocab.LangPy)))
+}
+
 // pyMemberLayout is one member's discovered Python surface.
 type pyMemberLayout struct {
 	member *workspace.Member
@@ -286,10 +293,7 @@ func (ex *extraction) extractPython(m *workspace.Member) error {
 	if _, err := ex.memberNodeID(vocab.LangPy, m); err != nil {
 		return err
 	}
-	if err := ex.emitDeclaredDeps(vocab.LangPy, m, m.Manifests[vocab.LangPy], func(dep string, cand *workspace.Member) bool {
-		n := pyNorm(dep)
-		return n == pyNorm(cand.Name) || (cand.RegistryName(vocab.LangPy) != "" && n == pyNorm(cand.RegistryName(vocab.LangPy)))
-	}); err != nil {
+	if err := ex.emitDeclaredDeps(vocab.LangPy, m, m.Manifests[vocab.LangPy], pyDepMatches); err != nil {
 		return err
 	}
 

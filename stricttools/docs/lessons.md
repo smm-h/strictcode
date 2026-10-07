@@ -51,6 +51,13 @@ numbers are stable, and tests and code comments cite them as "lesson N". The tes
 31. Malformed configuration MUST fail loudly, never be coerced or skipped.
 32. A suppression path that does not exist on disk MUST be a hard error.
 
+## From the rlsbl port
+
+These came with the checks that moved from rlsbl into strictcode: rlsbl's test cases and the false
+positives fixed there, each a red-green test in `internal/checks`.
+
+33. `deps-stale` MUST report a registry-sourced constraint that the dependency member's declared version does not satisfy, and MUST NOT judge path sources, workspace-protocol sources, constraints in forms it does not evaluate, or a dependency without a static version.
+
 ## From real-code runs
 
 These came from running strictcode on real repositories, each after a finding that was wrong:

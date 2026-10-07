@@ -267,6 +267,41 @@ func (ex *extraction) locate(relPath, needle string) relation.Span {
 // member, per-ecosystem.
 type depResolver func(depName string, candidate *workspace.Member) bool
 
+// tsDepMatches reports whether a package.json dependency names the candidate
+// member: its member name or its registry name, ignoring case.
+func tsDepMatches(dep string, cand *workspace.Member) bool {
+	n := strings.ToLower(dep)
+	if n == strings.ToLower(cand.Name) {
+		return true
+	}
+	rn := cand.RegistryName(vocab.LangTS)
+	return rn != "" && n == strings.ToLower(rn)
+}
+
+// DependencyMember is the workspace member a declared dependency of member
+// m names in language lang, or nil: the first other member, in declaration
+// order, the language's matcher accepts. The declares_dependency rows are
+// built by the same rule.
+func DependencyMember(ws *workspace.Workspace, lang vocab.Lang, m *workspace.Member, depName string) *workspace.Member {
+	var matches depResolver
+	switch lang {
+	case vocab.LangPy:
+		matches = pyDepMatches
+	case vocab.LangTS:
+		matches = tsDepMatches
+	case vocab.LangGo:
+		matches = goDepMatches
+	default:
+		return nil
+	}
+	for _, other := range ws.Members {
+		if other != m && matches(depName, other) {
+			return other
+		}
+	}
+	return nil
+}
+
 // emitDeclaredDeps adds declares_dependency rows for every dep of the
 // given manifest that resolves to a sibling workspace member. mf may be a
 // member's root manifest or a nested one (Go nested modules).

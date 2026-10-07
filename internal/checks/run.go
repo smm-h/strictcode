@@ -36,6 +36,7 @@ var implemented = map[string]checkFn{
 	"deps-undeclared":           checkDepsUndeclared,
 	"deps-runtime-test-only":    checkDepsRuntimeTestOnly,
 	"deps-dev-in-production":    checkDepsDevInProduction,
+	"deps-stale":                checkDepsStale,
 	"dead-modules":              checkDeadModules,
 	"dead-workspace-packages":   checkDeadWorkspacePackages,
 	"import-cycles":             checkImportCycles,
