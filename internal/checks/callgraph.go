@@ -8,17 +8,28 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/smm-h/strictcode/internal/extract"
 	"github.com/smm-h/strictcode/internal/findings"
 	"github.com/smm-h/strictcode/internal/vocab"
 )
 
 // stdoutCallees are the Python standard-stream writers (stricttools/docs/check-semantics.md, library-boundary rules:
 // print and sys.stdout/stderr writes are errors). Matched against the
-// alias-expanded canonical callee.
+// alias-expanded canonical callee. The Go and TypeScript/JavaScript call
+// sites the extractor records are standard-stream writes already.
 var stdoutCallees = map[string]bool{
 	"print":            true,
 	"sys.stdout.write": true,
 	"sys.stderr.write": true,
+}
+
+// writesStandardStream reports whether a call site is a standard-stream
+// write.
+func writesStandardStream(c extract.CallSite) bool {
+	if c.Lang != vocab.LangPy {
+		return true
+	}
+	return stdoutCallees[c.Callee]
 }
 
 // loggingMethods are the root-logger methods whose direct use is the
@@ -30,16 +41,19 @@ var loggingMethods = map[string]bool{
 
 // checkLibraryStdout: a library writing to standard streams. Library-only
 // (lesson 22); test/example files excluded via the shared predicate
-// (lesson 23); individual stream identifiers ignorable via the allow list.
+// (lesson 23); individual callees ignorable through the per-language allow
+// list. Python, Go, and TypeScript/JavaScript alike.
 func checkLibraryStdout(ctx *Context) []findings.Finding {
 	setting := ctx.Cfg.Setting("library-stdout")
 	allowed := map[string]bool{}
-	for _, a := range setting.Allow[string(vocab.LangPy)] {
-		allowed[a] = true
+	for lang, list := range setting.Allow {
+		for _, a := range list {
+			allowed[lang+"\x00"+a] = true
+		}
 	}
 	var out []findings.Finding
 	for _, c := range ctx.View.Res.Calls {
-		if c.TestContext || !stdoutCallees[c.Callee] || allowed[c.Callee] {
+		if c.TestContext || !writesStandardStream(c) || allowed[string(c.Lang)+"\x00"+c.Callee] {
 			continue
 		}
 		m := ctx.View.WS.MemberByName(c.Member)
@@ -65,7 +79,7 @@ func checkLibraryDirectLogging(ctx *Context) []findings.Finding {
 	}
 	var out []findings.Finding
 	for _, c := range ctx.View.Res.Calls {
-		if c.TestContext || allowed[c.Callee] {
+		if c.Lang != vocab.LangPy || c.TestContext || allowed[c.Callee] {
 			continue
 		}
 		rest, ok := strings.CutPrefix(c.Callee, "logging.")

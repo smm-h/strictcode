@@ -71,6 +71,7 @@ positives fixed there, each a red-green test in `internal/checks`.
 45. A src-layout Python package's modules MUST be named by their import path, not by their file path, so a module imported only from inside its package is alive.
 46. A member whose import name differs from its distribution name (a `core` distribution shipping `portal_core`, a `cloudflare` shipping `src/cf`) MUST be matched by the package directory it ships, so its dependents' imports are neither unused nor undeclared and the library is not dead.
 47. `import-cycles` MUST leave test modules out of the graph, so a cycle among tests is not reported.
+48. `library-stdout` MUST report Go and TypeScript/JavaScript standard-stream writes as it does Python's: Go `fmt.Print*`, `fmt.Fprint*` to `os.Stdout` or `os.Stderr`, and `os.Stdout` or `os.Stderr` writes; TypeScript/JavaScript `console` writers and `process.stdout` or `process.stderr` writes; never a write to a caller's writer or one in a test file.
 
 ## From real-code runs
 

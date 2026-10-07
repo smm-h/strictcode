@@ -200,9 +200,13 @@ Each language's list can be replaced, and both the per-language `allow` list and
 `lint_allow` list are subtracted from the effective set.
 
 Standard-stream writes for [`library-stdout`](../rules/library-stdout/): Python `print(...)` and
-`sys.stdout` or `sys.stderr` writes. The rule needs full-semantic extraction, which exists for
-Python only; the designed lists for the other languages are Go `fmt.Print*` and
-`os.Stdout.Write`, and TypeScript `console.log`, `warn`, `error`, and `info`. Direct use of Python's root logger
+`sys.stdout` or `sys.stderr` writes, matched on the callee call resolution canonicalizes; Go
+`fmt.Print`, `fmt.Printf`, `fmt.Println`, `fmt.Fprint*` with `os.Stdout` or `os.Stderr` as its
+first argument, `os.Stdout.Write*`, `os.Stderr.Write*`, and the builtins `print` and `println`;
+and TypeScript/JavaScript `console.log`, `info`, `warn`, `error`, `debug`, and `trace`, and
+`process.stdout.write` and `process.stderr.write`. The Go and TypeScript/JavaScript calls are
+matched by the qualified name they are written with, so an aliased import (`import f "fmt"`)
+hides a write there. Direct use of Python's root logger
 (`logging.<method>(...)`) is the separate, lower-severity
 [`library-direct-logging`](../rules/library-direct-logging/): a library should take a logger
 rather than use the root logger.

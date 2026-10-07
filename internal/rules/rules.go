@@ -320,7 +320,11 @@ var Rules = []Rule{
 		ID:          "library-stdout",
 		Severity:    SeverityError,
 		Description: "A library writing to standard streams (print, sys.stdout.write, fmt.Print*, console.log family).",
-		Requires: []vocab.Capability{
+		// The Go and TypeScript/JavaScript writes are recognized by the
+		// qualified name they are written with, once their imports are
+		// extracted; Python's call resolution expands aliases on top.
+		Requires: []vocab.Capability{vocab.CapImportExtraction},
+		Uses: []vocab.Capability{
 			vocab.CapCallableExtraction,
 			vocab.CapCallResolutionSyntactic,
 		},

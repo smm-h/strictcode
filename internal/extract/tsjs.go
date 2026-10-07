@@ -329,6 +329,7 @@ func (ex *extraction) extractTSFile(m *workspace.Member, layout *tsLayout, file 
 
 	srcID := moduleNodeID(vocab.LangTS, m.Name, tsLogicalName(file))
 	isTest := testctx.IsTestContext(file)
+	ex.recordTSStreamWrites(m, tree, grammar, tsLogicalName(file), wsPath, isTest)
 	fromDir := path.Dir(file)
 
 	for _, match := range query.Matches(tree) {

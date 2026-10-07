@@ -190,6 +190,7 @@ func (ex *extraction) extractGoFile(m *workspace.Member, resolveIntra func(strin
 
 	srcID := moduleNodeID(vocab.LangGo, m.Name, pkgDir)
 	isTest := strings.HasSuffix(file, "_test.go") || testctx.IsTestContext(file)
+	ex.recordGoStreamWrites(m, tree, pkgDir, wsPath, isTest)
 	attrs := func() map[string]relation.Value {
 		return map[string]relation.Value{
 			"test_context":  relation.BoolValue(isTest),
