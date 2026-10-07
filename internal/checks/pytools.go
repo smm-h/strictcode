@@ -94,8 +94,8 @@ func planPythonTool(ctx *Context, rule string) (*toolPlan, error) {
 	}
 	decl, ok := ctx.Cfg.PythonTools[rule]
 	if !ok {
-		return nil, fmt.Errorf("%s: strictcode:%s is on for the member path(s) %s, but %s declares no [python_tools.%s]: declare paths = [...] there, or switch the option off",
-			rule, rule, quoteJoin(on), ctx.CfgPath, rule)
+		return nil, fmt.Errorf("%s: strictcode:%s is on for the member path(s) %s, but %s declares no [python_tools.%s]: declare paths = [...] there, or %s",
+			rule, rule, quoteJoin(on), ctx.CfgPath, rule, options.SwitchOff(rule))
 	}
 	covered := map[string]bool{}
 	for _, rp := range decl.RootPaths() {
@@ -113,8 +113,8 @@ func planPythonTool(ctx *Context, rule string) (*toolPlan, error) {
 		}
 	}
 	if len(uncovered) != 0 {
-		return nil, fmt.Errorf("%s: strictcode:%s is on for the member path(s) %s, which no path of [python_tools.%s] in %s lies in: add a path inside each to the declaration, or switch the option off for it",
-			rule, rule, quoteJoin(uncovered), rule, ctx.CfgPath)
+		return nil, fmt.Errorf("%s: strictcode:%s is on for the member path(s) %s, which no path of [python_tools.%s] in %s lies in: add a path inside each to the declaration, or %s",
+			rule, rule, quoteJoin(uncovered), rule, ctx.CfgPath, options.SwitchOff(rule))
 	}
 	return &toolPlan{rule: rule, decl: decl, on: on}, nil
 }

@@ -522,3 +522,35 @@ func TestAScopeGuardConflictNoMemberOwnsIsRefused(t *testing.T) {
 		t.Fatalf("removing the key did not clear the refusal: %v", err)
 	}
 }
+
+// Each refusal of an adopted rule that names switching its option off names
+// the file and entry to edit; setting current = "off" there clears it.
+func TestSwitchingTheOptionOffClearsEachAdoptionRefusal(t *testing.T) {
+	cases := map[string]struct {
+		files       map[string]string
+		subject     string
+		rule, scope string
+	}{
+		"lint without a declaration": {
+			pyProject("", optionEntry("code", "lint", "", "error", "error")), "code", "lint", ""},
+		"type-check for an uncovered member": {
+			twoPyMembers("[python_tools.type-check]\npaths = [\"core\"]\n", optionEntry("code", "type-check", "tools", "error", "error")), "code", "type-check", "tools"},
+		"certificate without a declaration": {
+			pyProject("", optionEntry("release", "strictspec-certificate", "", "error", "error")), "release", "strictspec-certificate", ""},
+		"certificate file missing": {
+			pyProject("[strictspec_certificate]\ncertificate = \"migrations/cert.json\"\n", optionEntry("release", "strictspec-certificate", "", "error", "error")), "release", "strictspec-certificate", ""},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			_, err := analyzeWith(t, c.files, newFakeTools(t).run)
+			file := ".strictmetadata/options/" + c.subject + ".toml"
+			if err == nil || !strings.Contains(err.Error(), `set current = "off"`) || !strings.Contains(err.Error(), file) {
+				t.Fatalf("refusal does not name the entry to switch off in %s: %v", file, err)
+			}
+			c.files = withFiles(c.files, optionEntry(c.subject, c.rule, c.scope, "off", "error"))
+			if _, err := analyzeWith(t, c.files, newFakeTools(t).run); err != nil {
+				t.Fatalf("switching the option off did not clear the refusal: %v", err)
+			}
+		})
+	}
+}

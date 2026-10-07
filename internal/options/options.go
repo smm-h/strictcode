@@ -49,6 +49,22 @@ const (
 // ID is the option ID of a rule: strictcode:<rule id>.
 func ID(ruleID string) string { return Namespace + ":" + ruleID }
 
+// EntryFile is the repository-relative subject document that holds ruleID's
+// option entries, the file to edit to change the option's value.
+func EntryFile(ruleID string) string {
+	r, ok := rules.ByID(ruleID)
+	if !ok {
+		panic("options: no rule " + ruleID)
+	}
+	return strictspec.OptionsDir + "/" + r.OptionSubject + ".toml"
+}
+
+// SwitchOff is the instruction that switches ruleID's option off, for use at
+// the end of a refusal.
+func SwitchOff(ruleID string) string {
+	return fmt.Sprintf("switch %s off: set current = \"off\" in its entry in %s (the entry scoped to the member path, or the unscoped entry)", ID(ruleID), EntryFile(ruleID))
+}
+
 // Ranking is the ranking string of a rule's option.
 func Ranking(r rules.Rule) string {
 	if r.Severity == rules.SeverityWarning && !r.Adoption {

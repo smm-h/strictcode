@@ -85,6 +85,10 @@ type adjudicationEntry struct {
 	Scope      string
 }
 
+// ErrNoCertificate is wrapped by Evaluate's error when the declared
+// certificate file does not exist.
+var ErrNoCertificate = errors.New("the declared certificate file does not exist")
+
 // Evaluate reads the certificate (and the adjudication file, when one is
 // declared) at the workspace-root-relative paths under root and returns
 // every blocker. A missing or unreadable file, a certificate that is not a
@@ -93,7 +97,7 @@ type adjudicationEntry struct {
 func Evaluate(root, certificatePath, adjudicationPath string) ([]Blocker, error) {
 	raw, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(certificatePath)))
 	if errors.Is(err, fs.ErrNotExist) {
-		return nil, fmt.Errorf("the certificate %s does not exist: produce it with `strictspec diff`, or switch strictcode:strictspec-certificate off", certificatePath)
+		return nil, fmt.Errorf("%s: %w", certificatePath, ErrNoCertificate)
 	}
 	if err != nil {
 		return nil, err

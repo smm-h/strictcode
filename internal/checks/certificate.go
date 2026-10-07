@@ -1,6 +1,7 @@
 package checks
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/smm-h/strictcode/internal/certificate"
@@ -18,10 +19,14 @@ import (
 func checkStrictspecCertificate(ctx *Context) []findings.Finding {
 	decl := ctx.Cfg.Certificate
 	if decl == nil {
-		ctx.fail(fmt.Errorf("strictspec-certificate: strictcode:strictspec-certificate is on, but %s declares no [strictspec_certificate]: declare certificate = \"<path>\" there, or switch the option off", ctx.CfgPath))
+		ctx.fail(fmt.Errorf("strictspec-certificate: strictcode:strictspec-certificate is on, but %s declares no [strictspec_certificate]: declare certificate = \"<path>\" there, or %s", ctx.CfgPath, options.SwitchOff("strictspec-certificate")))
 		return nil
 	}
 	blockers, err := certificate.Evaluate(ctx.View.WS.Root, decl.Certificate, decl.Adjudication)
+	if errors.Is(err, certificate.ErrNoCertificate) {
+		ctx.fail(fmt.Errorf("strictspec-certificate: %w: produce it with `strictspec diff`, or %s", err, options.SwitchOff("strictspec-certificate")))
+		return nil
+	}
 	if err != nil {
 		ctx.fail(fmt.Errorf("strictspec-certificate: %w", err))
 		return nil
