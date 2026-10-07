@@ -110,10 +110,11 @@ type Member struct {
 	// whose publish_mode is "ci" and the member declares a publish pipeline:
 	// such a member has consumers outside the workspace.
 	Published bool
-	// ImportName is the explicit Python import-name override from
-	// workspace.toml (resolution order step 3).
+	// ImportName is the member's import_name in the declarations file, the
+	// explicit Python import-name override (resolution order step 3).
 	ImportName string
-	// RegistryNameOverride is workspace.toml's registry_name, when set.
+	// RegistryNameOverride is the member's registry_name in the declarations
+	// file, when set.
 	RegistryNameOverride string
 	// LintAllow is the per-member allow list for library-forbidden-imports.
 	LintAllow []string
