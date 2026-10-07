@@ -10,8 +10,10 @@ import (
 )
 
 // checkImportCycles: Tarjan SCC over the module imports projection per
-// member; SCCs of size >= 2 only (lesson 21, self-loops ignored). Never
-// runs on languages whose matrix cell is n/a (lesson 20: Go).
+// member; SCCs of size >= 2 only (lesson 21, self-loops ignored). Test
+// modules are left out of the graph, so a cycle among tests is not
+// reported (lesson 47). Never runs on languages whose matrix cell is n/a
+// (lesson 20: Go).
 func checkImportCycles(ctx *Context) []findings.Finding {
 	var out []findings.Finding
 	for _, lang := range vocab.Langs {
@@ -35,9 +37,18 @@ func cyclesFor(ctx *Context, lang vocab.Lang, member string) []findings.Finding 
 	// Distinct-pair adjacency, self-loops dropped.
 	adj := map[string][]string{}
 	seen := map[[2]string]bool{}
+	production := map[string]bool{}
+	for logical, mi := range modules {
+		if !mi.Test {
+			production[logical] = true
+		}
+	}
 	for src, edges := range ctx.View.ModuleImports[lm] {
+		if !production[src] {
+			continue
+		}
 		for _, e := range edges {
-			if e.Dst == src || seen[[2]string{src, e.Dst}] {
+			if e.Dst == src || !production[e.Dst] || seen[[2]string{src, e.Dst}] {
 				continue
 			}
 			seen[[2]string{src, e.Dst}] = true
@@ -48,7 +59,7 @@ func cyclesFor(ctx *Context, lang vocab.Lang, member string) []findings.Finding 
 		sort.Strings(dsts)
 	}
 
-	sccs := tarjan(sortedKeys(modules), adj)
+	sccs := tarjan(sortedKeys(production), adj)
 
 	var out []findings.Finding
 	for _, scc := range sccs {
