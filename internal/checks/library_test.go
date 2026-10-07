@@ -187,3 +187,21 @@ func TestPortedAllowListsMerge(t *testing.T) {
 		t.Fatalf("want only django forbidden: %v", got)
 	}
 }
+
+// A member nested in a library member's directory is its own member: its
+// imports and writes are never the library's.
+func TestPortedLibraryRulesLeaveNestedMembersOut(t *testing.T) {
+	fs := analyze(t, map[string]string{
+		fixture.DeclarationsPath:    fixture.Workspace("path = \"sdk\"\nname = \"sdk\"\nlibrary = true\n", "path = \"sdk/tool\"\nname = \"sdk-tool\"\n"),
+		"sdk/pyproject.toml":        "[project]\nname = \"sdk\"\n",
+		"sdk/sdk/__init__.py":       "",
+		"sdk/tool/pyproject.toml":   "[project]\nname = \"sdk-tool\"\n\n[project.scripts]\nsdk-tool = \"tool.main:run\"\n",
+		"sdk/tool/tool/__init__.py": "",
+		"sdk/tool/tool/main.py":     "import click\n\ndef run():\n    print(\"hi\")\n",
+	})
+	for _, rule := range []string{"library-forbidden-imports", "library-stdout", "library-entry-point"} {
+		if got := byRule(fs, rule); len(got) != 0 {
+			t.Errorf("%s: a nested application member was judged as the library: %+v", rule, got)
+		}
+	}
+}
