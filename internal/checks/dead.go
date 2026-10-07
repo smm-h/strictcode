@@ -112,8 +112,12 @@ func deadPy(ctx *Context, member string, suppressed map[string]bool) []findings.
 
 // deadGo: union-of-imports, package-granular. Only packages under an
 // internal/ path component are candidates; test-context packages never are
-// (lesson 9). A package is dead when no non-test file outside it imports
-// its path; suppressed packages leave the reference union too (lesson 14).
+// (lesson 9), and neither is a main package, an entry point run with go run
+// or built (lesson 42). A package is dead when no file outside it imports
+// its path, counting the _test.go files of other packages (a test helper
+// imported only by other packages' tests is alive) but never a package's
+// own tests nor a file under testdata/; suppressed packages leave the
+// reference union too (lesson 14).
 func deadGo(ctx *Context, member string, suppressed map[string]bool) []findings.Finding {
 	lm := langMember{vocab.LangGo, member}
 	modules := ctx.View.Modules[lm]
@@ -138,17 +142,24 @@ func deadGo(ctx *Context, member string, suppressed map[string]bool) []findings.
 			continue
 		}
 		for _, e := range edges {
-			if e.Dst == srcLogical || rowBool(e.Row, "test_context") {
+			if e.Dst == srcLogical || inTestdata(e.Row.File) {
+				continue
+			}
+			if rowBool(e.Row, "test_context") && !strings.HasSuffix(e.Row.File, "_test.go") {
 				continue
 			}
 			alive[e.Dst] = true
 		}
 	}
+	entry := map[string]bool{}
+	for _, target := range ctx.View.EntryTargets[lm] {
+		entry[target] = true
+	}
 
 	var out []findings.Finding
 	for _, logical := range sortedKeys(modules) {
 		mi := modules[logical]
-		if mi.Test || !underInternal(mi) || suppressed[mi.Path] || alive[logical] {
+		if mi.Test || !underInternal(mi) || suppressed[mi.Path] || alive[logical] || entry[logical] {
 			continue
 		}
 		out = append(out, ctx.finding("dead-modules",
@@ -156,6 +167,17 @@ func deadGo(ctx *Context, member string, suppressed map[string]bool) []findings.
 			fmt.Sprintf("package %s is not imported by any non-test file outside it", logical)))
 	}
 	return out
+}
+
+// inTestdata reports whether a workspace-root-relative path lies under a
+// testdata/ directory, which the go tool ignores.
+func inTestdata(path string) bool {
+	for _, part := range strings.Split(path, "/") {
+		if part == "testdata" {
+			return true
+		}
+	}
+	return false
 }
 
 // deadTS: BFS from entry points over the resolved import graph. A

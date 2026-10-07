@@ -63,6 +63,12 @@ positives fixed there, each a red-green test in `internal/checks`.
 37. A member nested inside a declared path MUST be left out of that path's ruff run, its files belonging to its own declared path.
 38. The scope guards MUST report a tool's own configuration that narrows or overrides the declared paths (ruff `include` and `extend-include`; mypy `files`, `packages`, and `modules`), MUST leave exclusion keys alone, and MUST report nothing while their tool rule is off.
 39. `strictspec-certificate` MUST block on a violated claim, an unsupported claim no adjudication entry discharges, and a dangling adjudication entry; MUST pass `corpus-supported` and `proven` claims; and MUST treat a missing or unreadable certificate or adjudication file as an error, never a pass.
+40. A directory named like a build artifact (`build`, `dist`, `static`, and the others on [check semantics](../check-semantics/)) MUST be left out of a source walk only directly under a member's root; deeper it is an ordinary package directory, such as a Go project's `internal/build`.
+41. A source walk MUST read only what git lists (tracked files and untracked files that are not ignored), so a gitignored file is never read; a workspace root outside a git work tree MUST be refused.
+42. A Go internal package imported only by other packages' `_test.go` files MUST be alive, and a main package MUST never be a candidate; a package's own tests and files under `testdata/` MUST NOT keep it alive.
+43. A member nested in another member's directory MUST be left out of the enclosing member's walk.
+44. A TypeScript entry point inside `tsconfig.json`'s `outDir` MUST resolve to its source under `rootDir`, files under `outDir` MUST NOT be scanned as source, and with no `rootDir` known reachability MUST abstain rather than report the sources dead.
+45. A src-layout Python package's modules MUST be named by their import path, not by their file path, so a module imported only from inside its package is alive.
 
 ## From real-code runs
 

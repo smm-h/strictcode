@@ -49,7 +49,7 @@ func goDepMatches(dep string, cand *workspace.Member) bool {
 // package resolution for files beneath them.
 func (ex *extraction) extractGo(m *workspace.Member) error {
 	mf := m.Manifests[vocab.LangGo]
-	all, err := walkMember(ex.ws, m, func(name string) bool {
+	all, err := walkMember(ex.sources, ex.ws, m, func(name string) bool {
 		return strings.HasSuffix(name, ".go") || name == "go.mod"
 	})
 	if err != nil {

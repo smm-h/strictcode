@@ -13,16 +13,18 @@ nav_order = 60
 
 The algorithm differs per language: union of imports for Python and Go, and reachability from
 entry points for TypeScript/JavaScript. [Check semantics](../../check-semantics/) describes each,
-including the Python export and `scripts/` exemptions, Go's `internal/` candidates, the
-TypeScript abstention when no entry point resolves to source, and the rule that a suppressed unit
-never keeps anything alive (lesson 14).
+including the Python export and `scripts/` exemptions, Go's `internal/` candidates with its test
+helpers and main packages, the mapping of TypeScript build output back to its sources through
+`tsconfig.json`, the abstention when no entry point resolves to source, and the rule that a
+suppressed unit never keeps anything alive (lesson 14). Only the files git lists are read.
 
 Most remaining findings on real code are units loaded dynamically, such as plugins, documentation
 directives, or extractors registered by name. A path suppression is the intended remedy for those.
 
-## Lineage
+## Origin
 
-Kept from the donor under the same name.
+Kept from the donor under the same name, with the donor's later false-positive fixes carried as
+lessons 40 to 45.
 
 ## Suppressing
 

@@ -1,7 +1,13 @@
 package extract
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
 	"path"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -71,6 +77,125 @@ type tsLayout struct {
 	modules map[string]string
 	// fileSet for O(1) resolution probes.
 	fileSet map[string]bool
+	// build is where tsconfig.json says the compiler reads and writes.
+	build tsBuildLayout
+}
+
+// tsBuildLayout is the member's tsconfig.json compilerOptions.outDir and
+// rootDir, member-relative and canonical; empty when not known. rootDir is
+// tsconfig's own when declared, else the one directory every include
+// pattern starts in.
+type tsBuildLayout struct {
+	outDir  string
+	rootDir string
+}
+
+// readTSBuildLayout reads the member's tsconfig.json (JSON with comments
+// and trailing commas). A member without one, or a tsconfig without outDir,
+// has no build layout; an unreadable tsconfig is an error.
+func readTSBuildLayout(ws *workspace.Workspace, m *workspace.Member) (tsBuildLayout, error) {
+	rel := wsRelPath(m, "tsconfig.json")
+	raw, err := os.ReadFile(filepath.Join(ws.Root, filepath.FromSlash(rel)))
+	if errors.Is(err, fs.ErrNotExist) {
+		return tsBuildLayout{}, nil
+	}
+	if err != nil {
+		return tsBuildLayout{}, fmt.Errorf("extract: %w", err)
+	}
+	var cfg struct {
+		CompilerOptions struct {
+			OutDir  string `json:"outDir"`
+			RootDir string `json:"rootDir"`
+		} `json:"compilerOptions"`
+		Include []string `json:"include"`
+	}
+	if err := json.Unmarshal(stripJSONC(raw), &cfg); err != nil {
+		return tsBuildLayout{}, fmt.Errorf("extract: %s: %w", rel, err)
+	}
+	out := tsBuildLayout{outDir: cleanTSDir(cfg.CompilerOptions.OutDir)}
+	if out.outDir == "" || out.outDir == "." {
+		// Output beside the sources is no separate tree to map from.
+		return tsBuildLayout{}, nil
+	}
+	out.rootDir = cleanTSDir(cfg.CompilerOptions.RootDir)
+	if cfg.CompilerOptions.RootDir == "" && len(cfg.Include) > 0 {
+		common := ""
+		for i, pattern := range cfg.Include {
+			first, _, _ := strings.Cut(strings.TrimPrefix(pattern, "./"), "/")
+			if first == "" || strings.ContainsAny(first, "*?{[") || (i > 0 && first != common) {
+				common = ""
+				break
+			}
+			common = first
+		}
+		out.rootDir = common
+	}
+	return out, nil
+}
+
+// cleanTSDir canonicalizes a tsconfig directory: "./dist/" is "dist", "."
+// stays ".", and a path leaving the member is not one ("").
+func cleanTSDir(dir string) string {
+	if strings.TrimSpace(dir) == "" {
+		return ""
+	}
+	c := path.Clean(strings.TrimSpace(dir))
+	if c == ".." || strings.HasPrefix(c, "../") || strings.HasPrefix(c, "/") {
+		return ""
+	}
+	return c
+}
+
+// stripJSONC removes comments and trailing commas from JSON with comments,
+// leaving string contents alone.
+func stripJSONC(src []byte) []byte {
+	var out []byte
+	inString, escaped := false, false
+	for i := 0; i < len(src); i++ {
+		c := src[i]
+		if inString {
+			out = append(out, c)
+			switch {
+			case escaped:
+				escaped = false
+			case c == '\\':
+				escaped = true
+			case c == '"':
+				inString = false
+			}
+			continue
+		}
+		switch {
+		case c == '"':
+			inString = true
+			out = append(out, c)
+		case c == '/' && i+1 < len(src) && src[i+1] == '/':
+			for i < len(src) && src[i] != '\n' {
+				i++
+			}
+			if i < len(src) {
+				out = append(out, '\n')
+			}
+		case c == '/' && i+1 < len(src) && src[i+1] == '*':
+			i += 2
+			for i+1 < len(src) && !(src[i] == '*' && src[i+1] == '/') {
+				i++
+			}
+			i++
+		case c == ']' || c == '}':
+			j := len(out) - 1
+			for j >= 0 && (out[j] == ' ' || out[j] == '\t' || out[j] == '\n' || out[j] == '\r') {
+				j--
+			}
+			if j >= 0 && out[j] == ',' {
+				out = append(out[:j], out[j+1:]...)
+			}
+			out = append(out, c)
+		default:
+			out = append(out, c)
+		}
+	}
+	return out
 }
 
 // tsLogicalName strips the extension and collapses index files to their
@@ -87,7 +212,7 @@ func tsLogicalName(file string) string {
 
 func (ex *extraction) extractTS(m *workspace.Member) error {
 	mf := m.Manifests[vocab.LangTS]
-	all, err := walkMember(ex.ws, m, func(name string) bool {
+	all, err := walkMember(ex.sources, ex.ws, m, func(name string) bool {
 		if name == "__init__.py" {
 			return true
 		}
@@ -113,8 +238,16 @@ func (ex *extraction) extractTS(m *workspace.Member) error {
 		}
 		sources = append(sources, f)
 	}
-	layout := &tsLayout{modules: map[string]string{}, fileSet: map[string]bool{}}
+	build, err := readTSBuildLayout(ex.ws, m)
+	if err != nil {
+		return err
+	}
+	layout := &tsLayout{modules: map[string]string{}, fileSet: map[string]bool{}, build: build}
 	for _, f := range sources {
+		// Compiler output is generated, not source (lesson 44).
+		if build.outDir != "" && workspace.IsInside(f, build.outDir) {
+			continue
+		}
 		inPyPkg := false
 		for dir := path.Dir(f); dir != "."; dir = path.Dir(dir) {
 			if pyPkgDirs[dir] {
@@ -336,15 +469,13 @@ func resolveTSRelative(layout *tsLayout, fromDir, spec string) (string, bool) {
 	if layout.fileSet[target] {
 		return target, true
 	}
-	// .js -> .ts, .jsx -> .tsx (TS emits .js specifiers for .ts sources).
-	if strings.HasSuffix(target, ".js") {
-		if mapped := strings.TrimSuffix(target, ".js") + ".ts"; layout.fileSet[mapped] {
-			return mapped, true
-		}
-	}
-	if strings.HasSuffix(target, ".jsx") {
-		if mapped := strings.TrimSuffix(target, ".jsx") + ".tsx"; layout.fileSet[mapped] {
-			return mapped, true
+	// .js -> .ts or .tsx, .jsx -> .tsx, .mjs -> .mts, .cjs -> .cts (TS
+	// emits the JavaScript extension in specifiers for its sources).
+	for _, pair := range [][2]string{{".js", ".ts"}, {".js", ".tsx"}, {".jsx", ".tsx"}, {".mjs", ".mts"}, {".cjs", ".cts"}} {
+		if strings.HasSuffix(target, pair[0]) {
+			if mapped := strings.TrimSuffix(target, pair[0]) + pair[1]; layout.fileSet[mapped] {
+				return mapped, true
+			}
 		}
 	}
 	// Extension probing.
@@ -360,6 +491,22 @@ func resolveTSRelative(layout *tsLayout, fromDir, spec string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// resolveTSEntry resolves a package.json entry target to a member module.
+// A target inside tsconfig's outDir is compiler output: it resolves to the
+// source it is compiled from, the same path under rootDir (lesson 44). With
+// no rootDir known it resolves to nothing, and reachability abstains.
+func resolveTSEntry(layout *tsLayout, target string) (string, bool) {
+	clean := path.Clean(strings.TrimPrefix(target, "./"))
+	if b := layout.build; b.outDir != "" && workspace.IsInside(clean, b.outDir) {
+		if b.rootDir == "" {
+			return "", false
+		}
+		rel := strings.TrimPrefix(strings.TrimPrefix(clean, b.outDir), "/")
+		clean = path.Join(b.rootDir, rel)
+	}
+	return resolveTSRelative(layout, ".", "./"+clean)
 }
 
 // emitTSEntryPoints adds entry_point nodes from package.json (exports
@@ -386,7 +533,7 @@ func (ex *extraction) emitTSEntryPoints(m *workspace.Member, layout *tsLayout) e
 		if err := ex.builder.AddNode(node); err != nil {
 			return err
 		}
-		target, ok := resolveTSRelative(layout, ".", "./"+strings.TrimPrefix(ep.Target, "./"))
+		target, ok := resolveTSEntry(layout, ep.Target)
 		if !ok {
 			continue
 		}

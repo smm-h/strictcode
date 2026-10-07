@@ -70,11 +70,20 @@ name in the manifest, so they carry a real `file:line`.
 
 ### Source-walk exclusions
 
-These directories are never scanned: `.venv`, `venv`, `__pycache__`, `.git`, `node_modules`,
-`build`, `dist`, `.tox`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`, `.selfdoc`, `_build`,
-`static`, `public`, `assets`, and `*.egg-info`. When a member's path contains a sibling member (for
-example `path = "."`), the sibling's tree is pruned, so one member's scan never takes in another's
-source.
+A source walk reads only what git lists under the workspace root: tracked files, and untracked
+files that are not ignored (`git ls-files --cached --others --exclude-standard`). A gitignored
+file, a third-party clone among them, is never read, and a workspace root outside any git work
+tree is refused.
+
+Of what git lists, these directories are never scanned at any depth: `.venv`, `venv`,
+`__pycache__`, `.git`, `node_modules`, `.tox`, `.mypy_cache`, `.pytest_cache`, `.ruff_cache`,
+`.selfdoc`, and `*.egg-info`. The build-artifact and asset names `build`, `dist`, `_build`,
+`static`, `public`, and `assets` are left out only directly under a member's root: deeper, the
+same name is an ordinary package directory, such as a Go project's `internal/build`.
+
+When a member's path contains another member (for example `path = "."`, or a member nested in
+another's directory), the other member's tree is pruned, so one member's scan never takes in
+another's source.
 
 ## Test context
 
@@ -145,17 +154,23 @@ as JavaScript.
   relative import. Files directly under a root `scripts/` directory are standalone programs: they
   are never candidates, and their imports do not keep other modules alive.
 - **Go: union of imports, per package.** The dead unit is a package directory, and only packages
-  under an `internal/` path component are candidates. A package is dead if no non-test `.go` file
-  outside it imports its full module path. Test files never define candidates and never keep a
-  package alive, and packages under `testdata/`, or made only of `*_test.go` files, are never
-  reported.
+  under an `internal/` path component are candidates. A package is dead if no `.go` file outside it
+  imports its full module path. The `_test.go` files of other packages count, so a test helper
+  imported only by other packages' tests is alive; a package's own tests, and files under
+  `testdata/`, never keep it alive. Packages under `testdata/`, packages made only of `*_test.go`
+  files, and main packages (programs built or run with `go run`, entry points in their own right)
+  are never reported.
 - **TypeScript/JavaScript: reachability from entry points.** A production file is dead if the
   resolved import graph cannot reach it from any entry point. Entry points come from
   `package.json` `exports` (traversing the condition and subpath tree recursively), `main`, and
   `bin` (string or object form). Test files are neither candidates nor entry points, so a module
-  used only by tests is dead. When no entry point resolves to scanned source, for example because
-  every export points at built `dist/` output, the rule reports nothing for that member rather than
-  declaring the whole tree dead.
+  used only by tests is dead. An entry point inside `tsconfig.json`'s `compilerOptions.outDir`
+  names compiler output: it resolves to the source it is compiled from, the same path under
+  `rootDir` (tsconfig's own, or else the one directory every `include` pattern starts in), and the
+  files under `outDir` are never scanned as source. `tsconfig.json` is read as JSON with comments
+  and trailing commas. When no entry point resolves to scanned source, for example because every
+  export points at `dist/` output and no `rootDir` is known, the rule reports nothing for that
+  member rather than declaring the whole tree dead.
 
 **No entry-point laundering.** A suppressed unit must not keep anything alive. For the
 union-of-imports languages, a suppressed unit is removed from both the candidate set and the

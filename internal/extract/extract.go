@@ -83,6 +83,8 @@ type extraction struct {
 	ws      *workspace.Workspace
 	builder *relation.Builder
 	lines   map[string][]uint32
+	// sources are the files git lists under the workspace root.
+	sources *sourceList
 
 	// memberNodes tracks which (lang, member) member nodes exist.
 	memberNodes map[string]relation.NodeID
@@ -103,8 +105,13 @@ type extraction struct {
 
 // Extract runs all extractors over the workspace and freezes the relation.
 func Extract(ws *workspace.Workspace) (*Result, error) {
+	sources, err := listSources(ws.Root)
+	if err != nil {
+		return nil, err
+	}
 	ex := &extraction{
 		ws:          ws,
+		sources:     sources,
 		builder:     relation.NewBuilder(),
 		lines:       map[string][]uint32{},
 		memberNodes: map[string]relation.NodeID{},
@@ -114,7 +121,7 @@ func Extract(ws *workspace.Workspace) (*Result, error) {
 
 	// Python resolution index needs every member's package roots before any
 	// member's imports are resolved (namespace map, step 4 of the import resolution order).
-	idx, err := buildPyResolutionIndex(ws)
+	idx, err := buildPyResolutionIndex(sources, ws)
 	if err != nil {
 		return nil, err
 	}
