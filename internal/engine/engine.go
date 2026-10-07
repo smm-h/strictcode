@@ -63,6 +63,9 @@ func Analyze(dir, cfgName string) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	fs := checks.Run(in.WS, res, in.Cfg, in.Opts, cfgName)
+	fs, err := checks.Run(in.WS, res, in.Cfg, in.Opts, cfgName, ExecRunner)
+	if err != nil {
+		return nil, err
+	}
 	return &Result{WorkspaceRoot: in.WS.Root, Findings: fs}, nil
 }

@@ -19,8 +19,23 @@ import (
 )
 
 // analyze runs the full check pipeline over a fixture. The fixture may
-// contain a strictcode.toml; it is loaded as the config.
+// contain a strictcode.toml; it is loaded as the config. No external tool
+// may run: a test that expects one uses analyzeWith.
 func analyze(t *testing.T, files map[string]string) []findings.Finding {
+	t.Helper()
+	fs, err := analyzeWith(t, files, func(run ToolRun) (ToolResult, error) {
+		t.Fatalf("unexpected tool run: %v", run.Argv)
+		return ToolResult{}, nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return fs
+}
+
+// analyzeWith runs the full check pipeline over a fixture with runner
+// answering every external tool run, returning Run's error.
+func analyzeWith(t *testing.T, files map[string]string, runner ToolRunner) ([]findings.Finding, error) {
 	t.Helper()
 	root := fixture.Write(t, files)
 	ws, err := workspace.Load(root)
@@ -43,7 +58,7 @@ func analyze(t *testing.T, files map[string]string) []findings.Finding {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return Run(ws, res, cfg, opts, "strictcode.toml")
+	return Run(ws, res, cfg, opts, "strictcode.toml", runner)
 }
 
 func byRule(fs []findings.Finding, rule string) []findings.Finding {
@@ -70,10 +85,10 @@ func messagesContain(fs []findings.Finding, sub string) bool {
 func twoMemberPy(aDeps string, aSources map[string]string) map[string]string {
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"a\"\nname = \"a\"\n", "path = \"b\"\nname = \"b\"\n"),
-		"a/pyproject.toml":               "[project]\nname = \"a\"\ndependencies = [" + aDeps + "]\n",
-		"a/a_pkg/__init__.py":            "",
-		"b/pyproject.toml":               "[project]\nname = \"b\"\n",
-		"b/b/__init__.py":                "",
+		"a/pyproject.toml":       "[project]\nname = \"a\"\ndependencies = [" + aDeps + "]\n",
+		"a/a_pkg/__init__.py":    "",
+		"b/pyproject.toml":       "[project]\nname = \"b\"\n",
+		"b/b/__init__.py":        "",
 	}
 	for path, content := range aSources {
 		files["a/"+path] = content
@@ -206,7 +221,7 @@ func TestLesson9GoTestPackagesNeverDead(t *testing.T) {
 
 func TestLesson10RegistryNameMismatchNoFalseUndeclared(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		fixture.DeclarationsPath:         fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"transport\"\nname = \"transport\"\n"),
+		fixture.DeclarationsPath:                 fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"transport\"\nname = \"transport\"\n"),
 		"app/pyproject.toml":                     "[project]\nname = \"app\"\ndependencies = [\"orxtra-transport\"]\n",
 		"app/app/__init__.py":                    "import orxtra_transport\n",
 		"transport/pyproject.toml":               "[project]\nname = \"orxtra-transport\"\n",
@@ -222,7 +237,7 @@ func TestLesson10RegistryNameMismatchNoFalseUndeclared(t *testing.T) {
 
 func TestLesson11NamespaceImportResolves(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		fixture.DeclarationsPath:           fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"transport\"\nname = \"transport\"\n"),
+		fixture.DeclarationsPath:                   fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"transport\"\nname = \"transport\"\n"),
 		"app/pyproject.toml":                       "[project]\nname = \"app\"\ndependencies = [\"transport\"]\n",
 		"app/app/__init__.py":                      "from orxt.transport import client\n",
 		"transport/pyproject.toml":                 "[project]\nname = \"transport\"\n",
@@ -237,10 +252,10 @@ func TestLesson11NamespaceImportResolves(t *testing.T) {
 func TestLesson12ImportNameOverrideHonored(t *testing.T) {
 	fs := analyze(t, map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"weird\"\nname = \"weird\"\nimport_name = \"totally_custom\"\n"),
-		"app/pyproject.toml":             "[project]\nname = \"app\"\ndependencies = [\"weird\"]\n",
-		"app/app/__init__.py":            "import totally_custom\n",
-		"weird/pyproject.toml":           "[project]\nname = \"weird\"\n",
-		"weird/lib/__init__.py":          "",
+		"app/pyproject.toml":     "[project]\nname = \"app\"\ndependencies = [\"weird\"]\n",
+		"app/app/__init__.py":    "import totally_custom\n",
+		"weird/pyproject.toml":   "[project]\nname = \"weird\"\n",
+		"weird/lib/__init__.py":  "",
 	})
 	if len(byRule(fs, "deps-undeclared")) != 0 || len(byRule(fs, "deps-unused")) != 0 {
 		t.Fatalf("import_name override must be honored (lesson 12): %+v", fs)
@@ -251,13 +266,13 @@ func TestLesson12ImportNameOverrideHonored(t *testing.T) {
 
 func TestLesson13SiblingSourceNeverTriggersUndeclared(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		fixture.DeclarationsPath: fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"sub\"\nname = \"sub\"\n", "path = \"other\"\nname = \"other\"\n"),
-		"pyproject.toml":                 "[project]\nname = \"root\"\n",
-		"rootpkg/__init__.py":            "",
-		"sub/pyproject.toml":             "[project]\nname = \"sub\"\ndependencies = [\"other\"]\n",
-		"sub/subpkg/__init__.py":         "import other\n",
-		"other/pyproject.toml":           "[project]\nname = \"other\"\n",
-		"other/other/__init__.py":        "",
+		fixture.DeclarationsPath:  fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"sub\"\nname = \"sub\"\n", "path = \"other\"\nname = \"other\"\n"),
+		"pyproject.toml":          "[project]\nname = \"root\"\n",
+		"rootpkg/__init__.py":     "",
+		"sub/pyproject.toml":      "[project]\nname = \"sub\"\ndependencies = [\"other\"]\n",
+		"sub/subpkg/__init__.py":  "import other\n",
+		"other/pyproject.toml":    "[project]\nname = \"other\"\n",
+		"other/other/__init__.py": "",
 	})
 	// sub's import of other is declared by sub; root must not report it.
 	for _, f := range byRule(fs, "deps-undeclared") {
@@ -426,8 +441,8 @@ func libWorkspace(library bool, extra map[string]string) map[string]string {
 	}
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\n" + lib),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
-		"m/pkg/__init__.py":              "import flask\n",
+		"m/pyproject.toml":       "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":      "import flask\n",
 	}
 	for k, v := range extra {
 		files[k] = v
@@ -461,8 +476,8 @@ func TestLesson26BothAllowListsSubtracted(t *testing.T) {
 	// per-language config allow list; django stays forbidden.
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\nlint_allow = [\"flask\"]\n"),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
-		"m/pkg/__init__.py":              "import flask\nimport click\nimport django\n",
+		"m/pyproject.toml":       "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":      "import flask\nimport click\nimport django\n",
 		"strictcode.toml": `
 format_version = 1
 [rules.library-forbidden-imports.allow]
@@ -478,9 +493,9 @@ py = ["click"]
 func TestLibraryEntryPoint(t *testing.T) {
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n\n[project.scripts]\nm-cli = \"pkg.main:run\"\n",
-		"m/pkg/__init__.py":              "",
-		"m/pkg/main.py":                  "def run(): pass\n",
+		"m/pyproject.toml":       "[project]\nname = \"m\"\n\n[project.scripts]\nm-cli = \"pkg.main:run\"\n",
+		"m/pkg/__init__.py":      "",
+		"m/pkg/main.py":          "def run(): pass\n",
 	}
 	got := byRule(analyze(t, files), "library-entry-point")
 	if len(got) != 1 || !strings.Contains(got[0].Message, "m-cli") {
@@ -490,8 +505,8 @@ func TestLibraryEntryPoint(t *testing.T) {
 	// flagged.
 	tsFiles := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
-		"m/package.json":                 "{\n  \"name\": \"m\",\n  \"main\": \"./index.ts\"\n}\n",
-		"m/index.ts":                     "export const x = 1;\n",
+		"m/package.json":         "{\n  \"name\": \"m\",\n  \"main\": \"./index.ts\"\n}\n",
+		"m/index.ts":             "export const x = 1;\n",
 	}
 	if got := byRule(analyze(t, tsFiles), "library-entry-point"); len(got) != 0 {
 		t.Fatalf("npm export/main entry points are not CLI entry points: %+v", got)
@@ -586,12 +601,12 @@ releasable = false
 
 func TestLesson29AssetDirsExcluded(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
-		"m/pkg/__init__.py":              "",
-		"m/.venv/site/flask_user.py":     "import flask\n",
-		"m/node_modules/x/index.js":      "import 'express';\n",
-		"m/build/gen.py":                 "import django\n",
+		fixture.DeclarationsPath:     fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
+		"m/pyproject.toml":           "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":          "",
+		"m/.venv/site/flask_user.py": "import flask\n",
+		"m/node_modules/x/index.js":  "import 'express';\n",
+		"m/build/gen.py":             "import django\n",
 	})
 	if got := byRule(fs, "library-forbidden-imports"); len(got) != 0 {
 		t.Fatalf("excluded dirs were scanned (lesson 29): %+v", got)
@@ -791,10 +806,10 @@ func TestGoNestedModuleDeclaredDeps(t *testing.T) {
 	// member's declared deps — no false deps-undeclared.
 	fs := analyze(t, map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"conf\"\nname = \"conf\"\n", "path = \"lib\"\nname = \"lib\"\n"),
-		"conf/harness/go.mod":            "module example.com/conf/harness\n\ngo 1.22\n\nrequire example.com/lib v0.1.0\n",
-		"conf/harness/main.go":           "package main\n\nimport \"example.com/lib\"\n\nfunc main() { _ = lib.V }\n",
-		"lib/go.mod":                     "module example.com/lib\n\ngo 1.22\n",
-		"lib/lib.go":                     "package lib\n\nvar V = 1\n",
+		"conf/harness/go.mod":    "module example.com/conf/harness\n\ngo 1.22\n\nrequire example.com/lib v0.1.0\n",
+		"conf/harness/main.go":   "package main\n\nimport \"example.com/lib\"\n\nfunc main() { _ = lib.V }\n",
+		"lib/go.mod":             "module example.com/lib\n\ngo 1.22\n",
+		"lib/lib.go":             "package lib\n\nvar V = 1\n",
 	})
 	if got := byRule(fs, "deps-undeclared"); len(got) != 0 {
 		t.Fatalf("nested go.mod requires must count as declared: %+v", got)
@@ -809,8 +824,8 @@ func TestGoNestedModuleDeclaredDeps(t *testing.T) {
 func TestLibraryStdout(t *testing.T) {
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n", "path = \"app\"\nname = \"app\"\n"),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
-		"m/pkg/__init__.py":              "",
+		"m/pyproject.toml":       "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":      "",
 		"m/pkg/core.py": `import sys
 
 def work():
@@ -841,8 +856,8 @@ def work():
 func TestLibraryStdoutAllowList(t *testing.T) {
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
-		"m/pkg/__init__.py":              "def f():\n    print(\"allowed\")\n",
+		"m/pyproject.toml":       "[project]\nname = \"m\"\n",
+		"m/pkg/__init__.py":      "def f():\n    print(\"allowed\")\n",
 		"strictcode.toml": `
 format_version = 1
 [rules.library-stdout.allow]
@@ -857,7 +872,7 @@ py = ["print"]
 func TestLesson27DirectLoggingIsWarning(t *testing.T) {
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
-		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
+		"m/pyproject.toml":       "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py": `import logging
 
 def f():
@@ -929,8 +944,8 @@ func TestUnreachableCodeRunsOnAllProjects(t *testing.T) {
 	// The approved departure: not library-gated.
 	files := map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"app\"\nname = \"app\"\n"),
-		"app/pyproject.toml":             "[project]\nname = \"app\"\n",
-		"app/cli/__init__.py":            "def main():\n    return 0\n    print(\"never\")\n",
+		"app/pyproject.toml":     "[project]\nname = \"app\"\n",
+		"app/cli/__init__.py":    "def main():\n    return 0\n    print(\"never\")\n",
 	}
 	if got := byRule(analyze(t, files), "unreachable-code"); len(got) != 1 {
 		t.Fatalf("unreachable-code must run on non-library projects: %+v", got)

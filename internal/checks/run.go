@@ -1,7 +1,9 @@
 package checks
 
 import (
+	"errors"
 	"sort"
+	"strings"
 
 	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/extract"
@@ -23,6 +25,10 @@ type Context struct {
 	// CfgPath is the workspace-root-relative config file path (the site of
 	// stale-suppression findings).
 	CfgPath string
+	// Runner runs the external tools of the Python tool rules.
+	Runner ToolRunner
+	// errs are the checks that could not answer.
+	errs []error
 }
 
 // checkFn implements one rule over the view.
@@ -46,16 +52,26 @@ var implemented = map[string]checkFn{
 	"library-stdout":            checkLibraryStdout,
 	"library-direct-logging":    checkLibraryDirectLogging,
 	"unreachable-code":          checkUnreachableCode,
+	"lint":                      checkLint,
+	"lint-scope-guard":          checkLintScopeGuard,
+	"format":                    checkFormat,
+	"format-scope-guard":        checkFormatScopeGuard,
+	"type-check":                checkTypeCheck,
+	"type-check-scope-guard":    checkTypeCheckScopeGuard,
 }
 
 // Run executes every check whose option is not off over the one shared
-// relation (lesson 30) and returns the sorted findings.
-func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, opts *options.Resolved, cfgPath string) []findings.Finding {
+// relation (lesson 30) and returns the sorted findings. runner runs the
+// external tools the Python tool rules declare. A check that cannot answer
+// (a tool that does not run, an adopted rule missing its declaration) is an
+// error, returned after every check has run.
+func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, opts *options.Resolved, cfgPath string, runner ToolRunner) ([]findings.Finding, error) {
 	ctx := &Context{
 		View:    buildView(ws, res),
 		Cfg:     cfg,
 		Opts:    opts,
 		CfgPath: cfgPath,
+		Runner:  runner,
 	}
 	ids := make([]string, 0, len(implemented))
 	for id := range implemented {
@@ -70,8 +86,20 @@ func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, op
 		}
 		out = append(out, implemented[id](ctx)...)
 	}
+	if len(ctx.errs) != 0 {
+		msgs := make([]string, 0, len(ctx.errs))
+		for _, err := range ctx.errs {
+			msgs = append(msgs, err.Error())
+		}
+		return nil, errors.New(strings.Join(msgs, "\n"))
+	}
 	findings.Sort(out)
-	return out
+	return out, nil
+}
+
+// fail records that a check could not answer; Run returns every such error.
+func (ctx *Context) fail(err error) {
+	ctx.errs = append(ctx.errs, err)
 }
 
 // --- shared helpers -------------------------------------------------------
@@ -86,6 +114,26 @@ func (ctx *Context) finding(ruleID string, targetID string, kind vocab.NodeKind,
 	return findings.Finding{
 		Rule:     ruleID,
 		Severity: options.Severity(ctx.Opts.Value(ruleID)),
+		Message:  message,
+		Target: findings.Target{
+			ID:   targetID,
+			Kind: kind,
+			File: file,
+			Line: line,
+		},
+	}
+}
+
+// findingAtLine constructs a finding at a known line and severity, for
+// findings whose site comes from a tool's output or a configuration file
+// rather than from the relation.
+func (ctx *Context) findingAtLine(ruleID string, severity rules.Severity, targetID string, kind vocab.NodeKind, file string, line int, message string) findings.Finding {
+	if line < 1 {
+		line = 1
+	}
+	return findings.Finding{
+		Rule:     ruleID,
+		Severity: severity,
 		Message:  message,
 		Target: findings.Target{
 			ID:   targetID,

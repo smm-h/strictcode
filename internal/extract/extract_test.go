@@ -188,8 +188,8 @@ func TestPyGuardedAndTypeChecking(t *testing.T) {
 func TestPyGuardedClassification(t *testing.T) {
 	res := run(t, map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \"a\"\nname = \"a\"\n", "path = \"b\"\nname = \"b\"\n"),
-		"a/pyproject.toml":               "[project]\nname = \"a\"\ndependencies = [\"b\"]\n",
-		"a/a_pkg/__init__.py":            "",
+		"a/pyproject.toml":       "[project]\nname = \"a\"\ndependencies = [\"b\"]\n",
+		"a/a_pkg/__init__.py":    "",
 		"a/a_pkg/guarded.py": `try:
     import b
 except ImportError:
@@ -296,10 +296,10 @@ func TestPySiblingPruning(t *testing.T) {
 	// Lesson 13: member with path = "." must not ingest nested sibling.
 	res := run(t, map[string]string{
 		fixture.DeclarationsPath: fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"sub\"\nname = \"sub\"\n"),
-		"pyproject.toml":                 "[project]\nname = \"root\"\n",
-		"rootpkg/__init__.py":            "",
-		"sub/pyproject.toml":             "[project]\nname = \"sub\"\n",
-		"sub/subpkg/__init__.py":         "import sub_only_dep\n",
+		"pyproject.toml":         "[project]\nname = \"root\"\n",
+		"rootpkg/__init__.py":    "",
+		"sub/pyproject.toml":     "[project]\nname = \"sub\"\n",
+		"sub/subpkg/__init__.py": "import sub_only_dep\n",
 	})
 	mods := nodeSet(res, vocab.NodeKindModule)
 	if _, ok := mods["py:root:sub%2Esubpkg:"]; ok {
@@ -572,11 +572,11 @@ func TestPyMemberRootIsThePackage(t *testing.T) {
 	// must get proper dotted logical names anchored at the directory name,
 	// and intra-package imports must resolve.
 	res := run(t, map[string]string{
-		fixture.DeclarationsPath: fixture.Workspace("path = \"selfblog\"\nname = \"selfblog\"\n"),
-		"selfblog/pyproject.toml":        "[project]\nname = \"selfblog\"\n",
-		"selfblog/__init__.py":           "from . import cli\n",
-		"selfblog/cli.py":                "import selfblog.posts\n",
-		"selfblog/posts.py":              "",
+		fixture.DeclarationsPath:  fixture.Workspace("path = \"selfblog\"\nname = \"selfblog\"\n"),
+		"selfblog/pyproject.toml": "[project]\nname = \"selfblog\"\n",
+		"selfblog/__init__.py":    "from . import cli\n",
+		"selfblog/cli.py":         "import selfblog.posts\n",
+		"selfblog/posts.py":       "",
 	})
 	mods := nodeSet(res, vocab.NodeKindModule)
 	for _, want := range []string{
