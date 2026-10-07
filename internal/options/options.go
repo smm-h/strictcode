@@ -39,7 +39,7 @@ const (
 	Off   Value = "off"
 )
 
-// scopeNone and scopePath are the registry scope kinds strictcode's options
+// scopeNone and scopePath are the registry scope forms strictcode's options
 // use.
 const (
 	scopeNone = "none"
@@ -69,7 +69,7 @@ func Default(r rules.Rule) Value {
 	}
 }
 
-// Scope is the scope kind of a rule's option.
+// Scope is the scope form of a rule's option.
 func Scope(r rules.Rule) string {
 	if r.PathScoped {
 		return scopePath

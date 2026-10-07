@@ -10,7 +10,8 @@
 //     declared adjudication file (Part B) discharges it.
 //
 // An adjudication entry discharges an unsupported claim when its claim_kind
-// equals the claim's kind and its scope equals the claim's statement; an
+// value equals the claim's class (the certificate's "kind" key) and its scope
+// equals the claim's statement; an
 // entry discharging no unsupported claim is dangling and blocks too.
 //
 // The certificate carries certificate_format_version rather than a document
@@ -63,7 +64,7 @@ type Blocker struct {
 
 // claim is one entry of the certificate's claims array.
 type claim struct {
-	Kind            string `json:"kind"`
+	Class           string `json:"kind"`
 	Grade           string `json:"grade"`
 	Statement       string `json:"statement"`
 	Counterexamples []struct {
@@ -75,13 +76,13 @@ func (c claim) label(i int) string {
 	if strings.TrimSpace(c.Statement) != "" {
 		return c.Statement
 	}
-	return fmt.Sprintf("claim #%d (kind %s)", i, c.Kind)
+	return fmt.Sprintf("claim #%d (%s)", i, c.Class)
 }
 
 // adjudicationEntry is one [[adjudications]] entry.
 type adjudicationEntry struct {
-	ClaimKind string
-	Scope     string
+	ClaimClass string
+	Scope      string
 }
 
 // Evaluate reads the certificate (and the adjudication file, when one is
@@ -154,7 +155,7 @@ func Evaluate(root, certificatePath, adjudicationPath string) ([]Blocker, error)
 		c := claims[i]
 		found := -1
 		for j, e := range entries {
-			if e.ClaimKind == c.Kind && e.Scope == c.Statement {
+			if e.ClaimClass == c.Class && e.Scope == c.Statement {
 				found = j
 				break
 			}
@@ -162,7 +163,7 @@ func Evaluate(root, certificatePath, adjudicationPath string) ([]Blocker, error)
 		if found < 0 {
 			blockers = append(blockers, Blocker{File: certificatePath, Reason: fmt.Sprintf(
 				"claim '%s' is unsupported and no adjudication entry discharges it (needs claim_kind %q, scope %q)",
-				c.label(i), c.Kind, c.Statement)})
+				c.label(i), c.Class, c.Statement)})
 			continue
 		}
 		matched[found] = true
@@ -171,7 +172,7 @@ func Evaluate(root, certificatePath, adjudicationPath string) ([]Blocker, error)
 		if !matched[j] {
 			blockers = append(blockers, Blocker{File: adjudicationPath, Reason: fmt.Sprintf(
 				"adjudication entry #%d (claim_kind %q, scope %q) matches no unsupported claim in the certificate (dangling)",
-				j, e.ClaimKind, e.Scope)})
+				j, e.ClaimClass, e.Scope)})
 		}
 	}
 	return blockers, nil
@@ -203,7 +204,7 @@ func loadAdjudications(root, path string) ([]adjudicationEntry, error) {
 	for _, item := range items.Items() {
 		var e adjudicationEntry
 		if v, ok := item.Field("claim_kind"); ok {
-			e.ClaimKind, _ = v.AsString()
+			e.ClaimClass, _ = v.AsString()
 		}
 		if v, ok := item.Field("scope"); ok {
 			e.Scope, _ = v.AsString()

@@ -28,8 +28,8 @@ func claimJSON(class, grade, statement string) map[string]interface{} {
 
 const adjudicationHeader = "format_version = 1\nschema_id = \"widget-config\"\nold_format_version = 1\nnew_format_version = 2\n"
 
-func adjudication(kind, scope string) string {
-	return "\n[[adjudications]]\nclaim_kind = \"" + kind + "\"\nscope = \"" + scope + "\"\njustification = \"no documents exist at rest\"\nauthor = \"maintainer\"\ndate = 2026-07-27\n"
+func adjudication(class, scope string) string {
+	return "\n[[adjudications]]\nclaim_kind = \"" + class + "\"\nscope = \"" + scope + "\"\njustification = \"no documents exist at rest\"\nauthor = \"maintainer\"\ndate = 2026-07-27\n"
 }
 
 func evaluate(t *testing.T, files map[string]string, adj string) ([]Blocker, error) {

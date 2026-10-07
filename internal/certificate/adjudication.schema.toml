@@ -47,7 +47,7 @@ type = "record"
 type = "enum"
 required = true
 values = ["flip-scan", "migrate-round-trip-soundness", "migrate-round-trip-completeness", "down-taxonomy"]
-description = "Which claim is discharged (matches certificate claim kind)."
+description = "Which claim is discharged, matched against the certificate claim's class."
 
 [types.AdjudicationEntry.fields.scope]
 type = "string"
