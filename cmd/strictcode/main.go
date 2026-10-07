@@ -66,16 +66,23 @@ func newApp() *strictcli.App {
 
 	app.Command("analyze", "Analyze a project or workspace directory and report findings",
 		analyzeHandler,
-		// read_only: analyze reads the workspace and its config and writes
-		// only to stdout/stderr. It creates, modifies and deletes nothing.
-		strictcli.WithEffect(strictcli.EffectReadOnly),
+		// mutating: the lint, format, and type-check rules, while their
+		// options are on, start their tools with `uv run`, which syncs the
+		// project's environment: it can create or update .venv and rewrite
+		// uv.lock. Every other rule only reads.
+		strictcli.WithEffect(strictcli.EffectMutating),
+		strictcli.WithDryRunUnsupported(
+			"the lint, format, and type-check rules start their tools with `uv run`, which can create or update .venv and rewrite uv.lock outside the effects handle, so a preview would report nothing while the real run writes"),
 		strictcli.WithArgs(
-			strictcli.NewArg("dir", "Project or workspace root to analyze",
-				strictcli.ArgDefault(defaultRoot)),
+			// Optional, not defaulted: this command is mutating, so the
+			// fallback is applied in the handler and stated here.
+			strictcli.NewArg("dir", "Project or workspace root to analyze; omitted means the current directory",
+				strictcli.ArgOptional()),
 		),
 		strictcli.WithFlags(
-			strictcli.StringFlag("config", "Config file name, resolved relative to the analyzed directory",
-				strictcli.Default(defaultConfigName)),
+			strictcli.StringFlag("config",
+				"Config file name, resolved relative to the analyzed directory; omitted means "+defaultConfigName,
+				strictcli.Optional()),
 		),
 		// Machine output is the framework's --json, and the findings document
 		// is this command's payload. strictcode declares no output-format flag
@@ -147,8 +154,8 @@ func newApp() *strictcli.App {
 // error-severity finding (the CI hard gate rlsbl keys on); exit 2 = tool or
 // config error.
 func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
-	dir := strictcli.Get[string](kwargs, "dir")
-	cfgName := strictcli.Get[string](kwargs, "config")
+	dir := optOr(kwargs, "dir", defaultRoot)
+	cfgName := optOr(kwargs, "config", defaultConfigName)
 
 	res, err := engine.Analyze(dir, cfgName)
 	if err != nil {
