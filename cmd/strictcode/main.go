@@ -3,8 +3,10 @@
 //
 // Surface: analyze (the batch pipeline — extract, check, report, exit
 // code), fix (the tier-1 transforms, under a required apply/preview
-// selector), and registry dump (the committed schema/registry.json, which
-// carries the computed support-matrix cells the docs site renders).
+// selector), registry rules (every implemented rule with its option, the
+// list rlsbl checks strictcode's capabilities against), and registry dump
+// (the committed schema/registry.json, which carries the computed
+// support-matrix cells the docs site renders).
 package main
 
 import (
@@ -115,6 +117,12 @@ func newApp() *strictcli.App {
 	)
 
 	registry := app.Group("registry", "Rule registry artifacts (mint-once IDs and retired-rule records)")
+	registry.Command("rules", "Print every rule strictcode implements, by rule ID, with its strictcode:<rule id> option (ranking, default, scope, and subject document); with --json the list is the payload",
+		registryRulesHandler,
+		// read_only: it prints the built-in registry and reads nothing else.
+		strictcli.WithEffect(strictcli.EffectReadOnly),
+		strictcli.PayloadSchema(registrydump.RulesSchema),
+	)
 	registry.Command("dump", "Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON",
 		registryDumpHandler,
 		// mutating: it writes the dump file named by --out.
@@ -205,6 +213,17 @@ func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli
 		return strictcli.Exit(2)
 	}
 	fmt.Printf("applied %d fix(es) across %d file(s); post-fix graph verified\n", len(report.Applied), report.FilesEdited)
+	return strictcli.Exit(0)
+}
+
+// registryRulesHandler prints the rule list. rlsbl asks it whether the
+// strictcode on PATH implements the rules rlsbl requires.
+func registryRulesHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli.Outcome {
+	list := registrydump.Rules(strictcode.Version)
+	ctx.Payload(list)
+	if !ctx.JSON() {
+		fmt.Print(registrydump.RenderRules(list))
+	}
 	return strictcli.Exit(0)
 }
 

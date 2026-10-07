@@ -38,6 +38,15 @@ negated spelling such as `--no-apply` selects nothing and is refused. `fix` exit
 including when there is nothing to fix, and 2 on a tool or configuration error or when a fix fails
 verification and is rolled back. [Fixes](../fixes/) describes what happens.
 
+## `registry rules`
+
+:-: cli-command name="registry rules"
+
+Read-only. It prints every rule strictcode implements, by rule ID, with its option's default and
+ranking; under `--json` the payload lists each rule with its severity, description, and option
+(ID, subject document, ranking, default, and scope). rlsbl reads this list to check that the
+strictcode on `PATH` implements the rules it requires; see [rlsbl integration](../rlsbl-integration/).
+
 ## `registry dump`
 
 :-: cli-command name="registry dump"
