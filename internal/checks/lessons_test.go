@@ -13,6 +13,8 @@ import (
 	"github.com/smm-h/strictcode/internal/extract"
 	"github.com/smm-h/strictcode/internal/findings"
 	"github.com/smm-h/strictcode/internal/fixture"
+	"github.com/smm-h/strictcode/internal/options"
+	"github.com/smm-h/strictcode/internal/rules"
 	"github.com/smm-h/strictcode/internal/workspace"
 )
 
@@ -29,11 +31,19 @@ func analyze(t *testing.T, files map[string]string) []findings.Finding {
 	if err != nil {
 		t.Fatal(err)
 	}
+	var paths []string
+	for _, m := range ws.Members {
+		paths = append(paths, m.Path)
+	}
+	opts, err := options.Load(root, paths)
+	if err != nil {
+		t.Fatal(err)
+	}
 	res, err := extract.Extract(ws)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return Run(ws, res, cfg, "strictcode.toml")
+	return Run(ws, res, cfg, opts, "strictcode.toml")
 }
 
 func byRule(fs []findings.Finding, rule string) []findings.Finding {
@@ -649,24 +659,55 @@ reason = "b is loaded via plugin discovery"
 	}
 }
 
-func TestDisabledRuleDoesNotRun(t *testing.T) {
-	files := twoMemberPy(`"b"`, map[string]string{
+// optionEntry renders the options files filing one strictcode entry in its
+// rule's subject document.
+func optionEntry(subject, rule, scope, current, ideal string) map[string]string {
+	body := "format_version = 1\n\n[[entry]]\nid = \"strictcode:" + rule + "\"\n"
+	if scope != "" {
+		body += "scope = \"" + scope + "\"\n"
+	}
+	body += "current = \"" + current + "\"\nideal = \"" + ideal + "\"\nreason = \"the fixture states it\"\n"
+	files := map[string]string{".strictmetadata/options/manifest.toml": "owner = \"strictspec\"\n"}
+	files[".strictmetadata/options/"+subject+".toml"] = body
+	return files
+}
+
+func withFiles(files map[string]string, extra map[string]string) map[string]string {
+	for k, v := range extra {
+		files[k] = v
+	}
+	return files
+}
+
+func TestRuleSwitchedOffDoesNotRun(t *testing.T) {
+	files := withFiles(twoMemberPy(`"b"`, map[string]string{
 		"a_pkg/mod.py": "x = 1\n",
-	})
-	files["strictcode.toml"] = "format_version = 1\n[rules.deps-unused]\nenabled = false\n"
+	}), optionEntry("dependencies", "deps-unused", "", "off", "error"))
 	if got := byRule(analyze(t, files), "deps-unused"); len(got) != 0 {
-		t.Fatalf("disabled rule produced findings: %+v", got)
+		t.Fatalf("a rule switched off produced findings: %+v", got)
 	}
 }
 
-func TestSeverityOverrideAppliedToFindings(t *testing.T) {
-	files := twoMemberPy(`"b"`, map[string]string{
+func TestOptionValueSetsTheSeverity(t *testing.T) {
+	files := withFiles(twoMemberPy(`"b"`, map[string]string{
 		"a_pkg/mod.py": "x = 1\n",
-	})
-	files["strictcode.toml"] = "format_version = 1\n[rules.deps-unused]\nseverity = \"warning\"\n"
+	}), optionEntry("dependencies", "deps-unused", "", "warn", "error"))
 	got := byRule(analyze(t, files), "deps-unused")
 	if len(got) != 1 || got[0].Severity != "warning" {
-		t.Fatalf("severity override not applied: %+v", got)
+		t.Fatalf("warn option not applied: %+v", got)
+	}
+}
+
+func TestEveryRuleIsImplemented(t *testing.T) {
+	for _, r := range rules.Rules {
+		if _, ok := implemented[r.ID]; !ok {
+			t.Errorf("%s is registered but has no implementation", r.ID)
+		}
+	}
+	for id := range implemented {
+		if _, ok := rules.ByID(id); !ok {
+			t.Errorf("%s is implemented but not registered", id)
+		}
 	}
 }
 

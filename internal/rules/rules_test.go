@@ -1,6 +1,8 @@
 package rules
 
 import (
+	"os"
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -9,9 +11,22 @@ import (
 
 var idPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
-func TestRegistryHasFourteenMintedRules(t *testing.T) {
-	if len(Rules) != 14 {
-		t.Fatalf("registry has %d rules, the rule reference documents 14", len(Rules))
+func TestEveryRuleHasARulePage(t *testing.T) {
+	for _, r := range Rules {
+		if _, err := os.Stat(filepath.Join("..", "..", "stricttools", "docs", "rules", r.ID+".md")); err != nil {
+			t.Errorf("%s: no rule page under stricttools/docs/rules/: %v", r.ID, err)
+		}
+	}
+}
+
+func TestRuleOptionDeclarationsAreComplete(t *testing.T) {
+	for _, r := range Rules {
+		if !idPattern.MatchString(r.OptionSubject) {
+			t.Errorf("%s: option subject %q is not a subject file stem", r.ID, r.OptionSubject)
+		}
+		if r.PathScoped && !r.Adoption {
+			t.Errorf("%s: only an adopted rule takes a path scope", r.ID)
+		}
 	}
 }
 
@@ -243,13 +258,27 @@ func TestMatrixUsesNeverBlocks(t *testing.T) {
 }
 
 func TestLanguageIndependentRules(t *testing.T) {
-	r, _ := ByID("stale-suppression")
-	if !r.LanguageIndependent() {
-		t.Fatal("stale-suppression must be language-independent")
+	independent := map[string]bool{"stale-suppression": true, "strictspec-certificate": true}
+	for _, r := range Rules {
+		if r.LanguageIndependent() != independent[r.ID] {
+			t.Errorf("%s: language-independent is %v, want %v", r.ID, r.LanguageIndependent(), independent[r.ID])
+		}
 	}
-	for _, other := range Rules {
-		if other.ID != "stale-suppression" && other.LanguageIndependent() {
-			t.Errorf("%s is unexpectedly language-independent", other.ID)
+}
+
+func TestMatrixPythonToolsArePythonOnly(t *testing.T) {
+	for _, id := range []string{"lint", "lint-scope-guard", "format", "format-scope-guard", "type-check", "type-check-scope-guard"} {
+		r, ok := ByID(id)
+		if !ok {
+			t.Fatalf("%s is not registered", id)
+		}
+		if c := MatrixCell(r, vocab.LangPy); c.Status != CellSupported {
+			t.Errorf("%s on py = %q, want supported", id, c.Status)
+		}
+		for _, lang := range []vocab.Lang{vocab.LangGo, vocab.LangTS} {
+			if c := MatrixCell(r, lang); c.Status != CellNotApplicable || c.Reason == "" {
+				t.Errorf("%s on %s = %+v, want n/a with a reason", id, lang, c)
+			}
 		}
 	}
 }

@@ -5,7 +5,7 @@ document_syntax = "toml"
 role = "schema"
 root = "Config"
 targets = ["go"]
-description = "Validates strictcode.toml, the single configuration file (see stricttools/docs/config.md): rule toggles, severities, thresholds, and allow lists; analysis modes; group toggles; and suppressions in each rule's declared shape, each with a mandatory reason. Rule-ID validity (a retired rule's error shows its retirement record) and matching suppressions to their rule's shape are checked by the loader against the registry; suppressions naming things that no longer exist are the stale-suppression rule."
+description = "Validates strictcode.toml, the declarations file (see stricttools/docs/config.md): analysis modes; per-rule thresholds and allow lists; suppressions in each rule's declared shape, each with a mandatory reason; the Python tool declarations; and the strictspec certificate declaration. It switches nothing: whether a rule runs, and at which severity, is its strictcode:<rule id> option. Rule-ID validity (a retired rule's error shows its retirement record), matching suppressions to their rule's shape, and canonical paths are checked by the loader; suppressions naming things that no longer exist are the stale-suppression rule."
 
 [types.Config]
 type = "record"
@@ -14,14 +14,6 @@ type = "record"
 type = "Analysis"
 required = false
 
-[types.Config.fields.groups]
-type = "map"
-required = false
-key_pattern = "^[a-z][a-z0-9-]*$"
-order = "incidental"
-[types.Config.fields.groups.value]
-type = "GroupConfig"
-
 [types.Config.fields.rules]
 type = "map"
 required = false
@@ -29,6 +21,20 @@ key_pattern = "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
 order = "incidental"
 [types.Config.fields.rules.value]
 type = "RuleConfig"
+
+[types.Config.fields.python_tools]
+type = "map"
+required = false
+key_pattern = "^(lint|format|type-check)$"
+order = "incidental"
+description = "Which command each Python tool rule runs over which paths, keyed by the rule. A declaration says only what runs; whether the rule runs, and for which members, is its strictcode:<rule> option."
+[types.Config.fields.python_tools.value]
+type = "PythonTool"
+
+[types.Config.fields.strictspec_certificate]
+type = "StrictspecCertificate"
+required = false
+description = "The strictspec diff certificate the strictspec-certificate rule checks, and the adjudication file discharging its unsupported claims. Declaring it switches nothing: the rule runs while its strictcode:strictspec-certificate option is on."
 
 [types.Analysis]
 type = "record"
@@ -56,34 +62,9 @@ form = "forbidden-when"
 field = "python_type_checker"
 when = { field = "python_call_resolution", predicate = "equals", value = "syntactic" }
 
-[types.GroupConfig]
-type = "record"
-description = "A group toggle (group:<name>): enable/disable or re-severity every member rule in one stroke."
-
-[types.GroupConfig.fields.enabled]
-type = "boolean"
-required = false
-
-[types.GroupConfig.fields.severity]
-type = "enum"
-required = false
-values = ["error", "warning"]
-
-[[types.GroupConfig.constraints]]
-form = "at-least-one-of"
-fields = ["enabled", "severity"]
-
 [types.RuleConfig]
 type = "record"
-
-[types.RuleConfig.fields.enabled]
-type = "boolean"
-required = false
-
-[types.RuleConfig.fields.severity]
-type = "enum"
-required = false
-values = ["error", "warning"]
+description = "A rule's declarations: thresholds, allow lists, and suppressions. A rule is switched on, off, or to another severity only through its strictcode:<rule id> option."
 
 [types.RuleConfig.fields.thresholds]
 type = "map"
@@ -171,3 +152,37 @@ fields = ["path", "dep", "modules", "member"]
 [[types.Suppression.constraints]]
 form = "co-presence"
 fields = ["project", "dep"]
+
+[types.PythonTool]
+type = "record"
+description = "One Python tool run: uv run <tool> over paths, in cwd."
+
+[types.PythonTool.fields.paths]
+type = "array"
+required = true
+min_len = 1
+description = "What the tool checks, relative to cwd; declared, never inferred from the tool's own configuration."
+[types.PythonTool.fields.paths.item]
+type = "string"
+non_empty = true
+
+[types.PythonTool.fields.cwd]
+type = "string"
+required = false
+non_empty = true
+description = "The directory the tool runs in, relative to the workspace root; absent means the workspace root."
+
+[types.StrictspecCertificate]
+type = "record"
+
+[types.StrictspecCertificate.fields.certificate]
+type = "string"
+required = true
+non_empty = true
+description = "The certificate strictspec diff wrote (JSON), relative to the workspace root."
+
+[types.StrictspecCertificate.fields.adjudication]
+type = "string"
+required = false
+non_empty = true
+description = "A committed adjudication file (TOML) discharging the certificate's unsupported claims, relative to the workspace root."

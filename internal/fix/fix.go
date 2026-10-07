@@ -19,6 +19,7 @@ import (
 
 	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/extract"
+	"github.com/smm-h/strictcode/internal/options"
 	"github.com/smm-h/strictcode/internal/relation"
 	"github.com/smm-h/strictcode/internal/vocab"
 	"github.com/smm-h/strictcode/internal/workspace"
@@ -37,14 +38,15 @@ type Planned struct {
 }
 
 // PlanUnreachableRemovals plans the whitelisted removal transform for
-// every unreachable region the configuration leaves active. Regions
+// every unreachable region the suppressions leave active, while the
+// strictcode:unreachable-code option is not off. Regions
 // contained within a larger dead region of the same file collapse into the
 // outer removal.
-func PlanUnreachableRemovals(res *extract.Result, cfg *config.Effective) []Planned {
-	setting := cfg.Setting("unreachable-code")
-	if !setting.Enabled {
+func PlanUnreachableRemovals(res *extract.Result, cfg *config.Effective, opts *options.Resolved) []Planned {
+	if opts.Value("unreachable-code") == options.Off {
 		return nil
 	}
+	setting := cfg.Setting("unreachable-code")
 	suppressed := map[string]bool{}
 	for _, s := range setting.Suppressions {
 		if s.Path != "" {

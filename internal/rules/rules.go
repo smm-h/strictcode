@@ -11,7 +11,9 @@ package rules
 
 import "github.com/smm-h/strictcode/internal/vocab"
 
-// Severity is a rule's default severity. Config may override per rule.
+// Severity is the severity of a rule's findings. A rule's declared severity
+// is its option's default (internal/options); a repository changes it only
+// through its strictcode:<rule id> options entry.
 type Severity string
 
 const (
@@ -86,6 +88,17 @@ type Rule struct {
 	// reasons, for cases where the capability calculus is satisfied but the
 	// check is meaningless in the ecosystem.
 	NotApplicable map[vocab.Lang]string
+
+	// OptionSubject names the subject document under .strictmetadata/options/
+	// (without ".toml") that the rule's strictcode:<rule id> option entries
+	// are filed in.
+	OptionSubject string
+	// Adoption marks a rule a repository opts into: its option defaults to
+	// off whatever its severity.
+	Adoption bool
+	// PathScoped marks a rule whose option entries may name one workspace
+	// member's path, so the rule's value can differ per member.
+	PathScoped bool
 }
 
 // Tombstone records a retired rule ID. The unknown-rule hard error renders
@@ -98,8 +111,10 @@ type Tombstone struct {
 	Migration  string
 }
 
-// Groups maps group names to member rule IDs. Groups are convenience
-// switches: a finding never carries a group; suppressions never target one.
+// Groups maps group names to member rule IDs. A group classifies rules in the
+// registry and its documentation; it switches nothing (a rule's behavior
+// changes only through its option), a finding never carries a group, and a
+// suppression never targets one.
 var Groups = map[string][]string{
 	"library": {
 		"library-forbidden-imports",
@@ -113,7 +128,7 @@ var Groups = map[string][]string{
 // donor names were re-minted at their best form pre-ship (stricttools/docs/decisions.md).
 var Tombstones = []Tombstone{}
 
-// Rules lists the fourteen minted rules in catalog order.
+// Rules lists the minted rules in catalog order.
 var Rules = []Rule{
 	// --- Dependency hygiene ---
 	{
@@ -126,9 +141,10 @@ var Rules = []Rule{
 			vocab.CapDeclaredDependencyExtraction,
 			vocab.CapTestContextClassification,
 		},
-		Uses:        []vocab.Capability{vocab.CapImportAttrGuarded},
-		Suppression: SuppressProjectDep,
-		FixTier:     Tier3,
+		Uses:          []vocab.Capability{vocab.CapImportAttrGuarded},
+		Suppression:   SuppressProjectDep,
+		OptionSubject: "dependencies",
+		FixTier:       Tier3,
 		PlannedFixes: []PlannedFix{
 			{Tier: Tier2, Description: "Remove the declaration from the manifest."},
 		},
@@ -144,8 +160,9 @@ var Rules = []Rule{
 			vocab.CapTestContextClassification,
 			vocab.CapImportAttrGuarded,
 		},
-		Suppression: SuppressProjectDep,
-		FixTier:     Tier3,
+		Suppression:   SuppressProjectDep,
+		OptionSubject: "dependencies",
+		FixTier:       Tier3,
 	},
 	{
 		ID:          "deps-undeclared",
@@ -161,8 +178,9 @@ var Rules = []Rule{
 			vocab.CapImportAttrGuarded,
 			vocab.CapImportAttrTypeChecking,
 		},
-		Suppression: SuppressProjectDep,
-		FixTier:     Tier3,
+		Suppression:   SuppressProjectDep,
+		OptionSubject: "dependencies",
+		FixTier:       Tier3,
 		PlannedFixes: []PlannedFix{
 			{Tier: Tier2, Description: "Add the declaration to the manifest."},
 		},
@@ -177,9 +195,10 @@ var Rules = []Rule{
 			vocab.CapDeclaredDependencyExtraction,
 			vocab.CapTestContextClassification,
 		},
-		Uses:        []vocab.Capability{vocab.CapImportAttrGuarded},
-		Suppression: SuppressProjectDep,
-		FixTier:     Tier3,
+		Uses:          []vocab.Capability{vocab.CapImportAttrGuarded},
+		Suppression:   SuppressProjectDep,
+		OptionSubject: "dependencies",
+		FixTier:       Tier3,
 		PlannedFixes: []PlannedFix{
 			{Tier: Tier2, Description: "Rescope the declaration to dev."},
 		},
@@ -194,11 +213,28 @@ var Rules = []Rule{
 			vocab.CapDeclaredDependencyExtraction,
 			vocab.CapTestContextClassification,
 		},
-		Uses:        []vocab.Capability{vocab.CapImportAttrGuarded},
-		Suppression: SuppressProjectDep,
-		FixTier:     Tier3,
+		Uses:          []vocab.Capability{vocab.CapImportAttrGuarded},
+		Suppression:   SuppressProjectDep,
+		OptionSubject: "dependencies",
+		FixTier:       Tier3,
 		PlannedFixes: []PlannedFix{
 			{Tier: Tier2, Description: "Rescope the declaration to runtime."},
+		},
+	},
+
+	{
+		ID:            "deps-stale",
+		Severity:      SeverityError,
+		Description:   "An intra-workspace dependency constraint in a manifest that the dependency member's declared version does not satisfy.",
+		Requires:      []vocab.Capability{vocab.CapDeclaredDependencyExtraction},
+		Suppression:   SuppressProjectDep,
+		OptionSubject: "dependencies",
+		FixTier:       Tier3,
+		PlannedFixes: []PlannedFix{
+			{Tier: Tier2, Description: "Raise the constraint to admit the dependency's current version."},
+		},
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "a go.mod requirement names a module version minimal version selection resolves, and a workspace member's go.mod declares no version of its own to compare it with",
 		},
 	},
 
@@ -217,9 +253,10 @@ var Rules = []Rule{
 		// stricttools/docs/decisions.md, 2026-08-04): the export-exemption facet (lesson 16) is
 		// Python-only; the Go and TS algorithms need no export surface for
 		// the rule to hold.
-		Uses:        []vocab.Capability{vocab.CapExportExtraction, vocab.CapEntryPointDiscovery},
-		Suppression: SuppressPath,
-		FixTier:     Tier3,
+		Uses:          []vocab.Capability{vocab.CapExportExtraction, vocab.CapEntryPointDiscovery},
+		Suppression:   SuppressPath,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 		PlannedFixes: []PlannedFix{
 			{Tier: Tier2, Description: "Delete the dead unit (consent-gated: deletion is behavior-relevant)."},
 		},
@@ -234,8 +271,9 @@ var Rules = []Rule{
 			vocab.CapDeclaredDependencyExtraction,
 			vocab.CapTestContextClassification,
 		},
-		Suppression: SuppressMember,
-		FixTier:     Tier3,
+		Suppression:   SuppressMember,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 	},
 
 	// --- Cycles ---
@@ -248,8 +286,9 @@ var Rules = []Rule{
 			vocab.CapImportExtraction,
 			vocab.CapResolveImportsModules,
 		},
-		Suppression: SuppressMemberSet,
-		FixTier:     Tier3,
+		Suppression:   SuppressMemberSet,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 		NotApplicable: map[vocab.Lang]string{
 			vocab.LangGo: "the Go compiler rejects import cycles; re-checking is noise",
 		},
@@ -257,23 +296,25 @@ var Rules = []Rule{
 
 	// --- Config hygiene ---
 	{
-		ID:          "stale-suppression",
-		Severity:    SeverityError,
-		Description: "A suppression in strictcode.toml referencing a path, rule, or (project, dep) pair that no longer exists on disk or in the registry.",
-		Suppression: SuppressNone,
-		FixTier:     Tier3,
+		ID:            "stale-suppression",
+		Severity:      SeverityError,
+		Description:   "A suppression in strictcode.toml referencing a path, rule, or (project, dep) pair that no longer exists on disk or in the registry.",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 	},
 
 	// --- Library boundary (group:library; runs only on library = true members) ---
 	{
-		ID:          "library-forbidden-imports",
-		Severity:    SeverityError,
-		Description: "A library importing an application-concern module (per-language default lists, replaceable; workspace and per-language allow lists subtracted).",
-		Requires:    []vocab.Capability{vocab.CapImportExtraction},
-		Uses:        []vocab.Capability{vocab.CapTestContextClassification},
-		Groups:      []string{"library"},
-		Suppression: SuppressNone,
-		FixTier:     Tier3,
+		ID:            "library-forbidden-imports",
+		Severity:      SeverityError,
+		Description:   "A library importing an application-concern module (per-language default lists, replaceable; workspace and per-language allow lists subtracted).",
+		Requires:      []vocab.Capability{vocab.CapImportExtraction},
+		Uses:          []vocab.Capability{vocab.CapTestContextClassification},
+		Groups:        []string{"library"},
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 	},
 	{
 		ID:          "library-stdout",
@@ -283,9 +324,10 @@ var Rules = []Rule{
 			vocab.CapCallableExtraction,
 			vocab.CapCallResolutionSyntactic,
 		},
-		Groups:      []string{"library"},
-		Suppression: SuppressNone,
-		FixTier:     Tier3,
+		Groups:        []string{"library"},
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 	},
 	{
 		ID:          "library-direct-logging",
@@ -295,37 +337,131 @@ var Rules = []Rule{
 			vocab.CapCallableExtraction,
 			vocab.CapCallResolutionSyntactic,
 		},
-		Groups:      []string{"library"},
-		Suppression: SuppressNone,
-		FixTier:     Tier3,
+		Groups:        []string{"library"},
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 		NotApplicable: map[vocab.Lang]string{
 			vocab.LangGo: "the diagnosis is specific to Python's root-logger idiom",
 			vocab.LangTS: "the diagnosis is specific to Python's root-logger idiom",
 		},
 	},
 	{
-		ID:          "library-entry-point",
-		Severity:    SeverityError,
-		Description: "A library declaring a CLI entry point ([project.scripts], func main in package main, npm bin).",
-		Requires:    []vocab.Capability{vocab.CapEntryPointDiscovery},
-		Groups:      []string{"library"},
-		Suppression: SuppressNone,
-		FixTier:     Tier3,
+		ID:            "library-entry-point",
+		Severity:      SeverityError,
+		Description:   "A library declaring a CLI entry point ([project.scripts], func main in package main, npm bin).",
+		Requires:      []vocab.Capability{vocab.CapEntryPointDiscovery},
+		Groups:        []string{"library"},
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
 	},
 
 	// --- Correctness ---
 	{
-		ID:          "unreachable-code",
-		Severity:    SeverityError,
-		Description: "Statements following an unconditional terminator in the same block (comment-aware; nested scopes independent). All projects, not only libraries.",
-		Requires:    []vocab.Capability{vocab.CapUnreachableStatementAnalysis},
-		Suppression: SuppressPath,
+		ID:            "unreachable-code",
+		Severity:      SeverityError,
+		Description:   "Statements following an unconditional terminator in the same block (comment-aware; nested scopes independent). All projects, not only libraries.",
+		Requires:      []vocab.Capability{vocab.CapUnreachableStatementAnalysis},
+		Suppression:   SuppressPath,
+		OptionSubject: "code",
 		// The flagship whitelisted transform shipped in round 3: removal of
 		// the unreachable statements, verified by post-fix re-extraction.
 		FixTier: Tier1,
 		NotApplicable: map[vocab.Lang]string{
 			vocab.LangGo: "go vet reports unreachable code natively",
 		},
+	},
+
+	// --- Python tools and the scope guards over their configuration ---
+	{
+		ID:            "lint",
+		Severity:      SeverityError,
+		Description:   "ruff check reports a violation in the paths the [python_tools.lint] declaration names, run through the project's environment with uv run.",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		Adoption:      true,
+		PathScoped:    true,
+		FixTier:       Tier3,
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "runs ruff, a Python linter",
+			vocab.LangTS: "runs ruff, a Python linter",
+		},
+	},
+	{
+		ID:            "lint-scope-guard",
+		Severity:      SeverityError,
+		Description:   "ruff's own configuration narrows the paths the [python_tools.lint] declaration names: include or extend-include in pyproject.toml [tool.ruff], ruff.toml, or .ruff.toml.",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "guards ruff, a Python linter",
+			vocab.LangTS: "guards ruff, a Python linter",
+		},
+	},
+	{
+		ID:            "format",
+		Severity:      SeverityError,
+		Description:   "ruff format --check reports a file it would reformat in the paths the [python_tools.format] declaration names, run through the project's environment with uv run.",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		Adoption:      true,
+		PathScoped:    true,
+		FixTier:       Tier3,
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "runs ruff, a Python formatter",
+			vocab.LangTS: "runs ruff, a Python formatter",
+		},
+	},
+	{
+		ID:            "format-scope-guard",
+		Severity:      SeverityError,
+		Description:   "ruff's own configuration narrows the paths the [python_tools.format] declaration names: include or extend-include in pyproject.toml [tool.ruff], ruff.toml, or .ruff.toml.",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "guards ruff, a Python formatter",
+			vocab.LangTS: "guards ruff, a Python formatter",
+		},
+	},
+	{
+		ID:            "type-check",
+		Severity:      SeverityError,
+		Description:   "mypy reports an error in the paths the [python_tools.type-check] declaration names, run through the project's environment with uv run.",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		Adoption:      true,
+		PathScoped:    true,
+		FixTier:       Tier3,
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "runs mypy, a Python type checker",
+			vocab.LangTS: "runs mypy, a Python type checker",
+		},
+	},
+	{
+		ID:            "type-check-scope-guard",
+		Severity:      SeverityError,
+		Description:   "mypy's own configuration declares a scope the paths of the [python_tools.type-check] declaration silently override: files, packages, or modules in pyproject.toml [tool.mypy], mypy.ini, .mypy.ini, or setup.cfg [mypy].",
+		Suppression:   SuppressNone,
+		OptionSubject: "code",
+		FixTier:       Tier3,
+		NotApplicable: map[vocab.Lang]string{
+			vocab.LangGo: "guards mypy, a Python type checker",
+			vocab.LangTS: "guards mypy, a Python type checker",
+		},
+	},
+
+	// --- Schema migration certificates ---
+	{
+		ID:            "strictspec-certificate",
+		Severity:      SeverityError,
+		Description:   "The strictspec diff certificate the [strictspec_certificate] declaration names holds a violated claim, an unsupported claim no adjudication entry discharges, or an adjudication entry that discharges no claim.",
+		Suppression:   SuppressNone,
+		OptionSubject: "release",
+		Adoption:      true,
+		FixTier:       Tier3,
 	},
 }
 

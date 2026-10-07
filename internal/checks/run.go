@@ -6,6 +6,7 @@ import (
 	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/extract"
 	"github.com/smm-h/strictcode/internal/findings"
+	"github.com/smm-h/strictcode/internal/options"
 	"github.com/smm-h/strictcode/internal/relation"
 	"github.com/smm-h/strictcode/internal/rules"
 	"github.com/smm-h/strictcode/internal/vocab"
@@ -16,6 +17,9 @@ import (
 type Context struct {
 	View *View
 	Cfg  *config.Effective
+	// Opts holds every rule's option value: whether it runs, and the
+	// severity of its findings.
+	Opts *options.Resolved
 	// CfgPath is the workspace-root-relative config file path (the site of
 	// stale-suppression findings).
 	CfgPath string
@@ -24,8 +28,8 @@ type Context struct {
 // checkFn implements one rule over the view.
 type checkFn func(ctx *Context) []findings.Finding
 
-// implemented maps rule IDs to their implementations — all fourteen minted
-// rules as of round 3.
+// implemented maps rule IDs to their implementations; a test holds that
+// every registered rule has one.
 var implemented = map[string]checkFn{
 	"deps-unused":               checkDepsUnused,
 	"deps-hard-guarded-only":    checkDepsHardGuardedOnly,
@@ -43,12 +47,13 @@ var implemented = map[string]checkFn{
 	"unreachable-code":          checkUnreachableCode,
 }
 
-// Run executes every enabled, implemented check over the one shared
+// Run executes every check whose option is not off over the one shared
 // relation (lesson 30) and returns the sorted findings.
-func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, cfgPath string) []findings.Finding {
+func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, opts *options.Resolved, cfgPath string) []findings.Finding {
 	ctx := &Context{
 		View:    buildView(ws, res),
 		Cfg:     cfg,
+		Opts:    opts,
 		CfgPath: cfgPath,
 	}
 	ids := make([]string, 0, len(implemented))
@@ -59,7 +64,7 @@ func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, cf
 
 	var out []findings.Finding
 	for _, id := range ids {
-		if !cfg.Setting(id).Enabled {
+		if !opts.Runs(id) {
 			continue
 		}
 		out = append(out, implemented[id](ctx)...)
@@ -70,7 +75,8 @@ func Run(ws *workspace.Workspace, res *extract.Result, cfg *config.Effective, cf
 
 // --- shared helpers -------------------------------------------------------
 
-// finding constructs a finding with the rule's effective severity.
+// finding constructs a finding at the severity the rule's repository-wide
+// option value gives.
 func (ctx *Context) finding(ruleID string, targetID string, kind vocab.NodeKind, file string, offset uint32, message string) findings.Finding {
 	line := 1
 	if file != "" {
@@ -78,7 +84,7 @@ func (ctx *Context) finding(ruleID string, targetID string, kind vocab.NodeKind,
 	}
 	return findings.Finding{
 		Rule:     ruleID,
-		Severity: ctx.Cfg.Setting(ruleID).Severity,
+		Severity: options.Severity(ctx.Opts.Value(ruleID)),
 		Message:  message,
 		Target: findings.Target{
 			ID:   targetID,

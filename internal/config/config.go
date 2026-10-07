@@ -1,27 +1,34 @@
-// Package config loads strictcode.toml through the strictspec-generated
-// reader and implements the consumer-native checks the schema cannot
-// express (stricttools/docs/config.md):
+// Package config loads strictcode.toml, the declarations file, through the
+// strictspec-generated reader and implements the consumer-native checks the
+// schema cannot express (stricttools/docs/config.md):
 //
 //   - rule-ID validity against the registry, with tombstone rendering — a
 //     config referencing a retired ID hard-errors with the tombstone's
 //     retired_in, reason, replaced_by successors, and migration hint;
-//   - group-name validity;
 //   - suppression-shape-vs-rule matching (a rule accepts only its declared
-//     natural target shape; shape "none" accepts no suppressions at all).
+//     natural target shape; shape "none" accepts no suppressions at all);
+//   - canonical relative paths in the Python tool and certificate
+//     declarations.
+//
+// The file only declares: suppressions with their reasons, allow lists, the
+// Python tool declarations, and the strictspec certificate. It switches
+// nothing; whether a rule runs, and at which severity, is the rule's
+// strictcode:<rule id> option (internal/options).
 //
 // Disk/registry staleness of suppression targets is NOT a load error — it is
 // the stale-suppression rule (stricttools/docs/rules/stale-suppression.md), evaluated during analysis with
 // the workspace in hand.
 //
-// A missing config file yields the registry defaults: every rule enabled at
-// its default severity, no suppressions, syntactic-only analysis. A present
-// but malformed config is a hard error (lesson 31): nothing is coerced,
-// defaulted, or skipped.
+// A missing config file yields no declarations: no suppressions, no tool or
+// certificate declarations, syntactic-only analysis. A present but malformed
+// config is a hard error (lesson 31): nothing is coerced, defaulted, or
+// skipped.
 package config
 
 import (
 	"fmt"
 	"os"
+	pathpkg "path"
 	"sort"
 	"strings"
 
@@ -43,11 +50,8 @@ type Suppression struct {
 	Member  string   // shape member
 }
 
-// RuleSetting is the effective per-rule configuration after group toggles
-// and per-rule overrides.
+// RuleSetting is one rule's declarations.
 type RuleSetting struct {
-	Enabled      bool
-	Severity     rules.Severity
 	Thresholds   map[string]int64
 	Suppressions []Suppression
 	// Allow holds per-language allow lists (library-forbidden-imports:
@@ -56,6 +60,32 @@ type RuleSetting struct {
 	// Forbidden holds per-language replacements of the default
 	// forbidden-imports list.
 	Forbidden map[string][]string
+}
+
+// PythonTool is one [python_tools.<rule>] declaration: the tool runs in Cwd
+// over Paths.
+type PythonTool struct {
+	// Cwd is the canonical workspace-root-relative directory the tool runs
+	// in; "." when the declaration states none.
+	Cwd string
+	// Paths are canonical and relative to Cwd.
+	Paths []string
+}
+
+// RootPaths are the declared paths relative to the workspace root.
+func (p PythonTool) RootPaths() []string {
+	out := make([]string, 0, len(p.Paths))
+	for _, path := range p.Paths {
+		out = append(out, joinRelative(p.Cwd, path))
+	}
+	return out
+}
+
+// Certificate is the [strictspec_certificate] declaration: workspace-root
+// relative paths, Adjudication empty when none is declared.
+type Certificate struct {
+	Certificate  string
+	Adjudication string
 }
 
 // Analysis is the effective analysis-mode selection.
@@ -70,6 +100,12 @@ type Effective struct {
 	Analysis Analysis
 	// Rules has an entry for every live registry rule.
 	Rules map[string]RuleSetting
+	// PythonTools holds the [python_tools.<rule>] declarations, keyed by
+	// rule ID.
+	PythonTools map[string]PythonTool
+	// Certificate is the [strictspec_certificate] declaration, nil when the
+	// file declares none.
+	Certificate *Certificate
 }
 
 // Setting returns the effective setting for a live rule ID. Panics on an
@@ -97,8 +133,9 @@ func (e *Effective) AllSuppressions() []Suppression {
 	return out
 }
 
-// Load reads the config file at path. A missing file returns the defaults;
-// any other read, parse, schema, or registry failure is a hard error.
+// Load reads the config file at path. A missing file returns no
+// declarations; any other read, parse, schema, or registry failure is a hard
+// error.
 func Load(path string) (*Effective, error) {
 	raw, err := os.ReadFile(path)
 	if os.IsNotExist(err) {
@@ -110,108 +147,172 @@ func Load(path string) (*Effective, error) {
 	return Parse(raw, path)
 }
 
-// Defaults returns the registry-default configuration.
+// Defaults returns the configuration of a repository without a config file.
 func Defaults() *Effective {
-	eff := &Effective{Rules: map[string]RuleSetting{}}
+	eff := &Effective{Rules: map[string]RuleSetting{}, PythonTools: map[string]PythonTool{}}
 	for _, r := range rules.Rules {
-		eff.Rules[r.ID] = RuleSetting{Enabled: true, Severity: r.Severity}
+		eff.Rules[r.ID] = RuleSetting{}
 	}
 	return eff
 }
 
 // Parse validates and resolves a config document. name is used in errors.
 func Parse(raw []byte, name string) (*Effective, error) {
-	doc, diags := configspec.ValidateBytes(raw, "toml")
-	if doc == nil {
+	if valid, diags := configspec.ValidateBytes(raw, "toml"); valid == nil {
 		return nil, fmt.Errorf("config: %s is invalid:\n%s", name, renderDiags(diags))
+	}
+	// The generated reader validated the document; the fields are read from
+	// the document itself, which keeps this loader independent of the typed
+	// binding's shape.
+	doc, err := strictspec.LoadValue(raw, "toml")
+	if err != nil {
+		return nil, fmt.Errorf("config: %s: %w", name, err)
 	}
 
 	eff := Defaults()
 
-	if doc.Analysis != nil {
-		if doc.Analysis.PythonCallResolution == "type-checker" {
-			eff.Analysis.PythonTypeChecker = doc.Analysis.PythonTypeChecker
+	if analysis, ok := doc.Field("analysis"); ok {
+		if mode, _ := fieldString(analysis, "python_call_resolution"); mode == "type-checker" {
+			eff.Analysis.PythonTypeChecker, _ = fieldString(analysis, "python_type_checker")
 		}
 	}
 
-	// Group toggles first (per-rule settings override them).
-	for _, kv := range doc.Groups.Entries() {
-		members, ok := rules.Groups[kv.Key]
-		if !ok {
-			return nil, fmt.Errorf("config: %s: unknown group %q (known groups: %s)",
-				name, kv.Key, strings.Join(groupNames(), ", "))
-		}
-		enabled, hasEnabled := fieldBool(kv.Value, "enabled")
-		severity, hasSeverity := fieldString(kv.Value, "severity")
-		for _, id := range members {
-			s := eff.Rules[id]
-			if hasEnabled {
-				s.Enabled = enabled
+	if ruleTables, ok := doc.Field("rules"); ok {
+		for _, kv := range ruleTables.Entries() {
+			if err := parseRule(eff, kv, name); err != nil {
+				return nil, err
 			}
-			if hasSeverity {
-				s.Severity = rules.Severity(severity)
-			}
-			eff.Rules[id] = s
 		}
 	}
 
-	// Per-rule settings.
-	for _, kv := range doc.Rules.Entries() {
-		rule, live := rules.ByID(kv.Key)
-		if !live {
-			if tomb, retired := rules.TombstoneByID(kv.Key); retired {
-				return nil, fmt.Errorf("config: %s: rule %q was retired in %s: %s; use %s; %s",
-					name, kv.Key, tomb.RetiredIn, tomb.Reason,
-					renderSuccessors(tomb.ReplacedBy), tomb.Migration)
+	if tools, ok := doc.Field("python_tools"); ok {
+		for _, kv := range tools.Entries() {
+			tool, err := parsePythonTool(kv.Value)
+			if err != nil {
+				return nil, fmt.Errorf("config: %s: python_tools.%s: %w", name, kv.Key, err)
 			}
-			return nil, fmt.Errorf("config: %s: unknown rule %q", name, kv.Key)
+			eff.PythonTools[kv.Key] = tool
 		}
-		s := eff.Rules[rule.ID]
-		if enabled, ok := fieldBool(kv.Value, "enabled"); ok {
-			s.Enabled = enabled
-		}
-		if severity, ok := fieldString(kv.Value, "severity"); ok {
-			s.Severity = rules.Severity(severity)
-		}
-		if thresholds, ok := kv.Value.Field("thresholds"); ok {
-			s.Thresholds = map[string]int64{}
-			for _, tkv := range thresholds.Entries() {
-				n, _ := tkv.Value.Int()
-				s.Thresholds[tkv.Key] = n
-			}
-		}
-		for _, listField := range []string{"allow", "forbidden"} {
-			lists, ok := kv.Value.Field(listField)
-			if !ok {
+	}
+
+	if cert, ok := doc.Field("strictspec_certificate"); ok {
+		c := &Certificate{}
+		c.Certificate, _ = fieldString(cert, "certificate")
+		c.Adjudication, _ = fieldString(cert, "adjudication")
+		for field, path := range map[string]string{"certificate": c.Certificate, "adjudication": c.Adjudication} {
+			if path == "" && field == "adjudication" {
 				continue
 			}
-			m := map[string][]string{}
-			for _, lkv := range lists.Entries() {
-				var vals []string
-				for _, item := range lkv.Value.Items() {
-					s, _ := item.AsString()
-					vals = append(vals, s)
-				}
-				m[lkv.Key] = vals
-			}
-			if listField == "allow" {
-				s.Allow = m
-			} else {
-				s.Forbidden = m
+			if problem := pathProblem(path); problem != "" {
+				return nil, fmt.Errorf("config: %s: strictspec_certificate.%s: %s", name, field, problem)
 			}
 		}
-		if sups, ok := kv.Value.Field("suppressions"); ok {
-			for i, item := range sups.Items() {
-				sup, err := bindSuppression(rule, item)
-				if err != nil {
-					return nil, fmt.Errorf("config: %s: rules.%s.suppressions[%d]: %w", name, rule.ID, i, err)
-				}
-				s.Suppressions = append(s.Suppressions, sup)
-			}
-		}
-		eff.Rules[rule.ID] = s
+		eff.Certificate = c
 	}
 	return eff, nil
+}
+
+// parseRule reads one [rules.<id>] table.
+func parseRule(eff *Effective, kv strictspec.KV, name string) error {
+	rule, live := rules.ByID(kv.Key)
+	if !live {
+		if tomb, retired := rules.TombstoneByID(kv.Key); retired {
+			return fmt.Errorf("config: %s: rule %q was retired in %s: %s; use %s; %s",
+				name, kv.Key, tomb.RetiredIn, tomb.Reason,
+				renderSuccessors(tomb.ReplacedBy), tomb.Migration)
+		}
+		return fmt.Errorf("config: %s: unknown rule %q", name, kv.Key)
+	}
+	s := eff.Rules[rule.ID]
+	if thresholds, ok := kv.Value.Field("thresholds"); ok {
+		s.Thresholds = map[string]int64{}
+		for _, tkv := range thresholds.Entries() {
+			n, _ := tkv.Value.Int()
+			s.Thresholds[tkv.Key] = n
+		}
+	}
+	for _, listField := range []string{"allow", "forbidden"} {
+		lists, ok := kv.Value.Field(listField)
+		if !ok {
+			continue
+		}
+		m := map[string][]string{}
+		for _, lkv := range lists.Entries() {
+			var vals []string
+			for _, item := range lkv.Value.Items() {
+				v, _ := item.AsString()
+				vals = append(vals, v)
+			}
+			m[lkv.Key] = vals
+		}
+		if listField == "allow" {
+			s.Allow = m
+		} else {
+			s.Forbidden = m
+		}
+	}
+	if sups, ok := kv.Value.Field("suppressions"); ok {
+		for i, item := range sups.Items() {
+			sup, err := bindSuppression(rule, item)
+			if err != nil {
+				return fmt.Errorf("config: %s: rules.%s.suppressions[%d]: %w", name, rule.ID, i, err)
+			}
+			s.Suppressions = append(s.Suppressions, sup)
+		}
+	}
+	eff.Rules[rule.ID] = s
+	return nil
+}
+
+// parsePythonTool reads one [python_tools.<rule>] table, refusing a path
+// that is not canonical.
+func parsePythonTool(v strictspec.Value) (PythonTool, error) {
+	tool := PythonTool{Cwd: "."}
+	if cwd, ok := fieldString(v, "cwd"); ok {
+		if problem := pathProblem(cwd); problem != "" {
+			return tool, fmt.Errorf("cwd: %s", problem)
+		}
+		tool.Cwd = cwd
+	}
+	paths, _ := v.Field("paths")
+	for i, item := range paths.Items() {
+		p, _ := item.AsString()
+		if problem := pathProblem(p); problem != "" {
+			return tool, fmt.Errorf("paths[%d]: %s", i, problem)
+		}
+		tool.Paths = append(tool.Paths, p)
+	}
+	return tool, nil
+}
+
+// pathProblem says why p is not a canonical relative path, and is empty
+// when it is one: relative, '/'-separated, with no '.', '..', or empty
+// segment, the directory itself written ".".
+func pathProblem(p string) string {
+	const rule = "a path here is relative, '/'-separated, with no '.', '..', or empty segment, and the directory itself is written \".\""
+	if p == "" || strings.HasPrefix(p, "/") || strings.Contains(p, "\\") || strings.TrimSpace(p) != p {
+		return fmt.Sprintf("%q is not canonical: %s", p, rule)
+	}
+	clean := pathpkg.Clean(p)
+	if clean == ".." || strings.HasPrefix(clean, "../") {
+		return fmt.Sprintf("%q leaves the directory it is relative to: %s", p, rule)
+	}
+	if clean != p {
+		return fmt.Sprintf("%q is not canonical: write it as %q", p, clean)
+	}
+	return ""
+}
+
+// joinRelative joins canonical relative paths, "." disappearing.
+func joinRelative(dir, rel string) string {
+	switch {
+	case dir == ".":
+		return rel
+	case rel == ".":
+		return dir
+	default:
+		return dir + "/" + rel
+	}
 }
 
 // bindSuppression converts one schema-valid suppression entry and enforces
@@ -269,29 +370,12 @@ func renderDiags(diags []strictspec.Diagnostic) string {
 	return strings.Join(lines, "\n")
 }
 
-func groupNames() []string {
-	var names []string
-	for name := range rules.Groups {
-		names = append(names, name)
-	}
-	sort.Strings(names)
-	return names
-}
-
 func fieldString(v strictspec.Value, name string) (string, bool) {
 	f, ok := v.Field(name)
 	if !ok {
 		return "", false
 	}
 	return f.AsString()
-}
-
-func fieldBool(v strictspec.Value, name string) (bool, bool) {
-	f, ok := v.Field(name)
-	if !ok {
-		return false, false
-	}
-	return f.Bool()
 }
 
 func has(v strictspec.Value, name string) bool {

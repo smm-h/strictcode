@@ -1,20 +1,54 @@
 +++
 title = "Configuration"
-description = "strictcode.toml: rule and group toggles, severities, allow lists, analysis modes, and per-rule suppressions, each with a mandatory reason."
+description = "strictcode.toml declares what strictcode reads: analysis modes, allow lists, per-rule suppressions with mandatory reasons, the Python tool declarations, and the strictspec certificate. Every rule is switched through its strictcode:<rule id> option."
 nav_order = 300
 +++
 
 # Configuration
 
-strictcode reads one configuration file, `strictcode.toml`, from the analyzed directory (the
+strictcode reads one declarations file, `strictcode.toml`, from the analyzed directory (the
 `--config` flag names a different file, resolved relative to that directory). The file is a
 strictspec document validated by `schema/strictspec/config.schema.toml`; the tables on this page
 are rendered from that schema.
 
-A missing file means the registry defaults: every rule enabled at its default severity, no
-suppressions, and the syntactic call-resolution layer only. A file that is present but malformed
+The file declares; it switches nothing. Whether a rule runs, and at which severity, is the rule's
+option (see [Options](#options)), the one sanctioned way to change how a family tool behaves.
+
+A missing file means no declarations: no suppressions, no Python tool or certificate
+declarations, and the syntactic call-resolution layer only. A file that is present but malformed
 is a hard error (lesson 31): unknown keys, wrong types, and empty mandatory fields are never
 coerced, defaulted, or skipped.
+
+## Options
+
+Every rule is an option `strictcode:<rule id>`, filed as an entry in a subject document under
+`.strictmetadata/options/` at the repository root and read through strictspec's options readers.
+A rule declared at error severity ranks `error > warn > off`, and one declared at warning
+severity ranks `warn > off`; the option's default is the rule's severity, so a repository without
+entries runs every rule. `warn` reports the rule's findings at warning severity, which never fails
+the run, and `off` does not run the rule.
+
+The adopted rules (`lint`, `format`, `type-check`, and `strictspec-certificate`) rank
+`error > warn > off` and default to `off`: a repository adopts one by filing an entry. `lint`,
+`format`, and `type-check` take a path scope naming one workspace member's directory, so a
+workspace adopts them member by member; every other option takes no scope. An entry without a
+scope is the value for every member that has no entry of its own.
+
+```toml
+# .strictmetadata/options/code.toml
+format_version = 1
+
+[[entry]]
+id = "strictcode:lint"
+scope = "core"
+current = "error"
+ideal = "error"
+reason = "core adopts ruff"
+```
+
+An entry that strictspec refuses (an unknown option, a value the option does not rank, a scope
+the option does not take, a scope that names no member's path, an entry equal to the default) is
+a hard error, and so is a document that fails its shape.
 
 ## Top level
 
@@ -29,28 +63,51 @@ error, never a downgrade; see [call resolution](../call-resolution/). The type-c
 implemented: strictcode accepts `python_call_resolution = "type-checker"` and then ignores it,
 which is an open defect recorded in [decisions](../decisions/).
 
-## Groups
-
-:-: schema-fields path="schema/strictspec/config.schema.toml" type="GroupConfig"
-
-```toml
-[groups.library]
-severity = "warning"
-```
-
-Group settings apply first, and a rule's own settings override them.
-
 ## Rules
 
 :-: schema-fields path="schema/strictspec/config.schema.toml" type="RuleConfig"
 
 ```toml
-[rules.dead-modules]
-severity = "error"
-
-[rules.import-cycles]
-enabled = false
+[rules.library-forbidden-imports.allow]
+py = ["click"]
 ```
+
+A rule table carries no switch: `enabled` and `severity` are refused, and so are group tables.
+
+## Python tools
+
+:-: schema-fields path="schema/strictspec/config.schema.toml" type="PythonTool"
+
+```toml
+[python_tools.lint]
+paths = ["core", "tools/gen"]
+
+[python_tools.type-check]
+cwd = "core"
+paths = ["src", "tests"]
+```
+
+A `[python_tools.<rule>]` declaration names which command `lint`, `format`, or `type-check` runs
+over which paths: `uv run ruff check`, `uv run ruff format --check`, or `uv run mypy`, in `cwd`
+over `paths`. Paths are canonical and relative to `cwd`, and `cwd` is relative to the workspace
+root. A declaration runs nothing on its own: the rule's option decides for which members it runs,
+and a member whose option is on but whose directory no declared path lies in is refused, naming
+the member's path. See the [lint](../rules/lint/), [format](../rules/format/), and
+[type-check](../rules/type-check/) rule pages.
+
+## strictspec certificate
+
+:-: schema-fields path="schema/strictspec/config.schema.toml" type="StrictspecCertificate"
+
+```toml
+[strictspec_certificate]
+certificate = "migrations/config-v2.certificate.json"
+adjudication = "migrations/config-v2.adjudication.toml"
+```
+
+The declaration names the files the [`strictspec-certificate`](../rules/strictspec-certificate/)
+rule reads. Declaring it switches nothing; the rule runs while its option is on, and is refused
+while on with no declaration.
 
 ## Suppressions
 
@@ -82,9 +139,9 @@ Beyond schema validation, these are hard errors when the configuration loads:
 
 - a rule ID the registry does not know; a retired rule's error shows its retirement record,
   including its replacements and what to do;
-- a group name that does not exist;
 - a suppression whose fields do not match its rule's shape;
-- any suppression on a rule whose shape is `none`.
+- any suppression on a rule whose shape is `none`;
+- a path in a Python tool or certificate declaration that is not canonical.
 
 A suppression naming something that no longer exists on disk or in the workspace is not a load
 error. It is a finding of [`stale-suppression`](../rules/stale-suppression/), reported during

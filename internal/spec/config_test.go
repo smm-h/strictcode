@@ -7,9 +7,9 @@ import (
 	"github.com/stricttools/strictspec/go/strictspec"
 )
 
-// validConfig exercises every configuration surface the pinned decisions
-// define: analysis modes, group toggles, rule toggles/severities, and all
-// four suppression shapes.
+// validConfig exercises every declaration surface: analysis modes, all four
+// suppression shapes, the Python tool declarations, and the strictspec
+// certificate.
 const validConfig = `
 format_version = 1
 
@@ -17,20 +17,10 @@ format_version = 1
 python_call_resolution = "type-checker"
 python_type_checker = "pyright"
 
-[groups.library]
-enabled = true
-severity = "error"
-
-[rules.deps-unused]
-enabled = true
-
 [[rules.deps-unused.suppressions]]
 project = "core"
 dep = "transport"
 reason = "loaded dynamically via the plugin registry"
-
-[rules.dead-modules]
-severity = "error"
 
 [[rules.dead-modules.suppressions]]
 path = "src/legacy_shim.py"
@@ -43,6 +33,17 @@ reason = "known cycle, scheduled for the split in the next refactor"
 [[rules.dead-workspace-packages.suppressions]]
 member = "experimental"
 reason = "incubating package, not yet consumed"
+
+[python_tools.lint]
+paths = ["core", "tools"]
+
+[python_tools.type-check]
+cwd = "core"
+paths = ["src"]
+
+[strictspec_certificate]
+certificate = "migrations/cert.json"
+adjudication = "migrations/adjudication.toml"
 `
 
 func TestValidConfigBinds(t *testing.T) {
@@ -102,20 +103,36 @@ func TestInvalidConfigsAreRejected(t *testing.T) {
 			"format_version = 1\n[analysis]\npython_call_resolution = \"syntactic\"\npython_type_checker = \"ty\"\n",
 		},
 		{
-			"empty-group-toggle",
-			"format_version = 1\n[groups.library]\n",
+			"group-toggle",
+			"format_version = 1\n[groups.library]\nenabled = false\n",
+		},
+		{
+			"rule-toggle",
+			"format_version = 1\n[rules.deps-unused]\nenabled = false\n",
 		},
 		{
 			"unknown-key",
 			"format_version = 1\nsurprise = true\n",
 		},
 		{
-			"bad-severity",
+			"severity-switch",
 			"format_version = 1\n[rules.deps-unused]\nseverity = \"fatal\"\n",
 		},
 		{
 			"bad-rule-key-shape",
-			"format_version = 1\n[rules.NotARule]\nenabled = false\n",
+			"format_version = 1\n[[rules.NotARule.suppressions]]\npath = \"x\"\nreason = \"why\"\n",
+		},
+		{
+			"python-tool-without-paths",
+			"format_version = 1\n[python_tools.lint]\ncwd = \"core\"\n",
+		},
+		{
+			"unknown-python-tool",
+			"format_version = 1\n[python_tools.pyright]\npaths = [\"x\"]\n",
+		},
+		{
+			"certificate-without-certificate",
+			"format_version = 1\n[strictspec_certificate]\nadjudication = \"a.toml\"\n",
 		},
 		{
 			"non-integer-threshold",

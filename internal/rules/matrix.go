@@ -19,11 +19,14 @@ type Cell struct {
 }
 
 // LanguageIndependent reports whether a rule engages no language
-// capabilities at all (e.g. stale-suppression, evaluated against config,
-// disk, and registry). Such rules apply to every project regardless of
-// language and are presented as a single spanning row in the matrix.
+// capabilities at all and declares no language not applicable (e.g.
+// stale-suppression, evaluated against config, disk, and registry). Such
+// rules apply to every project regardless of language and are presented as a
+// single spanning row in the matrix. A rule that runs a tool of one language
+// (lint, for one) engages no capability but declares the other languages not
+// applicable, so it is not language-independent.
 func (r Rule) LanguageIndependent() bool {
-	return len(r.Requires) == 0 && len(r.Uses) == 0
+	return len(r.Requires) == 0 && len(r.Uses) == 0 && len(r.NotApplicable) == 0
 }
 
 // MatrixCell computes the matrix cell for a rule and language per the

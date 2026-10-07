@@ -13,13 +13,11 @@ import (
 	"path/filepath"
 
 	strictcode "github.com/smm-h/strictcode"
-	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/engine"
 	"github.com/smm-h/strictcode/internal/extract"
 	"github.com/smm-h/strictcode/internal/findings"
 	"github.com/smm-h/strictcode/internal/fix"
 	"github.com/smm-h/strictcode/internal/registrydump"
-	"github.com/smm-h/strictcode/internal/workspace"
 	"github.com/stricttools/strictcli/go/strictcli"
 )
 
@@ -178,22 +176,18 @@ func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli
 	// elected" is unrepresentable rather than a state this handler refuses.
 	apply := strictcli.GetElected(kwargs, "disposition").Is(fixApplyChoice)
 
-	ws, err := workspace.Load(dir)
+	in, err := engine.Load(dir, cfgName)
 	if err != nil {
 		ctx.Error(err.Error())
 		return strictcli.Exit(2)
 	}
-	cfg, err := config.Load(filepath.Join(ws.Root, filepath.FromSlash(cfgName)))
-	if err != nil {
-		ctx.Error(err.Error())
-		return strictcli.Exit(2)
-	}
+	ws := in.WS
 	res, err := extract.Extract(ws)
 	if err != nil {
 		ctx.Error(err.Error())
 		return strictcli.Exit(2)
 	}
-	plans := fix.PlanUnreachableRemovals(res, cfg)
+	plans := fix.PlanUnreachableRemovals(res, in.Cfg, in.Opts)
 	if len(plans) == 0 {
 		fmt.Println("no tier-1 fixes to apply")
 		return strictcli.Exit(0)

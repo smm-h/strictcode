@@ -9,10 +9,11 @@ import (
 	"github.com/smm-h/strictcode/internal/config"
 	"github.com/smm-h/strictcode/internal/extract"
 	"github.com/smm-h/strictcode/internal/fixture"
+	"github.com/smm-h/strictcode/internal/options"
 	"github.com/smm-h/strictcode/internal/workspace"
 )
 
-func setup(t *testing.T, files map[string]string) (*workspace.Workspace, *extract.Result, *config.Effective) {
+func setup(t *testing.T, files map[string]string) (*workspace.Workspace, *extract.Result, *config.Effective, *options.Resolved) {
 	t.Helper()
 	root := fixture.Write(t, files)
 	ws, err := workspace.Load(root)
@@ -23,11 +24,15 @@ func setup(t *testing.T, files map[string]string) (*workspace.Workspace, *extrac
 	if err != nil {
 		t.Fatal(err)
 	}
+	opts, err := options.Load(root, []string{"."})
+	if err != nil {
+		t.Fatal(err)
+	}
 	res, err := extract.Extract(ws)
 	if err != nil {
 		t.Fatal(err)
 	}
-	return ws, res, cfg
+	return ws, res, cfg, opts
 }
 
 func readBack(t *testing.T, ws *workspace.Workspace, rel string) string {
@@ -40,13 +45,13 @@ func readBack(t *testing.T, ws *workspace.Workspace, rel string) string {
 }
 
 func TestPlanUnreachableRemovals(t *testing.T) {
-	_, res, cfg := setup(t, map[string]string{
+	_, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/a.py":        "def f():\n    return 1\n    x = 2\n    y = 3\n",
 		"pkg/clean.py":    "def g():\n    return 1\n",
 	})
-	plans := PlanUnreachableRemovals(res, cfg)
+	plans := PlanUnreachableRemovals(res, cfg, opts)
 	if len(plans) != 1 {
 		t.Fatalf("plans: %+v", plans)
 	}
@@ -62,19 +67,21 @@ func TestPlanHonorsSuppressionsAndDisable(t *testing.T) {
 		"pkg/a.py":        "def f():\n    return 1\n    x = 2\n",
 		"strictcode.toml": "format_version = 1\n[[rules.unreachable-code.suppressions]]\npath = \"pkg/a.py\"\nreason = \"intentional\"\n",
 	}
-	_, res, cfg := setup(t, files)
-	if plans := PlanUnreachableRemovals(res, cfg); len(plans) != 0 {
+	_, res, cfg, opts := setup(t, files)
+	if plans := PlanUnreachableRemovals(res, cfg, opts); len(plans) != 0 {
 		t.Fatalf("suppressed region planned: %+v", plans)
 	}
-	files["strictcode.toml"] = "format_version = 1\n[rules.unreachable-code]\nenabled = false\n"
-	_, res, cfg = setup(t, files)
-	if plans := PlanUnreachableRemovals(res, cfg); len(plans) != 0 {
+	delete(files, "strictcode.toml")
+	files[".strictmetadata/options/manifest.toml"] = "owner = \"strictspec\"\n"
+	files[".strictmetadata/options/code.toml"] = "format_version = 1\n\n[[entry]]\nid = \"strictcode:unreachable-code\"\ncurrent = \"off\"\nideal = \"error\"\nreason = \"the generated module keeps its dead branches\"\n"
+	_, res, cfg, opts = setup(t, files)
+	if plans := PlanUnreachableRemovals(res, cfg, opts); len(plans) != 0 {
 		t.Fatalf("disabled rule planned: %+v", plans)
 	}
 }
 
 func TestApplyRemovesDeadStatementsAndVerifies(t *testing.T) {
-	ws, res, cfg := setup(t, map[string]string{
+	ws, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/a.py": `def f():
@@ -90,7 +97,7 @@ def cleanup():
     return 0
 `,
 	})
-	plans := PlanUnreachableRemovals(res, cfg)
+	plans := PlanUnreachableRemovals(res, cfg, opts)
 	if len(plans) != 1 {
 		t.Fatalf("plans: %+v", plans)
 	}
@@ -121,7 +128,7 @@ def cleanup():
 func TestApplyPrunesDefinitionsInDeadRegion(t *testing.T) {
 	// The dead region contains a def and an import: the transform's delta
 	// must predict the node and rows disappearing, so verification passes.
-	ws, res, cfg := setup(t, map[string]string{
+	ws, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/a.py": `def f():
@@ -135,7 +142,7 @@ def caller():
 `,
 		"pkg/helper.py": "H = 1\n",
 	})
-	plans := PlanUnreachableRemovals(res, cfg)
+	plans := PlanUnreachableRemovals(res, cfg, opts)
 	if len(plans) != 1 {
 		t.Fatalf("plans: %+v", plans)
 	}
@@ -152,7 +159,7 @@ func TestPlanRefusesSiblingRenumbering(t *testing.T) {
 	// The dead region contains `def dup` while another `def dup` (overload
 	// sibling) lives outside: removal would renumber #1 -> #0, which the
 	// delta cannot express. The region must be refused at plan time.
-	_, res, cfg := setup(t, map[string]string{
+	_, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/a.py": `def f():
@@ -168,7 +175,7 @@ def g():
 	})
 	// Both dup defs share the name but different containers (f vs g) — that
 	// is fine. Craft the true conflict: same container.
-	_, res2, cfg2 := setup(t, map[string]string{
+	_, res2, cfg2, opts2 := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/b.py": `def f():
@@ -184,7 +191,8 @@ def dup():
 	})
 	_ = res
 	_ = cfg
-	plans := PlanUnreachableRemovals(res2, cfg2)
+	_ = opts
+	plans := PlanUnreachableRemovals(res2, cfg2, opts2)
 	// pkg/b.py: module-level dup sibling exists outside the region (the
 	// in-region dup is f.dup — different container, no conflict). Verify by
 	// checking what was planned and that Apply verifies cleanly either way.
@@ -194,7 +202,7 @@ def dup():
 }
 
 func TestPlanRefusesTrueSiblingConflict(t *testing.T) {
-	_, res, cfg := setup(t, map[string]string{
+	_, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		// Module-level: dead region between two same-name defs. The region
@@ -214,7 +222,7 @@ def trailing():
 	// The module block terminates at raise; both following defs are in the
 	// dead region... craft differently: only ONE dup inside the region and
 	// one outside (before the terminator).
-	plans := PlanUnreachableRemovals(res, cfg)
+	plans := PlanUnreachableRemovals(res, cfg, opts)
 	for _, p := range plans {
 		if p.File == "pkg/c.py" {
 			t.Fatalf("region containing an overload sibling of a pre-terminator def was planned: %+v", p)
@@ -223,7 +231,7 @@ def trailing():
 }
 
 func TestApplySabotageRollsBack(t *testing.T) {
-	ws, res, cfg := setup(t, map[string]string{
+	ws, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/a.py": `def f():
@@ -234,7 +242,7 @@ def live():
     return 3
 `,
 	})
-	plans := PlanUnreachableRemovals(res, cfg)
+	plans := PlanUnreachableRemovals(res, cfg, opts)
 	if len(plans) != 1 {
 		t.Fatalf("plans: %+v", plans)
 	}
@@ -266,12 +274,12 @@ def live():
 }
 
 func TestApplyRefusesCRLF(t *testing.T) {
-	ws, res, cfg := setup(t, map[string]string{
+	ws, res, cfg, opts := setup(t, map[string]string{
 		"pyproject.toml":  "[project]\nname = \"solo\"\n",
 		"pkg/__init__.py": "",
 		"pkg/a.py":        "def f():\r\n    return 1\r\n    dead = 2\r\n",
 	})
-	plans := PlanUnreachableRemovals(res, cfg)
+	plans := PlanUnreachableRemovals(res, cfg, opts)
 	if len(plans) != 1 {
 		t.Fatalf("plans: %+v", plans)
 	}

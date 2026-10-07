@@ -6,7 +6,8 @@ nav_order = 200
 
 # Rules
 
-Rules are built in: Go code shipped with the tool, enabled, disabled, and tuned through
+Rules are built in: Go code shipped with the tool, each switched and given its severity through
+its `strictcode:<rule id>` option, with its suppressions and allow lists declared in
 [configuration](../config/). There is no user rule language and no embedded query language.
 Rules stay correct, testable, and fixable because they are code, and users cannot write broken
 ones. The rule engine operates on graph nodes and rows, never on syntax trees, and every rule in
@@ -32,12 +33,15 @@ nothing else. Category, severity, fix tier, capabilities, and group membership a
 metadata, so they can change without touching the ID.
 
 The set of rule IDs is strictcode's API surface: IDs appear in findings, in configuration and
-suppressions, and in rlsbl's check configuration. A registry has two lifecycle operations and no
+suppressions, in option IDs (`strictcode:<rule id>`), and in the list
+`strictcode registry rules` prints, which rlsbl reads. A registry has two lifecycle operations and no
 others:
 
 - **Adding a rule** is a minor release. It can make a previously passing build fail, because the
-  tool got stricter and found real problems. That is intended: new rules ship enabled, because a
-  rule shipped disabled by default is the soft guidance strictcode exists to replace.
+  tool got stricter and found real problems. That is intended: a new rule's option defaults to its
+  severity, because a rule shipped off by default is the soft guidance strictcode exists to
+  replace. The exceptions are the adopted rules, which run a tool or read a file a repository
+  must first declare.
 - **Retiring a rule** is a breaking release. The ID is never reused and never deleted from the
   registry. Configuration or suppressions naming a retired ID are a hard error, and the error
   renders the retirement record: when the rule was retired, why, which rules replaced it, and what
@@ -53,9 +57,9 @@ membership) are minor releases.
 
 ## Groups
 
-A group is a convenience switch over several rules, written `group:<name>` so it can never be
-mistaken for a rule ID. Configuration can enable, disable, or re-severity a group's members in one
-entry. A finding never names a group, and a suppression never targets one.
+A group classifies several rules, written `group:<name>` so it can never be mistaken for a rule
+ID. It switches nothing: each rule is switched through its own option. A finding never names a
+group, and a suppression never targets one.
 
 :-: group-table
 

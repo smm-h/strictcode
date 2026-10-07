@@ -19,29 +19,24 @@ func TestMissingFileYieldsDefaults(t *testing.T) {
 		t.Fatalf("defaults cover %d rules, registry has %d", len(eff.Rules), len(rules.Rules))
 	}
 	for _, r := range rules.Rules {
-		s := eff.Setting(r.ID)
-		if !s.Enabled || s.Severity != r.Severity || len(s.Suppressions) != 0 {
-			t.Errorf("%s default = %+v, want enabled at %s", r.ID, s, r.Severity)
+		if s := eff.Setting(r.ID); len(s.Suppressions) != 0 {
+			t.Errorf("%s default = %+v, want no suppressions", r.ID, s)
 		}
+	}
+	if len(eff.PythonTools) != 0 || eff.Certificate != nil {
+		t.Fatalf("defaults declare tools or a certificate: %+v", eff)
 	}
 	if eff.Analysis.PythonTypeChecker != "" {
 		t.Fatal("default analysis must be syntactic-only")
 	}
 }
 
-func TestRuleAndGroupResolution(t *testing.T) {
+func TestRuleDeclarations(t *testing.T) {
 	eff, err := Parse([]byte(`
 format_version = 1
 
-[groups.library]
-enabled = false
-
-[rules.library-stdout]
-enabled = true
-severity = "warning"
-
-[rules.deps-unused]
-severity = "warning"
+[rules.library-forbidden-imports.allow]
+py = ["click"]
 
 [[rules.dead-modules.suppressions]]
 path = "src/keep.py"
@@ -50,16 +45,8 @@ reason = "referenced from templated imports"
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Group toggle disables all four library rules...
-	if eff.Setting("library-forbidden-imports").Enabled || eff.Setting("library-entry-point").Enabled {
-		t.Fatal("group:library disable not applied")
-	}
-	// ...but the per-rule override wins for library-stdout.
-	if s := eff.Setting("library-stdout"); !s.Enabled || s.Severity != rules.SeverityWarning {
-		t.Fatalf("per-rule override lost to group toggle: %+v", s)
-	}
-	if s := eff.Setting("deps-unused"); s.Severity != rules.SeverityWarning || !s.Enabled {
-		t.Fatalf("deps-unused: %+v", s)
+	if allow := eff.Setting("library-forbidden-imports").Allow["py"]; len(allow) != 1 || allow[0] != "click" {
+		t.Fatalf("allow list: %+v", allow)
 	}
 	sups := eff.Setting("dead-modules").Suppressions
 	if len(sups) != 1 || sups[0].Shape != rules.SuppressPath || sups[0].Path != "src/keep.py" {
@@ -67,6 +54,87 @@ reason = "referenced from templated imports"
 	}
 	if sups[0].Reason == "" {
 		t.Fatal("reason lost")
+	}
+}
+
+// The per-rule and per-group switches are gone: a rule's behavior changes
+// only through its strictcode:<rule id> option, so strictcode.toml refuses
+// every spelling of a switch.
+func TestSwitchesAreRefused(t *testing.T) {
+	for _, doc := range []string{
+		"format_version = 1\n[rules.deps-unused]\nenabled = false\n",
+		"format_version = 1\n[rules.deps-unused]\nseverity = \"warning\"\n",
+		"format_version = 1\n[groups.library]\nenabled = false\n",
+		"format_version = 1\n[groups.library]\nseverity = \"warning\"\n",
+	} {
+		if _, err := Parse([]byte(doc), "test"); err == nil {
+			t.Errorf("switch accepted: %q", doc)
+		}
+	}
+}
+
+func TestPythonToolDeclarations(t *testing.T) {
+	eff, err := Parse([]byte(`
+format_version = 1
+
+[python_tools.lint]
+paths = ["core", "tools/gen"]
+
+[python_tools.type-check]
+cwd = "core"
+paths = ["src", "tests"]
+`), "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lint, ok := eff.PythonTools["lint"]
+	if !ok || lint.Cwd != "." || len(lint.Paths) != 2 {
+		t.Fatalf("lint declaration: %+v", lint)
+	}
+	tc := eff.PythonTools["type-check"]
+	if got := tc.RootPaths(); len(got) != 2 || got[0] != "core/src" || got[1] != "core/tests" {
+		t.Fatalf("type-check root paths: %v", got)
+	}
+	if _, ok := eff.PythonTools["format"]; ok {
+		t.Fatal("an undeclared tool appeared")
+	}
+}
+
+func TestPythonToolDeclarationsAreRefused(t *testing.T) {
+	cases := map[string]string{
+		"no paths":          "[python_tools.lint]\ncwd = \"core\"\n",
+		"empty paths":       "[python_tools.lint]\npaths = []\n",
+		"unknown tool":      "[python_tools.pyright]\npaths = [\"x\"]\n",
+		"unknown key":       "[python_tools.lint]\npaths = [\"x\"]\nargs = [\"--fix\"]\n",
+		"absolute path":     "[python_tools.lint]\npaths = [\"/x\"]\n",
+		"climbing path":     "[python_tools.lint]\npaths = [\"../x\"]\n",
+		"non-canonical cwd": "[python_tools.lint]\ncwd = \"core/\"\npaths = [\"x\"]\n",
+	}
+	for name, body := range cases {
+		t.Run(name, func(t *testing.T) {
+			if _, err := Parse([]byte("format_version = 1\n"+body), "test"); err == nil {
+				t.Fatalf("accepted: %q", body)
+			}
+		})
+	}
+}
+
+func TestCertificateDeclaration(t *testing.T) {
+	eff, err := Parse([]byte("format_version = 1\n[strictspec_certificate]\ncertificate = \"migrations/cert.json\"\n"), "test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if eff.Certificate == nil || eff.Certificate.Certificate != "migrations/cert.json" || eff.Certificate.Adjudication != "" {
+		t.Fatalf("certificate: %+v", eff.Certificate)
+	}
+	for _, body := range []string{
+		"[strictspec_certificate]\nadjudication = \"a.toml\"\n",
+		"[strictspec_certificate]\ncertificate = \"/abs/cert.json\"\n",
+		"[strictspec_certificate]\ncertificate = \"c.json\"\nenabled = true\n",
+	} {
+		if _, err := Parse([]byte("format_version = 1\n"+body), "test"); err == nil {
+			t.Errorf("accepted: %q", body)
+		}
 	}
 }
 
@@ -88,19 +156,9 @@ func TestAnalysisModes(t *testing.T) {
 }
 
 func TestUnknownRuleIsHardError(t *testing.T) {
-	_, err := Parse([]byte("format_version = 1\n[rules.no-such-rule]\nenabled = false\n"), "test")
+	_, err := Parse([]byte("format_version = 1\n[rules.no-such-rule.allow]\npy = [\"click\"]\n"), "test")
 	if err == nil || !strings.Contains(err.Error(), `unknown rule "no-such-rule"`) {
 		t.Fatalf("got %v", err)
-	}
-}
-
-func TestUnknownGroupIsHardError(t *testing.T) {
-	_, err := Parse([]byte("format_version = 1\n[groups.nope]\nenabled = false\n"), "test")
-	if err == nil || !strings.Contains(err.Error(), `unknown group "nope"`) {
-		t.Fatalf("got %v", err)
-	}
-	if !strings.Contains(err.Error(), "library") {
-		t.Fatalf("error must list known groups: %v", err)
 	}
 }
 
@@ -117,7 +175,7 @@ func TestTombstoneRendering(t *testing.T) {
 	}}
 	defer func() { rules.Tombstones = saved }()
 
-	_, err := Parse([]byte("format_version = 1\n[rules.old-rule]\nenabled = true\n"), "test")
+	_, err := Parse([]byte("format_version = 1\n[[rules.old-rule.suppressions]]\npath = \"x\"\nreason = \"kept\"\n"), "test")
 	if err == nil {
 		t.Fatal("tombstoned rule accepted")
 	}
@@ -165,7 +223,7 @@ func TestMalformedConfigIsHardError(t *testing.T) {
 	// Lesson 31: wrong types, unknown keys — fail loudly, never coerce.
 	cases := []string{
 		"format_version = 1\nunknown_key = 1\n",
-		"format_version = 1\n[rules.deps-unused]\nenabled = \"yes\"\n",
+		"format_version = 1\n[rules.deps-unused]\nthresholds = \"yes\"\n",
 		"not toml at all [",
 	}
 	for _, doc := range cases {
