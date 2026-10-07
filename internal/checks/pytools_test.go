@@ -466,3 +466,59 @@ func TestLesson39StrictspecCertificate(t *testing.T) {
 		t.Fatalf("certificate findings: %+v", got)
 	}
 }
+
+// A declared path that no member owns is refused, naming it, since no
+// member's option could judge what the tool reports there; removing it
+// clears the refusal.
+func TestADeclaredPathNoMemberOwnsIsRefused(t *testing.T) {
+	files := twoPyMembers("[python_tools.lint]\npaths = [\"core\", \"tools\", \"scripts\"]\n", optionEntry("code", "lint", "", "error", "error"))
+	files["scripts/build.py"] = ""
+	_, err := analyzeWith(t, files, newFakeTools(t).run)
+	if err == nil || !strings.Contains(err.Error(), `"scripts"`) || !strings.Contains(err.Error(), "no member") {
+		t.Fatalf("a declared path no member owns was not refused by name: %v", err)
+	}
+	files["strictcode.toml"] = "format_version = 1\n[python_tools.lint]\npaths = [\"core\", \"tools\"]\n"
+	if _, err := analyzeWith(t, files, newFakeTools(t).run); err != nil {
+		t.Fatalf("removing the path did not clear the refusal: %v", err)
+	}
+}
+
+// A problem a tool reports in a file no member owns is refused, naming the
+// file, instead of being attributed to an arbitrary member; declaring a
+// member owning the file clears the refusal.
+func TestAToolProblemInAFileNoMemberOwnsIsRefused(t *testing.T) {
+	files := twoPyMembers("[python_tools.lint]\npaths = [\"core\", \"tools\"]\n", optionEntry("code", "lint", "", "error", "error"))
+	files["conftest.py"] = ""
+	tools := newFakeTools(t)
+	tools.answers["ruff check"] = ToolResult{ExitCode: 1, Stdout: `[{"code": "F401", "message": "os imported but unused", "filename": "conftest.py", "location": {"row": 1, "column": 8}}]`}
+	_, err := analyzeWith(t, files, tools.run)
+	if err == nil || !strings.Contains(err.Error(), "conftest.py") || !strings.Contains(err.Error(), "no member") {
+		t.Fatalf("a problem in a file no member owns was not refused by name: %v", err)
+	}
+	files[fixture.DeclarationsPath] = fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"core\"\nname = \"core\"\n", "path = \"tools\"\nname = \"tools\"\n")
+	files["pyproject.toml"] = "[project]\nname = \"root\"\nversion = \"1.0.0\"\n"
+	files["strictcode.toml"] = "format_version = 1\n[python_tools.lint]\npaths = [\"core\", \"tools\", \"conftest.py\"]\n"
+	fs, err := analyzeWith(t, files, tools.run)
+	if err != nil {
+		t.Fatalf("declaring a member owning the file did not clear the refusal: %v", err)
+	}
+	if got := byRule(fs, "lint"); len(got) != 1 || got[0].Target.File != "conftest.py" {
+		t.Fatalf("the problem is not reported for the owning member: %+v", got)
+	}
+}
+
+// A scope guard conflict in a directory no member owns is refused, naming the
+// key, instead of being attributed to an arbitrary member; removing the key
+// clears the refusal.
+func TestAScopeGuardConflictNoMemberOwnsIsRefused(t *testing.T) {
+	files := twoPyMembers("[python_tools.lint]\npaths = [\"core\", \"tools\"]\n", optionEntry("code", "lint", "", "error", "error"))
+	files["ruff.toml"] = "include = [\"src/**\"]\n"
+	_, err := analyzeWith(t, files, newFakeTools(t).run)
+	if err == nil || !strings.Contains(err.Error(), "'include'") || !strings.Contains(err.Error(), "no member") {
+		t.Fatalf("a guard conflict no member owns was not refused by key: %v", err)
+	}
+	files["ruff.toml"] = "line-length = 100\n"
+	if _, err := analyzeWith(t, files, newFakeTools(t).run); err != nil {
+		t.Fatalf("removing the key did not clear the refusal: %v", err)
+	}
+}

@@ -99,9 +99,12 @@ func planPythonTool(ctx *Context, rule string) (*toolPlan, error) {
 	}
 	covered := map[string]bool{}
 	for _, rp := range decl.RootPaths() {
-		if owner := ws.Owner(rp); owner != nil {
-			covered[owner.Path] = true
+		owner := ws.Owner(rp)
+		if owner == nil {
+			return nil, fmt.Errorf("%s: [python_tools.%s] in %s declares the path %q, which no member owns, so no member's strictcode:%s value could judge what the tool reports there: remove the path, or declare a member whose directory holds it",
+				rule, rule, ctx.CfgPath, rp, rule)
 		}
+		covered[owner.Path] = true
 	}
 	var uncovered []string
 	for _, p := range on {
@@ -148,7 +151,8 @@ func (ctx *Context) runTool(plan *toolPlan, extra []string) (ToolResult, error) 
 // toolFinding reports one problem a tool found in file (relative to the
 // declaration's directory, or absolute) at line, attributed to the member
 // owning the file, at that member's option value; ok is false when that
-// member's option is off.
+// member's option is off, or when no member owns the file, which is refused
+// through ctx.fail.
 func (ctx *Context) toolFinding(plan *toolPlan, file string, line int, message string) (findings.Finding, bool) {
 	ws := ctx.View.WS
 	rel := file
@@ -161,7 +165,9 @@ func (ctx *Context) toolFinding(plan *toolPlan, file string, line int, message s
 	}
 	owner := ws.Owner(rel)
 	if owner == nil {
-		owner = ws.Members[0]
+		ctx.fail(fmt.Errorf("%s: the tool reported %s (%s), a file no member owns, so no member's strictcode:%s value can judge it: declare a member whose directory holds it, or keep the tool from reporting it",
+			plan.rule, rel, message, plan.rule))
+		return findings.Finding{}, false
 	}
 	v := ctx.Opts.ValueFor(plan.rule, owner.Path)
 	if v == options.Off {
@@ -534,11 +540,13 @@ func checkScopeGuard(ctx *Context, rule string) []findings.Finding {
 		return nil
 	}
 	owner := ctx.View.WS.Owner(dir)
-	if owner == nil {
-		owner = ctx.View.WS.Members[0]
-	}
 	var out []findings.Finding
 	for _, c := range conflicts {
+		if owner == nil {
+			ctx.fail(fmt.Errorf("%s: %s: '%s' competes with the paths [python_tools.%s] declares (%s), and its directory %q belongs to no member, so no member's finding can report it: remove the key",
+				tool.guard, c.source, c.key, rule, guardExplanation[tool.family], dir))
+			continue
+		}
 		out = append(out, ctx.findingAtLine(tool.guard, options.Severity(ctx.Opts.Value(tool.guard)),
 			memberTargetID(ctx, vocab.LangPy, owner.Name), vocab.NodeKindWorkspaceMember,
 			c.file, c.line,
