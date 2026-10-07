@@ -89,7 +89,9 @@
     "analyze": {
       "name": "analyze",
       "help": "Analyze a project or workspace directory and report findings",
-      "effect": "read_only",
+      "effect": "mutating",
+      "dry_run_supported": false,
+      "dry_run_unsupported_reason": "the lint, format, and type-check rules start their tools with `uv run`, which can create or update .venv and rewrite uv.lock outside the effects handle, so a preview would report nothing while the real run writes",
       "payload_schema": {
         "additionalProperties": false,
         "properties": {
@@ -192,23 +194,21 @@
       "flags": [
         {
           "name": "config",
-          "help": "Config file name, resolved relative to the analyzed directory",
+          "help": "Config file name, resolved relative to the analyzed directory; omitted means strictcode.toml",
           "value_schema": {
             "type": "string"
           },
-          "presence": "default",
-          "default": "strictcode.toml"
+          "presence": "optional"
         }
       ],
       "args": [
         {
           "name": "dir",
-          "help": "Project or workspace root to analyze",
+          "help": "Project or workspace root to analyze; omitted means the current directory",
           "value_schema": {
             "type": "string"
           },
-          "presence": "default",
-          "default": "."
+          "presence": "optional"
         }
       ]
     },
