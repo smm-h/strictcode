@@ -93,9 +93,9 @@ type Manifest struct {
 	// Version is the manifest-declared version: pyproject [project].version,
 	// package.json version. Empty when the manifest declares none (a
 	// dynamic pyproject version, go.mod).
-	Version string
-	Deps         []DeclaredDep
-	EntryPoints  []EntryPoint
+	Version     string
+	Deps        []DeclaredDep
+	EntryPoints []EntryPoint
 }
 
 // Member is one workspace member (or the synthesized single-project member).

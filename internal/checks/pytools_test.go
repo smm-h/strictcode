@@ -196,9 +196,7 @@ reason = "tools is mid-cleanup"
 // Lesson 35: ruff names files absolutely; a finding is placed at the file
 // relative to the workspace root.
 func TestLesson35AbsoluteToolPathsAreMadeRootRelative(t *testing.T) {
-	files := pyProject("[python_tools.lint]
-paths = ["pkg"]
-", optionEntry("code", "lint", "", "error", "error"))
+	files := pyProject("[python_tools.lint]\npaths = [\"pkg\"]\n", optionEntry("code", "lint", "", "error", "error"))
 	tools := newFakeTools(t)
 	runner := func(run ToolRun) (ToolResult, error) {
 		if strings.Contains(strings.Join(run.Argv, " "), "ruff check") {

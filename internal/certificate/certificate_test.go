@@ -22,8 +22,8 @@ func cert(claims ...map[string]interface{}) string {
 	return string(b)
 }
 
-func claim(kind, grade, statement string) map[string]interface{} {
-	return map[string]interface{}{"kind": kind, "grade": grade, "statement": statement}
+func claimJSON(class, grade, statement string) map[string]interface{} {
+	return map[string]interface{}{"kind": class, "grade": grade, "statement": statement}
 }
 
 const adjudicationHeader = "format_version = 1\nschema_id = \"widget-config\"\nold_format_version = 1\nnew_format_version = 2\n"
@@ -46,8 +46,8 @@ func TestTheAdjudicationSchemaCompiles(t *testing.T) {
 
 func TestGreenGradesPass(t *testing.T) {
 	blockers, err := evaluate(t, map[string]string{"cert.json": cert(
-		claim("flip-scan", "corpus-supported", "every document valid at N stays valid at N+1"),
-		claim("down-taxonomy", "proven", "s"),
+		claimJSON("flip-scan", "corpus-supported", "every document valid at N stays valid at N+1"),
+		claimJSON("down-taxonomy", "proven", "s"),
 	)}, "")
 	if err != nil || len(blockers) != 0 {
 		t.Fatalf("green grades blocked: %v %v", blockers, err)
@@ -55,10 +55,10 @@ func TestGreenGradesPass(t *testing.T) {
 }
 
 func TestViolatedBlocksNamingItsWitness(t *testing.T) {
-	violated := claim("flip-scan", "violated", "narrowing without a bump")
+	violated := claimJSON("flip-scan", "violated", "narrowing without a bump")
 	violated["counterexamples"] = []map[string]interface{}{{"document_path": "corpus/bad.toml", "diagnostics": []interface{}{}}}
 	blockers, err := evaluate(t, map[string]string{"cert.json": cert(
-		claim("flip-scan", "corpus-supported", "a"), violated,
+		claimJSON("flip-scan", "corpus-supported", "a"), violated,
 	)}, "")
 	if err != nil {
 		t.Fatal(err)
@@ -72,7 +72,7 @@ func TestViolatedBlocksNamingItsWitness(t *testing.T) {
 }
 
 func TestUnsupportedWithoutAdjudicationBlocks(t *testing.T) {
-	blockers, err := evaluate(t, map[string]string{"cert.json": cert(claim("flip-scan", "no-corpus", "s"))}, "")
+	blockers, err := evaluate(t, map[string]string{"cert.json": cert(claimJSON("flip-scan", "no-corpus", "s"))}, "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -83,7 +83,7 @@ func TestUnsupportedWithoutAdjudicationBlocks(t *testing.T) {
 
 func TestAdjudicationDischargesAndDanglingBlocks(t *testing.T) {
 	files := map[string]string{
-		"cert.json": cert(claim("flip-scan", "no-corpus", "greenfield claim")),
+		"cert.json": cert(claimJSON("flip-scan", "no-corpus", "greenfield claim")),
 		"adj.toml":  adjudicationHeader + adjudication("flip-scan", "greenfield claim"),
 	}
 	if blockers, err := evaluate(t, files, "adj.toml"); err != nil || len(blockers) != 0 {
@@ -108,9 +108,9 @@ func TestUnreadableFilesAreErrors(t *testing.T) {
 		"missing certificate":   {map[string]string{}, "", "does not exist"},
 		"malformed certificate": {map[string]string{"cert.json": "{ not json"}, "", "not valid JSON"},
 		"no claims":             {map[string]string{"cert.json": `{"schema_id": "x"}`}, "", "claims"},
-		"missing adjudication":  {map[string]string{"cert.json": cert(claim("flip-scan", "no-corpus", "s"))}, "missing.toml", "does not exist"},
+		"missing adjudication":  {map[string]string{"cert.json": cert(claimJSON("flip-scan", "no-corpus", "s"))}, "missing.toml", "does not exist"},
 		"invalid adjudication": {map[string]string{
-			"cert.json": cert(claim("flip-scan", "no-corpus", "s")),
+			"cert.json": cert(claimJSON("flip-scan", "no-corpus", "s")),
 			"adj.toml":  adjudicationHeader + "\n[[adjudications]]\nclaim_kind = \"flip-scan\"\nscope = \"s\"\njustification = \"j\"\n",
 		}, "adj.toml", "fails its schema"},
 	}
