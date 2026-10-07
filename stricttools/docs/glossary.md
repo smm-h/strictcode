@@ -21,7 +21,9 @@ nav_order = 440
 ::: **Lesson**: A numbered regression requirement from the lessons register, each implemented as a red-green test.
 ::: **Suppression shape**: The form a rule's suppressions take: a path, a member and dependency pair, a cycle's module set, a member, or none.
 ::: **Retirement record**: The registry entry kept for a retired rule, saying when and why it was retired, what replaced it, and what to do.
-::: **Group**: A named switch over several rules, written with a group prefix, that configuration can toggle in one entry.
+::: **Group**: A named classification of several rules, written with a group prefix. It switches nothing; each rule is switched through its own option.
+::: **Option**: A rule's switch, `strictcode:<rule id>`, filed as an entry under `.strictmetadata/options/`: off, or the severity its findings take. It defaults to the rule's severity, or to off for a rule a repository adopts.
+::: **Adopted rule**: A rule whose option defaults to off because it runs a tool or reads a file the repository must first declare, such as `lint` or `strictspec-certificate`.
 ::: **Fix tier**: The safety class of a fix: guaranteed behavior-preserving, behavior-changing with consent, or suggestion only.
 ::: **Declared delta**: The rows and nodes a tier-1 fix is expected to remove, against which the re-extracted graph is verified.
 :>:

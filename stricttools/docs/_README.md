@@ -33,8 +33,10 @@ strictcode fix . --apply       # apply them, verified against the re-extracted g
 
 :-: table-commands
 
-Configuration lives in `strictcode.toml` at the analyzed directory: rule toggles, severities,
-analysis modes, and suppressions, each with a mandatory reason.
+Every rule is an option, `strictcode:<rule id>`, filed under `.strictmetadata/options/`: its
+default is the rule's severity, and an entry switches it off or to another severity. Declarations
+live in `strictcode.toml` at the analyzed directory: analysis modes, allow lists, suppressions each
+with a mandatory reason, the Python tools some rules run, and the strictspec certificate.
 
 ## Documentation
 

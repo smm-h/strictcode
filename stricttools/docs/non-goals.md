@@ -9,8 +9,9 @@ nav_order = 40
 - **No LLM in the analysis pipeline.** Determinism is the product.
 - **No security scanning.** Joern, CodeQL, and Semgrep own that space. strictcode targets
   architecture, correctness, and discipline. [Prior art](../prior-art/) covers these tools.
-- **No user-extensible rule language.** Rules are Go code maintained in the repository, with
-  configuration limited to toggles, severities, thresholds, and suppressions.
+- **No user-extensible rule language.** Rules are Go code maintained in the repository; a
+  repository switches each one and sets its severity through its option, and declares only
+  thresholds, allow lists, suppressions, and the tools and files some rules read.
 - **No watch mode, daemon, or server.** strictcode is a batch command-line tool.
 - **No silent fallbacks of any kind,** including no regular-expression parsing backend.
 - **No speculative language support.** Dart, Java, Kotlin, and every other language wait for a
