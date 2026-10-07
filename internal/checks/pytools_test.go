@@ -388,12 +388,13 @@ func indexOf(items []string, want string) int {
 func TestLesson38ScopeGuards(t *testing.T) {
 	cases := []struct {
 		rule, guard, file, content, key string
+		line                            int
 	}{
-		{"lint", "lint-scope-guard", "pyproject.toml", "[project]\nname = \"p\"\n\n[tool.ruff]\ninclude = [\"src/**\"]\n", "include"},
-		{"format", "format-scope-guard", "ruff.toml", "extend-include = [\"*.pyi\"]\n", "extend-include"},
-		{"type-check", "type-check-scope-guard", "pyproject.toml", "[project]\nname = \"p\"\n\n[tool.mypy]\nfiles = \"src\"\n", "files"},
-		{"type-check", "type-check-scope-guard", "mypy.ini", "[mypy]\nstrict = True\npackages = pkg\n", "packages"},
-		{"type-check", "type-check-scope-guard", "setup.cfg", "[metadata]\nname = p\n\n[mypy]\nmodules: pkg.a\n", "modules"},
+		{"lint", "lint-scope-guard", "pyproject.toml", "[project]\nname = \"p\"\n\n[tool.ruff]\ninclude = [\"src/**\"]\n", "include", 5},
+		{"format", "format-scope-guard", "ruff.toml", "line-length = 100\nextend-include = [\"*.pyi\"]\n", "extend-include", 2},
+		{"type-check", "type-check-scope-guard", "pyproject.toml", "[project]\nname = \"p\"\n\n[tool.mypy]\nfiles = \"src\"\n", "files", 5},
+		{"type-check", "type-check-scope-guard", "mypy.ini", "[mypy]\nstrict = True\npackages = pkg\n", "packages", 3},
+		{"type-check", "type-check-scope-guard", "setup.cfg", "[metadata]\nname = p\n\n[mypy]\nmodules: pkg.a\n", "modules", 5},
 	}
 	for _, c := range cases {
 		t.Run(c.guard+"/"+c.file, func(t *testing.T) {
@@ -407,8 +408,8 @@ func TestLesson38ScopeGuards(t *testing.T) {
 			if len(got) != 1 || !strings.Contains(got[0].Message, "'"+c.key+"'") || got[0].Target.File != c.file {
 				t.Fatalf("guard findings: %+v", got)
 			}
-			if got[0].Target.Line < 2 {
-				t.Errorf("guard finding does not point at the key's line: %+v", got[0])
+			if got[0].Target.Line != c.line {
+				t.Errorf("guard finding at line %d, want the key's line %d", got[0].Target.Line, c.line)
 			}
 
 			// With the tool rule off, the guard has no declared scope to
