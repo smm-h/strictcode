@@ -21,3 +21,4 @@
 {"format_version":1,"id":"18dc4a143155cef9afbbad24245649f484d6cdf28bf1af5a","commits":["92a4958abb2fcfd3f661be5ca1df9f4b13f5901f"],"user_facing":true,"description":"**`library-stdout` covers Go and TypeScript.** A library member's Go `fmt.Print*`, `fmt.Fprint*` to `os.Stdout` or `os.Stderr`, and `os.Stdout` writes, and its TypeScript/JavaScript `console` and `process.stdout` writes, are reported as Python's `print` is; the per-language `allow` lists exempt a callee.","type":"feature"}
 {"format_version":1,"id":"18dc4a1b9252c336ce4ff741ddb04e0ca35fcfb758e62103","commits":["d28e50d7294bcf8866dd90fe85f412609a713ccb"],"user_facing":false}
 {"format_version":1,"id":"18dc4a263ec67276f1619f89cb37405c865eb8a26cdf19e8","commits":["f29aa5ef9c4078a8c030fa424c3dfb177a247965"],"user_facing":false}
+{"format_version":1,"id":"18dc4a29a037b46d016f2865b6b94938940552d58b297750","commits":["f7dfed6e0c25bb0e9691c802d76650d283c89a0f"],"user_facing":false}
