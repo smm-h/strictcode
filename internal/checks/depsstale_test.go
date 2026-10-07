@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/smm-h/strictcode/internal/fixture"
+	"github.com/smm-h/strictcode/internal/vocab"
 )
 
 // npmPair is a workspace of two npm members: lib at libVersion, and app
@@ -23,11 +24,11 @@ func npmPair(libVersion, spec string) map[string]string {
 // version no longer satisfies is reported, naming both members, the
 // constraint, and the current version.
 func TestLesson33OutdatedConstraintIsReported(t *testing.T) {
-	got := byRule(analyze(t, npmPair("2.0.0", "==1.0.0")), "deps-stale")
+	got := byRule(analyze(t, npmPair("2.0.0", "=1.0.0")), "deps-stale")
 	if len(got) != 1 {
 		t.Fatalf("outdated constraint must be reported once: %+v", got)
 	}
-	for _, want := range []string{"'app'", "'lib'", "==1.0.0", "2.0.0"} {
+	for _, want := range []string{"'app'", "'lib'", "=1.0.0", "2.0.0"} {
 		if !strings.Contains(got[0].Message, want) {
 			t.Errorf("message %q does not name %q", got[0].Message, want)
 		}
@@ -91,37 +92,84 @@ func TestLesson33DependencyWithoutAStaticVersionIsNotJudged(t *testing.T) {
 }
 
 func TestEvaluateConstraint(t *testing.T) {
+	py, ts := vocab.LangPy, vocab.LangTS
 	cases := []struct {
+		lang                vocab.Lang
 		constraint, version string
 		want                constraintVerdict
 	}{
-		{">=1.0.0", "2.0.0", constraintSatisfied},
-		{">=2.0.1", "2.0.0", constraintOutdated},
-		{">1.0", "1.0", constraintOutdated},
-		{"<=1.0", "1.0", constraintSatisfied},
-		{"<2", "2.0", constraintOutdated},
-		{"==1.0.0", "1.0.0", constraintSatisfied},
-		{"=1.0.0", "1.0.1", constraintOutdated},
-		{"1.0.0", "1.0.0", constraintSatisfied},
-		{"^1.2.0", "1.9.0", constraintSatisfied},
-		{"^1.2.0", "2.0.0", constraintOutdated},
-		{"^1.2.0", "1.1.0", constraintOutdated},
-		{"^0.3.0", "0.3.9", constraintSatisfied},
-		{"^0.3.0", "0.4.0", constraintOutdated},
-		{"~1.2.0", "1.2.7", constraintSatisfied},
-		{"~1.2.0", "1.3.0", constraintOutdated},
-		{"~=1.4", "1.4.2", constraintSatisfied},
-		{"~=1.4", "2.1.0", constraintOutdated},
-		{">=1.0,<2.0", "3.0", constraintUnevaluated},
-		{"!=1.0", "1.0", constraintUnevaluated},
-		{"1.x", "1.0", constraintUnevaluated},
-		{">=1.0", "1.0.0rc1", constraintUnevaluated},
-		{"", "1.0", constraintUnevaluated},
-		{">=+1.0", "1.0", constraintUnevaluated},
+		{py, ">=1.0.0", "2.0.0", constraintSatisfied},
+		{py, ">=2.0.1", "2.0.0", constraintOutdated},
+		{py, ">1.0", "1.0", constraintOutdated},
+		{py, "<=1.0", "1.0", constraintSatisfied},
+		{py, "<2", "2.0", constraintOutdated},
+		{py, "==1.0.0", "1.0.0", constraintSatisfied},
+		{ts, "=1.0.0", "1.0.1", constraintOutdated},
+		{ts, "1.0.0", "1.0.0", constraintSatisfied},
+		{ts, "^1.2.0", "1.9.0", constraintSatisfied},
+		{ts, "^1.2.0", "2.0.0", constraintOutdated},
+		{ts, "^1.2.0", "1.1.0", constraintOutdated},
+		{ts, "^0.3.0", "0.3.9", constraintSatisfied},
+		{ts, "^0.3.0", "0.4.0", constraintOutdated},
+		{ts, "~1.2.0", "1.2.7", constraintSatisfied},
+		{ts, "~1.2.0", "1.3.0", constraintOutdated},
+		{py, "~=1.4", "1.4.2", constraintSatisfied},
+		{py, "~=1.4", "2.1.0", constraintOutdated},
+		{py, ">=1.0,<2.0", "3.0", constraintUnevaluated},
+		{py, "!=1.0", "1.0", constraintUnevaluated},
+		{ts, "1.x", "1.0.0", constraintUnevaluated},
+		{py, ">=1.0", "1.0.0rc1", constraintUnevaluated},
+		{py, "", "1.0", constraintUnevaluated},
+		{py, ">=+1.0", "1.0", constraintUnevaluated},
+
+		// PEP 440's compatible release with two components is >=1.4, ==1.*;
+		// with three, >=1.4.2, ==1.4.*; with one it is invalid.
+		{py, "~=1.4", "1.9.0", constraintSatisfied},
+		{py, "~=1.4", "1.3.9", constraintOutdated},
+		{py, "~=1.4.2", "1.4.9", constraintSatisfied},
+		{py, "~=1.4.2", "1.5.0", constraintOutdated},
+		{py, "~=1.4.2", "1.4.1", constraintOutdated},
+		{py, "~=1", "1.0.0", constraintUnevaluated},
+		// PEP 440 pads the shorter release with zeros.
+		{py, "==1.2", "1.2.0", constraintSatisfied},
+		{py, "==1.2.0", "1.2", constraintSatisfied},
+		{py, ">1.2", "1.2.0", constraintOutdated},
+		{py, "<=1.2", "1.2.0", constraintSatisfied},
+		{py, ">=1.2.0", "1.2", constraintSatisfied},
+		// npm's caret keeps the left-most non-zero component, and every
+		// given component when all are zero.
+		{ts, "^0.0.3", "0.0.3", constraintSatisfied},
+		{ts, "^0.0.3", "0.0.9", constraintOutdated},
+		{ts, "^0.0", "0.0.9", constraintSatisfied},
+		{ts, "^0.0", "0.1.0", constraintOutdated},
+		{ts, "^0", "0.9.0", constraintSatisfied},
+		{ts, "^0", "1.0.0", constraintOutdated},
+		{ts, "^1.2", "1.9.0", constraintSatisfied},
+		// npm's tilde keeps the major and minor when a minor is given, the
+		// major otherwise.
+		{ts, "~1", "1.9.0", constraintSatisfied},
+		{ts, "~1", "2.0.0", constraintOutdated},
+		{ts, "~0.2.3", "0.2.9", constraintSatisfied},
+		{ts, "~0.2.3", "0.3.0", constraintOutdated},
+		// npm reads a partial version as a range over the missing components.
+		{ts, "1.2", "1.2.5", constraintSatisfied},
+		{ts, "=1.2", "1.3.0", constraintOutdated},
+		{ts, ">1.2", "1.2.5", constraintOutdated},
+		{ts, ">1.2", "1.3.0", constraintSatisfied},
+		{ts, "<=1.2", "1.2.5", constraintSatisfied},
+		{ts, "<1.2", "1.2.0", constraintOutdated},
+		{ts, ">=1.2", "1.2.0", constraintSatisfied},
+		// An operator the ecosystem does not have is not evaluated.
+		{py, "^1.0", "1.0", constraintUnevaluated},
+		{py, "~1.0", "1.0", constraintUnevaluated},
+		{py, "=1.0", "1.0", constraintUnevaluated},
+		{py, "1.0", "1.0", constraintUnevaluated},
+		{ts, "~=1.0", "1.0.0", constraintUnevaluated},
+		{ts, "==1.0.0", "1.0.0", constraintUnevaluated},
 	}
 	for _, c := range cases {
-		if got := evaluateConstraint(c.constraint, c.version); got != c.want {
-			t.Errorf("evaluateConstraint(%q, %q) = %d, want %d", c.constraint, c.version, got, c.want)
+		if got := evaluateConstraint(c.lang, c.constraint, c.version); got != c.want {
+			t.Errorf("evaluateConstraint(%s, %q, %q) = %d, want %d", c.lang, c.constraint, c.version, got, c.want)
 		}
 	}
 }

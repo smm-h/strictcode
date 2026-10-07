@@ -56,7 +56,7 @@ func checkDepsStale(ctx *Context) []findings.Finding {
 				if tmf == nil || tmf.Version == "" {
 					continue
 				}
-				if evaluateConstraint(dep.Constraint, tmf.Version) != constraintOutdated {
+				if evaluateConstraint(lang, dep.Constraint, tmf.Version) != constraintOutdated {
 					continue
 				}
 				if ctx.suppressedPair("deps-stale", m.Name, target.Name) {
@@ -83,13 +83,23 @@ func (ctx *Context) declarationSite(lang vocab.Lang, src, dst, manifest string) 
 	return relation.Row{File: manifest}
 }
 
-// evaluateConstraint judges version against one simple constraint: an
-// operator (>=, >, <=, <, ==, =, ~=, ^, or ~) or none (an exact version)
-// followed by a dotted numeric version. Caret keeps the major version (the
-// minor for a 0.x constraint); tilde and ~= keep the major and minor.
+// evaluateConstraint judges version against one simple constraint of the
+// language's ecosystem: an operator followed by a dotted numeric version.
+//
+//   - Python (PEP 440) has >=, >, <=, <, ==, and ~=, and compares releases
+//     padded with zeros (==1.2 matches 1.2.0). ~=X.Y keeps every component
+//     but the last (~=1.4 is >=1.4, ==1.*) and needs at least two.
+//   - npm has >=, >, <=, <, =, none (an exact version), ^, and ~, and reads a
+//     partial version as a range over its missing components (1.2 is 1.2.x,
+//     >1.2 is >=1.3.0), so the version is compared on as many components as
+//     the constraint gives. Caret keeps the left-most non-zero component (all
+//     given components when they are zero: ^0.0.3 is exactly 0.0.3); tilde
+//     keeps the major and minor when a minor is given, the major otherwise.
+//
 // Several conditions (a comma, "||", or a space between parts), "!=",
-// wildcards, and non-numeric versions are not evaluated.
-func evaluateConstraint(constraint, version string) constraintVerdict {
+// wildcards, non-numeric versions, and an operator the ecosystem does not
+// have are not evaluated.
+func evaluateConstraint(lang vocab.Lang, constraint, version string) constraintVerdict {
 	current, ok := parseVersionTuple(version)
 	if !ok {
 		return constraintUnevaluated
@@ -98,16 +108,13 @@ func evaluateConstraint(constraint, version string) constraintVerdict {
 	if c == "" || strings.Contains(c, ",") || strings.Contains(c, "||") || strings.HasPrefix(c, "!=") {
 		return constraintUnevaluated
 	}
-	op := "=="
+	op := ""
 	for _, candidate := range []string{">=", "<=", "==", "~=", ">", "<", "^", "~", "="} {
 		if strings.HasPrefix(c, candidate) {
 			op = candidate
 			c = strings.TrimSpace(c[len(candidate):])
 			break
 		}
-	}
-	if op == "=" {
-		op = "=="
 	}
 	want, ok := parseVersionTuple(c)
 	if !ok {
@@ -119,38 +126,87 @@ func evaluateConstraint(constraint, version string) constraintVerdict {
 		}
 		return constraintOutdated
 	}
-	cmp := compareTuples(current, want)
-	switch op {
-	case ">=":
-		return verdict(cmp >= 0)
-	case ">":
-		return verdict(cmp > 0)
-	case "<=":
-		return verdict(cmp <= 0)
-	case "<":
-		return verdict(cmp < 0)
-	case "==":
-		return verdict(cmp == 0)
-	case "^":
-		if cmp < 0 {
-			return constraintOutdated
-		}
-		if want[0] > 0 {
-			return verdict(current[0] == want[0])
-		}
-		if len(want) >= 2 && len(current) >= 2 {
-			return verdict(current[0] == 0 && current[1] == want[1])
+	switch lang {
+	case vocab.LangPy:
+		cmp := compareTuples(current, want)
+		switch op {
+		case ">=":
+			return verdict(cmp >= 0)
+		case ">":
+			return verdict(cmp > 0)
+		case "<=":
+			return verdict(cmp <= 0)
+		case "<":
+			return verdict(cmp < 0)
+		case "==":
+			return verdict(cmp == 0)
+		case "~=":
+			if len(want) < 2 {
+				return constraintUnevaluated
+			}
+			return verdict(cmp >= 0 && samePrefix(current, want, len(want)-1))
 		}
 		return constraintUnevaluated
-	default: // "~" and "~="
-		if cmp < 0 {
-			return constraintOutdated
-		}
-		if len(want) >= 2 && len(current) >= 2 {
-			return verdict(current[0] == want[0] && current[1] == want[1])
+	case vocab.LangTS:
+		// The version compared on the components the constraint gives.
+		cmp := compareTuples(truncate(current, len(want)), want)
+		switch op {
+		case ">=":
+			return verdict(cmp >= 0)
+		case ">":
+			return verdict(cmp > 0)
+		case "<=":
+			return verdict(cmp <= 0)
+		case "<":
+			return verdict(cmp < 0)
+		case "=", "":
+			return verdict(cmp == 0)
+		case "^":
+			keep := len(want)
+			for i, n := range want {
+				if n != 0 {
+					keep = i + 1
+					break
+				}
+			}
+			return verdict(compareTuples(current, want) >= 0 && samePrefix(current, want, keep))
+		case "~":
+			keep := 1
+			if len(want) >= 2 {
+				keep = 2
+			}
+			return verdict(compareTuples(current, want) >= 0 && samePrefix(current, want, keep))
 		}
 		return constraintUnevaluated
 	}
+	return constraintUnevaluated
+}
+
+// samePrefix reports whether a and b agree on their first n components, a
+// missing component counting as zero.
+func samePrefix(a, b []int, n int) bool {
+	for i := 0; i < n; i++ {
+		if component(a, i) != component(b, i) {
+			return false
+		}
+	}
+	return true
+}
+
+// truncate is the first n components of v, padded with zeros.
+func truncate(v []int, n int) []int {
+	out := make([]int, n)
+	for i := range out {
+		out[i] = component(v, i)
+	}
+	return out
+}
+
+func component(v []int, i int) int {
+	if i < len(v) {
+		return v[i]
+	}
+	return 0
 }
 
 // parseVersionTuple parses a dotted numeric version ("1.2.3"); any other
@@ -173,22 +229,21 @@ func parseVersionTuple(s string) ([]int, bool) {
 	return out, true
 }
 
-// compareTuples compares version tuples element by element, a shorter tuple
-// that is a prefix of a longer one ranking below it.
+// compareTuples compares version tuples component by component, the shorter
+// padded with zeros (1.2 equals 1.2.0).
 func compareTuples(a, b []int) int {
-	for i := 0; i < len(a) && i < len(b); i++ {
-		if a[i] != b[i] {
-			if a[i] < b[i] {
+	n := len(a)
+	if len(b) > n {
+		n = len(b)
+	}
+	for i := 0; i < n; i++ {
+		x, y := component(a, i), component(b, i)
+		if x != y {
+			if x < y {
 				return -1
 			}
 			return 1
 		}
-	}
-	switch {
-	case len(a) < len(b):
-		return -1
-	case len(a) > len(b):
-		return 1
 	}
 	return 0
 }
