@@ -13,8 +13,8 @@ regression tests.
 ## Origin and boundary with rlsbl
 
 rlsbl, the ecosystem's release orchestrator, is moving to a permanent invariant: **rlsbl never
-parses source code.** It works only from declared metadata: manifests, `workspace.toml`, its own
-configuration, git tags, and registry APIs. Everything that requires interpreting the contents of
+parses source code.** It works only from declared metadata: manifests, its release declarations
+(`.strictmetadata/releasables/releasables.toml`), git tags, and registry APIs. Everything that requires interpreting the contents of
 a source file moves to strictcode.
 
 rlsbl's implementation is the behavioral donor, not a mandate. strictcode adopts its check
@@ -44,9 +44,12 @@ consistency), checks that delegate to subprocesses, changelog and release machin
 strictcode reads a workspace's committed files and reconstructs everything it needs from disk;
 nothing is passed to it at runtime.
 
-- **`workspace.toml`**: member names, paths, `library` flags, `import_name` overrides, per-project
-  lint allow lists (`lint_allow`), and the dev-only and releasable markers. Both spellings of the
-  dev marker that exist in real workspaces, `dev_only` and `dev_node`, are read.
+- **rlsbl's release declarations** (`.strictmetadata/releasables/releasables.toml`): the
+  repository layout, and each `[[members]]` table's name, path, `library` flag, `import_name`
+  override, lint allow list (`lint_allow`), `dev_only` marker, and `releasable` (a releasable name,
+  or `false`). The document is rlsbl's, which validates every other key; strictcode refuses a
+  document missing what it reads, and a path that is not canonical. rlsbl's old layout,
+  `.rlsbl-monorepo/workspace.toml`, is refused, naming `rlsbl migrate records`, which converts it.
 - **Manifests**: `pyproject.toml`, `package.json`, and `go.mod` (including nested `go.mod` files
   inside a member, whose requirements count toward the member's declared dependencies, and whose
   module paths resolve the packages under them).
@@ -55,7 +58,7 @@ nothing is passed to it at runtime.
   `dependencies`, `devDependencies`, and `peerDependencies` map to their names, and
   `optionalDependencies` is `peer`. go.mod requirements are `runtime`, since Go has no dev scope.
   The `explicit` scope is reserved for workspace-declared edges.
-- **Single projects.** Without a `workspace.toml`, the project is one member named `_`. It has no
+- **Single projects.** Without a declarations file, the project is one member named `_`. It has no
   `library = true` marker, so the library-boundary rules never run on it.
 
 Findings on manifest-declared facts point at the first occurrence of the dependency or entry-point
@@ -97,7 +100,7 @@ for every rule:
      `sys.stdlib_module_names`);
   2. match the normalized top-level name against member names, using PyPI normalization
      (lowercase, with `-`, `_`, and `.` unified);
-  3. apply a member's explicit `import_name` override from `workspace.toml`;
+  3. apply a member's explicit `import_name` override from the declarations;
   4. match the longest prefix in the namespace map, which is discovered by locating each member's
      package root (for example `src/orxt`) and mapping `namespace.member` to the member when a
      matching subdirectory exists;

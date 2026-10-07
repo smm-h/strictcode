@@ -1,17 +1,20 @@
 // Package workspace loads the analysis inputs strictcode reconstructs from
-// disk (stricttools/docs/check-semantics.md, workspace and manifest inputs): the rlsbl workspace file
-// (.rlsbl-monorepo/workspace.toml) when present, the per-member manifests
-// (pyproject.toml, package.json, go.mod), declared dependency scopes, and
-// manifest-declared entry points. Nothing is passed at runtime by any
-// caller; everything is read, not owned.
+// disk (stricttools/docs/check-semantics.md, workspace and manifest inputs): the
+// release declarations rlsbl keeps at
+// .strictmetadata/releasables/releasables.toml when present, the per-member
+// manifests (pyproject.toml, package.json, go.mod), declared dependency
+// scopes, and manifest-declared entry points. Nothing is passed at runtime by
+// any caller; everything is read, not owned.
 //
-// Without a workspace file, the root is a single-project scan: one
-// synthesized member named "_" at path ".".
+// Without a declarations file, the root is a single-project scan: one
+// synthesized member named "_" at path ".". The old rlsbl layout
+// (.rlsbl-monorepo/workspace.toml) is refused, naming the migration.
 package workspace
 
 import (
 	"fmt"
 	"os"
+	pathpkg "path"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -105,9 +108,12 @@ func (m *Member) RegistryName(lang vocab.Lang) string {
 type Workspace struct {
 	// Root is the absolute workspace root.
 	Root string
-	// Single is true for single-project scans (no workspace.toml).
+	// Single is true for single-project scans (no declarations file).
 	Single bool
-	// Members in workspace declaration order (single synthesized member for
+	// Layout is the declared repository layout ("standalone" or
+	// "workspace"); empty for single-project scans.
+	Layout string
+	// Members in declaration order (single synthesized member for
 	// single-project scans).
 	Members []*Member
 }
@@ -122,11 +128,53 @@ func (w *Workspace) MemberByName(name string) *Member {
 	return nil
 }
 
-// workspaceFile is the rlsbl workspace file location.
-const workspaceFile = ".rlsbl-monorepo/workspace.toml"
+// MemberAt returns the member declared at the canonical root-relative path,
+// or nil.
+func (w *Workspace) MemberAt(path string) *Member {
+	for _, m := range w.Members {
+		if m.Path == path {
+			return m
+		}
+	}
+	return nil
+}
 
-// Load reads the workspace at root. A missing workspace file means
-// single-project mode; a malformed one is a hard error.
+// Owner returns the member whose territory holds the canonical
+// root-relative path: the member with the longest path containing it. Nil
+// when no member's path contains it.
+func (w *Workspace) Owner(path string) *Member {
+	var best *Member
+	for _, m := range w.Members {
+		if !IsInside(path, m.Path) {
+			continue
+		}
+		if best == nil || len(m.Path) > len(best.Path) || best.Path == "." {
+			best = m
+		}
+	}
+	return best
+}
+
+// IsInside reports whether the canonical root-relative path p is dir or lies
+// under it; every path lies under ".".
+func IsInside(p, dir string) bool {
+	if dir == "." {
+		return true
+	}
+	return p == dir || strings.HasPrefix(p, dir+"/")
+}
+
+// DeclarationsFile is where rlsbl keeps a repository's release declarations,
+// relative to the repository root. strictcode reads its members from here.
+const DeclarationsFile = ".strictmetadata/releasables/releasables.toml"
+
+// oldWorkspaceFile is the workspace file of rlsbl's old layout, which the
+// record migration replaces with DeclarationsFile.
+const oldWorkspaceFile = ".rlsbl-monorepo/workspace.toml"
+
+// Load reads the workspace at root. A missing declarations file means
+// single-project mode; a malformed one, and the old layout's workspace file,
+// are hard errors.
 func Load(root string) (*Workspace, error) {
 	absRoot, err := filepath.Abs(root)
 	if err != nil {
@@ -134,8 +182,15 @@ func Load(root string) (*Workspace, error) {
 	}
 	ws := &Workspace{Root: absRoot}
 
-	wsPath := filepath.Join(absRoot, workspaceFile)
-	raw, err := os.ReadFile(wsPath)
+	if _, err := os.Stat(filepath.Join(absRoot, filepath.FromSlash(oldWorkspaceFile))); err == nil {
+		return nil, fmt.Errorf("workspace: %s is rlsbl's old layout, which strictcode no longer reads; "+
+			"strictcode reads members from %s: run `rlsbl migrate records` to convert the repository",
+			oldWorkspaceFile, DeclarationsFile)
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("workspace: %w", err)
+	}
+
+	raw, err := os.ReadFile(filepath.Join(absRoot, filepath.FromSlash(DeclarationsFile)))
 	if os.IsNotExist(err) {
 		ws.Single = true
 		member := &Member{Name: "_", Path: ".", Manifests: map[vocab.Lang]*Manifest{}}
@@ -151,45 +206,61 @@ func Load(root string) (*Workspace, error) {
 
 	doc, err := strictspec.LoadValue(raw, "toml")
 	if err != nil {
-		return nil, fmt.Errorf("workspace: %s: %w", workspaceFile, err)
+		return nil, fmt.Errorf("workspace: %s: %w", DeclarationsFile, err)
 	}
-	projects, ok := doc.Field("projects")
-	if !ok {
-		return nil, fmt.Errorf("workspace: %s has no [[projects]]", workspaceFile)
+	if v, ok := doc.Field("format_version"); !ok {
+		return nil, fmt.Errorf("workspace: %s has no format_version", DeclarationsFile)
+	} else if n, isInt := v.Int(); !isInt || n != 1 {
+		return nil, fmt.Errorf("workspace: %s: format_version must be 1", DeclarationsFile)
 	}
-	seen := map[string]bool{}
-	for i, p := range projects.Items() {
-		m, err := parseProject(p, i)
+	layout, _ := stringField(doc, "repository_layout")
+	if layout != "standalone" && layout != "workspace" {
+		return nil, fmt.Errorf("workspace: %s: repository_layout must be \"standalone\" or \"workspace\"", DeclarationsFile)
+	}
+	ws.Layout = layout
+	members, ok := doc.Field("members")
+	if !ok || len(members.Items()) == 0 {
+		return nil, fmt.Errorf("workspace: %s declares no [[members]]", DeclarationsFile)
+	}
+	names := map[string]bool{}
+	paths := map[string]bool{}
+	for i, item := range members.Items() {
+		m, err := parseMember(item, i)
 		if err != nil {
 			return nil, err
 		}
-		if seen[m.Name] {
-			return nil, fmt.Errorf("workspace: duplicate member name %q", m.Name)
+		if names[m.Name] {
+			return nil, fmt.Errorf("workspace: %s: member name %q is declared twice", DeclarationsFile, m.Name)
 		}
-		seen[m.Name] = true
+		if paths[m.Path] {
+			return nil, fmt.Errorf("workspace: %s: member path %q is declared twice", DeclarationsFile, m.Path)
+		}
+		names[m.Name], paths[m.Path] = true, true
 		if err := loadManifests(ws, m); err != nil {
 			return nil, err
 		}
 		ws.Members = append(ws.Members, m)
 	}
-	if len(ws.Members) == 0 {
-		return nil, fmt.Errorf("workspace: %s declares no projects", workspaceFile)
+	if layout == "standalone" && (len(ws.Members) != 1 || ws.Members[0].Path != ".") {
+		return nil, fmt.Errorf("workspace: %s: a standalone layout declares one member, at path \".\"", DeclarationsFile)
 	}
 	return ws, nil
 }
 
-func parseProject(p strictspec.Value, idx int) (*Member, error) {
+// parseMember reads the fields of one [[members]] table strictcode uses.
+// The document is rlsbl's, which validates every other key.
+func parseMember(p strictspec.Value, idx int) (*Member, error) {
 	name, ok := stringField(p, "name")
 	if !ok || name == "" {
-		return nil, fmt.Errorf("workspace: projects[%d] has no name", idx)
+		return nil, fmt.Errorf("workspace: %s: members[%d] has no name", DeclarationsFile, idx)
 	}
 	path, ok := stringField(p, "path")
 	if !ok || path == "" {
-		return nil, fmt.Errorf("workspace: project %q has no path", name)
+		return nil, fmt.Errorf("workspace: %s: member %q has no path", DeclarationsFile, name)
 	}
-	path = strings.TrimSuffix(path, "/")
-	if path == "" {
-		path = "."
+	if clean := cleanRelative(path); clean != path {
+		return nil, fmt.Errorf("workspace: %s: member %q has the path %q, which is not canonical (relative, '/'-separated, no '.', '..', or empty segment, the root written \".\")",
+			DeclarationsFile, name, path)
 	}
 	m := &Member{
 		Name:      name,
@@ -197,13 +268,15 @@ func parseProject(p strictspec.Value, idx int) (*Member, error) {
 		Manifests: map[vocab.Lang]*Manifest{},
 	}
 	m.Library = boolField(p, "library")
-	// Both spellings exist in current rlsbl workspaces (dev_only, and the
-	// older dev_node); the donor reads either as the dev marker.
-	m.DevOnly = boolField(p, "dev_only") || boolField(p, "dev_node")
-	if rel, ok := p.Field("releasable"); ok {
-		if s, isStr := rel.AsString(); isStr && s != "" {
-			m.Releasable = true
-		}
+	m.DevOnly = boolField(p, "dev_only")
+	rel, ok := p.Field("releasable")
+	if !ok {
+		return nil, fmt.Errorf("workspace: %s: member %q has no releasable (a releasable name, or false)", DeclarationsFile, name)
+	}
+	if s, isStr := rel.AsString(); isStr && s != "" {
+		m.Releasable = true
+	} else if b, isBool := rel.Bool(); !isBool || b {
+		return nil, fmt.Errorf("workspace: %s: member %q: releasable must be a releasable name or false", DeclarationsFile, name)
 	}
 	m.ImportName, _ = stringField(p, "import_name")
 	m.RegistryNameOverride, _ = stringField(p, "registry_name")
@@ -215,6 +288,20 @@ func parseProject(p strictspec.Value, idx int) (*Member, error) {
 		}
 	}
 	return m, nil
+}
+
+// cleanRelative is the canonical spelling of a relative slash path: "." for
+// the root, otherwise path.Clean's form. A path that is absolute or climbs
+// out returns "" so it never equals its input.
+func cleanRelative(p string) string {
+	if p == "" || strings.HasPrefix(p, "/") || strings.Contains(p, "\\") || strings.TrimSpace(p) != p {
+		return ""
+	}
+	c := pathpkg.Clean(p)
+	if c == ".." || strings.HasPrefix(c, "../") {
+		return ""
+	}
+	return c
 }
 
 // loadManifests detects and parses the member's per-language manifests.

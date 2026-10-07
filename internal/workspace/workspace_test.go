@@ -1,6 +1,9 @@
 package workspace
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/smm-h/strictcode/internal/fixture"
@@ -33,28 +36,37 @@ func TestSingleProjectMode(t *testing.T) {
 
 func TestWorkspaceMembers(t *testing.T) {
 	root := fixture.Write(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": `
+		DeclarationsFile: `format_version = 1
+repository_layout = "workspace"
+release_branches = ["main"]
+
 [[releasables]]
 name = "core-rel"
 
-[[projects]]
-path = "core/"
+[[members]]
+path = "."
+name = "root"
+releasable = false
+dev_only = true
+
+[[members]]
+path = "core"
 name = "core"
 library = true
 releasable = "core-rel"
 import_name = "core_lib"
 lint_allow = ["click"]
 
-[[projects]]
+[[members]]
 path = "tools"
 name = "tools"
 dev_only = true
 releasable = false
 
-[[projects]]
+[[members]]
 path = "legacy"
 name = "legacy"
-dev_node = true
+releasable = false
 `,
 		"core/pyproject.toml": `[project]
 name = "orxtra-core"
@@ -88,8 +100,11 @@ dev = ["pytest>=8"]
 	if ws.Single {
 		t.Fatal("not single mode")
 	}
-	if len(ws.Members) != 3 {
+	if len(ws.Members) != 4 {
 		t.Fatalf("members: %d", len(ws.Members))
+	}
+	if ws.Layout != "workspace" {
+		t.Fatalf("layout %q", ws.Layout)
 	}
 
 	core := ws.MemberByName("core")
@@ -97,7 +112,7 @@ dev = ["pytest>=8"]
 		t.Fatalf("core flags wrong: %+v", core)
 	}
 	if core.Path != "core" {
-		t.Fatalf("core path %q (trailing slash must be trimmed)", core.Path)
+		t.Fatalf("core path %q", core.Path)
 	}
 	if core.ImportName != "core_lib" || len(core.LintAllow) != 1 || core.LintAllow[0] != "click" {
 		t.Fatalf("core overrides wrong: %+v", core)
@@ -153,8 +168,8 @@ dev = ["pytest>=8"]
 	}
 
 	legacy := ws.MemberByName("legacy")
-	if legacy == nil || !legacy.DevOnly {
-		t.Fatal("legacy dev_node not read as dev marker")
+	if legacy == nil || legacy.DevOnly || legacy.Releasable {
+		t.Fatalf("legacy flags wrong: %+v", legacy)
 	}
 	gomod := legacy.Manifests[vocab.LangGo]
 	if gomod == nil || gomod.GoModulePath != "example.com/legacy" {
@@ -165,31 +180,107 @@ dev = ["pytest>=8"]
 	}
 }
 
-func TestMalformedWorkspaceIsHardError(t *testing.T) {
-	cases := map[string]map[string]string{
-		"bad-toml": {
-			".rlsbl-monorepo/workspace.toml": "[[projects]\nname=",
-		},
-		"project-without-name": {
-			".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"x\"\n",
-		},
-		"project-without-path": {
-			".rlsbl-monorepo/workspace.toml": "[[projects]]\nname = \"x\"\n",
-		},
-		"duplicate-names": {
-			".rlsbl-monorepo/workspace.toml": "[[projects]]\nname = \"x\"\npath = \"a\"\n\n[[projects]]\nname = \"x\"\npath = \"b\"\n",
-		},
-		"no-projects": {
-			".rlsbl-monorepo/workspace.toml": "# empty\n",
-		},
+// decl renders a releasables.toml with the given layout and member tables.
+func decl(layout string, members ...string) string {
+	out := "format_version = 1\nrepository_layout = \"" + layout + "\"\nrelease_branches = [\"main\"]\n"
+	for _, m := range members {
+		out += "\n[[members]]\n" + m
 	}
-	for name, files := range cases {
+	return out
+}
+
+func TestMalformedWorkspaceIsHardError(t *testing.T) {
+	cases := map[string]string{
+		"bad-toml":                  "[[members]\nname=",
+		"no-format-version":         "repository_layout = \"workspace\"\n\n[[members]]\npath = \".\"\nname = \"root\"\nreleasable = false\n",
+		"no-layout":                 "format_version = 1\n\n[[members]]\npath = \".\"\nname = \"root\"\nreleasable = false\n",
+		"unknown-layout":            decl("monorepo", "path = \".\"\nname = \"root\"\nreleasable = false\n"),
+		"member-without-name":       decl("workspace", "path = \"x\"\nreleasable = false\n"),
+		"member-without-path":       decl("workspace", "name = \"x\"\nreleasable = false\n"),
+		"member-without-releasable": decl("workspace", "path = \"x\"\nname = \"x\"\n"),
+		"releasable-true":           decl("workspace", "path = \"x\"\nname = \"x\"\nreleasable = true\n"),
+		"non-canonical-path":        decl("workspace", "path = \"core/\"\nname = \"core\"\nreleasable = false\n"),
+		"climbing-path":             decl("workspace", "path = \"../x\"\nname = \"x\"\nreleasable = false\n"),
+		"duplicate-names":           decl("workspace", "name = \"x\"\npath = \"a\"\nreleasable = false\n", "name = \"x\"\npath = \"b\"\nreleasable = false\n"),
+		"duplicate-paths":           decl("workspace", "name = \"x\"\npath = \"a\"\nreleasable = false\n", "name = \"y\"\npath = \"a\"\nreleasable = false\n"),
+		"no-members":                decl("workspace"),
+		"standalone-two-members":    decl("standalone", "name = \"root\"\npath = \".\"\nreleasable = \"r\"\n", "name = \"x\"\npath = \"x\"\nreleasable = false\n"),
+		"standalone-not-at-root":    decl("standalone", "name = \"x\"\npath = \"x\"\nreleasable = \"r\"\n"),
+	}
+	for name, content := range cases {
 		t.Run(name, func(t *testing.T) {
-			root := fixture.Write(t, files)
+			root := fixture.Write(t, map[string]string{DeclarationsFile: content})
 			if _, err := Load(root); err == nil {
-				t.Fatal("malformed workspace accepted")
+				t.Fatal("malformed declarations accepted")
 			}
 		})
+	}
+}
+
+func TestStandaloneLayoutReadsTheRootMember(t *testing.T) {
+	root := fixture.Write(t, map[string]string{
+		DeclarationsFile: decl("standalone", "path = \".\"\nname = \"root\"\nreleasable = \"solo\"\n"),
+		"pyproject.toml": "[project]\nname = \"solo\"\n",
+	})
+	ws, err := Load(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ws.Single || ws.Layout != "standalone" {
+		t.Fatalf("standalone declarations read as %+v", ws)
+	}
+	if len(ws.Members) != 1 || ws.Members[0].Name != "root" || !ws.Members[0].Releasable {
+		t.Fatalf("members: %+v", ws.Members)
+	}
+}
+
+// The old layout's workspace file is refused, naming the migration; once the
+// migration has replaced it with the declarations file, the workspace loads.
+func TestOldLayoutIsRefusedUntilMigrated(t *testing.T) {
+	root := fixture.Write(t, map[string]string{
+		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"a\"\nname = \"a\"\n",
+		"a/pyproject.toml":               "[project]\nname = \"a\"\n",
+	})
+	_, err := Load(root)
+	if err == nil {
+		t.Fatal("old layout accepted")
+	}
+	for _, want := range []string{".rlsbl-monorepo/workspace.toml", DeclarationsFile, "rlsbl migrate records"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("refusal does not name %q: %v", want, err)
+		}
+	}
+
+	// What the migration does: the old file goes, the declarations arrive.
+	if err := os.RemoveAll(filepath.Join(root, ".rlsbl-monorepo")); err != nil {
+		t.Fatal(err)
+	}
+	declPath := filepath.Join(root, filepath.FromSlash(DeclarationsFile))
+	if err := os.MkdirAll(filepath.Dir(declPath), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	content := decl("workspace",
+		"path = \".\"\nname = \"root\"\nreleasable = false\ndev_only = true\n",
+		"path = \"a\"\nname = \"a\"\nreleasable = \"a\"\n")
+	if err := os.WriteFile(declPath, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	ws, err := Load(root)
+	if err != nil {
+		t.Fatalf("migrated repository refused: %v", err)
+	}
+	if ws.MemberByName("a") == nil {
+		t.Fatalf("member a missing: %+v", ws.Members)
+	}
+}
+
+func TestOwnerIsTheLongestContainingMember(t *testing.T) {
+	ws := &Workspace{Members: []*Member{{Name: "root", Path: "."}, {Name: "a", Path: "a"}, {Name: "ab", Path: "a/b"}}}
+	cases := map[string]string{".": "root", "x": "root", "a": "a", "a/c": "a", "a/b": "ab", "a/b/c": "ab", "ab": "root"}
+	for path, want := range cases {
+		if got := ws.Owner(path); got == nil || got.Name != want {
+			t.Errorf("Owner(%q) = %+v, want %s", path, got, want)
+		}
 	}
 }
 

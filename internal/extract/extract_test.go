@@ -61,16 +61,17 @@ func boolAttr(t *testing.T, r relation.Row, name string) bool {
 
 func pyWorkspace() map[string]string {
 	return map[string]string{
-		".rlsbl-monorepo/workspace.toml": `
-[[projects]]
+		fixture.DeclarationsPath: fixture.DeclarationsHeader + `
+[[members]]
 path = "core"
 name = "core"
 library = true
 releasable = "core"
 
-[[projects]]
+[[members]]
 path = "transport"
 name = "transport"
+releasable = false
 `,
 		"core/pyproject.toml": `[project]
 name = "orxtra-core"
@@ -186,7 +187,7 @@ func TestPyGuardedAndTypeChecking(t *testing.T) {
 
 func TestPyGuardedClassification(t *testing.T) {
 	res := run(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"a\"\nname = \"a\"\n\n[[projects]]\npath = \"b\"\nname = \"b\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"a\"\nname = \"a\"\n", "path = \"b\"\nname = \"b\"\n"),
 		"a/pyproject.toml":               "[project]\nname = \"a\"\ndependencies = [\"b\"]\n",
 		"a/a_pkg/__init__.py":            "",
 		"a/a_pkg/guarded.py": `try:
@@ -294,7 +295,7 @@ func TestPyDeclaredDeps(t *testing.T) {
 func TestPySiblingPruning(t *testing.T) {
 	// Lesson 13: member with path = "." must not ingest nested sibling.
 	res := run(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \".\"\nname = \"root\"\n\n[[projects]]\npath = \"sub\"\nname = \"sub\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"sub\"\nname = \"sub\"\n"),
 		"pyproject.toml":                 "[project]\nname = \"root\"\n",
 		"rootpkg/__init__.py":            "",
 		"sub/pyproject.toml":             "[project]\nname = \"sub\"\n",
@@ -313,15 +314,17 @@ func TestPySiblingPruning(t *testing.T) {
 
 func goWorkspace() map[string]string {
 	return map[string]string{
-		".rlsbl-monorepo/workspace.toml": `
-[[projects]]
+		fixture.DeclarationsPath: fixture.DeclarationsHeader + `
+[[members]]
 path = "lib"
 name = "lib"
 library = true
+releasable = false
 
-[[projects]]
+[[members]]
 path = "app"
 name = "app"
+releasable = false
 `,
 		"lib/go.mod":                    "module example.com/lib\n\ngo 1.22\n",
 		"lib/lib.go":                    "package lib\n\nimport \"example.com/lib/internal/parser\"\n\nvar _ = parser.X\n",
@@ -404,15 +407,17 @@ func TestGoDeclaredDeps(t *testing.T) {
 
 func tsWorkspace() map[string]string {
 	return map[string]string{
-		".rlsbl-monorepo/workspace.toml": `
-[[projects]]
+		fixture.DeclarationsPath: fixture.DeclarationsHeader + `
+[[members]]
 path = "ui"
 name = "ui"
+releasable = false
 
-[[projects]]
+[[members]]
 path = "sdk"
 name = "sdk"
 library = true
+releasable = false
 `,
 		"ui/package.json": `{
   "name": "@x/ui",
@@ -567,7 +572,7 @@ func TestPyMemberRootIsThePackage(t *testing.T) {
 	// must get proper dotted logical names anchored at the directory name,
 	// and intra-package imports must resolve.
 	res := run(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"selfblog\"\nname = \"selfblog\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"selfblog\"\nname = \"selfblog\"\n"),
 		"selfblog/pyproject.toml":        "[project]\nname = \"selfblog\"\n",
 		"selfblog/__init__.py":           "from . import cli\n",
 		"selfblog/cli.py":                "import selfblog.posts\n",

@@ -59,7 +59,7 @@ func messagesContain(fs []findings.Finding, sub string) bool {
 // (imported), with a's pyproject declaring deps and a's source provided.
 func twoMemberPy(aDeps string, aSources map[string]string) map[string]string {
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"a\"\nname = \"a\"\n\n[[projects]]\npath = \"b\"\nname = \"b\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"a\"\nname = \"a\"\n", "path = \"b\"\nname = \"b\"\n"),
 		"a/pyproject.toml":               "[project]\nname = \"a\"\ndependencies = [" + aDeps + "]\n",
 		"a/a_pkg/__init__.py":            "",
 		"b/pyproject.toml":               "[project]\nname = \"b\"\n",
@@ -196,7 +196,7 @@ func TestLesson9GoTestPackagesNeverDead(t *testing.T) {
 
 func TestLesson10RegistryNameMismatchNoFalseUndeclared(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml":         "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"transport\"\nname = \"transport\"\n",
+		fixture.DeclarationsPath:         fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"transport\"\nname = \"transport\"\n"),
 		"app/pyproject.toml":                     "[project]\nname = \"app\"\ndependencies = [\"orxtra-transport\"]\n",
 		"app/app/__init__.py":                    "import orxtra_transport\n",
 		"transport/pyproject.toml":               "[project]\nname = \"orxtra-transport\"\n",
@@ -212,7 +212,7 @@ func TestLesson10RegistryNameMismatchNoFalseUndeclared(t *testing.T) {
 
 func TestLesson11NamespaceImportResolves(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml":           "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"transport\"\nname = \"transport\"\n",
+		fixture.DeclarationsPath:           fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"transport\"\nname = \"transport\"\n"),
 		"app/pyproject.toml":                       "[project]\nname = \"app\"\ndependencies = [\"transport\"]\n",
 		"app/app/__init__.py":                      "from orxt.transport import client\n",
 		"transport/pyproject.toml":                 "[project]\nname = \"transport\"\n",
@@ -226,7 +226,7 @@ func TestLesson11NamespaceImportResolves(t *testing.T) {
 
 func TestLesson12ImportNameOverrideHonored(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"app\"\nname = \"app\"\n\n[[projects]]\npath = \"weird\"\nname = \"weird\"\nimport_name = \"totally_custom\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"app\"\nname = \"app\"\n", "path = \"weird\"\nname = \"weird\"\nimport_name = \"totally_custom\"\n"),
 		"app/pyproject.toml":             "[project]\nname = \"app\"\ndependencies = [\"weird\"]\n",
 		"app/app/__init__.py":            "import totally_custom\n",
 		"weird/pyproject.toml":           "[project]\nname = \"weird\"\n",
@@ -241,7 +241,7 @@ func TestLesson12ImportNameOverrideHonored(t *testing.T) {
 
 func TestLesson13SiblingSourceNeverTriggersUndeclared(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \".\"\nname = \"root\"\n\n[[projects]]\npath = \"sub\"\nname = \"sub\"\n\n[[projects]]\npath = \"other\"\nname = \"other\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"sub\"\nname = \"sub\"\n", "path = \"other\"\nname = \"other\"\n"),
 		"pyproject.toml":                 "[project]\nname = \"root\"\n",
 		"rootpkg/__init__.py":            "",
 		"sub/pyproject.toml":             "[project]\nname = \"sub\"\ndependencies = [\"other\"]\n",
@@ -415,7 +415,7 @@ func libWorkspace(library bool, extra map[string]string) map[string]string {
 		lib = "library = true\n"
 	}
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\n" + lib,
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\n" + lib),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py":              "import flask\n",
 	}
@@ -450,7 +450,7 @@ func TestLesson26BothAllowListsSubtracted(t *testing.T) {
 	// flask allowed via workspace lint_allow; click allowed via the
 	// per-language config allow list; django stays forbidden.
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\nlint_allow = [\"flask\"]\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\nlint_allow = [\"flask\"]\n"),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py":              "import flask\nimport click\nimport django\n",
 		"strictcode.toml": `
@@ -467,7 +467,7 @@ py = ["click"]
 
 func TestLibraryEntryPoint(t *testing.T) {
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n\n[project.scripts]\nm-cli = \"pkg.main:run\"\n",
 		"m/pkg/__init__.py":              "",
 		"m/pkg/main.py":                  "def run(): pass\n",
@@ -479,7 +479,7 @@ func TestLibraryEntryPoint(t *testing.T) {
 	// npm "export" form entry points are the normal library surface — never
 	// flagged.
 	tsFiles := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
 		"m/package.json":                 "{\n  \"name\": \"m\",\n  \"main\": \"./index.ts\"\n}\n",
 		"m/index.ts":                     "export const x = 1;\n",
 	}
@@ -492,40 +492,45 @@ func TestLibraryEntryPoint(t *testing.T) {
 
 func TestLesson28DeadWorkspacePackages(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": `
+		fixture.DeclarationsPath: fixture.DeclarationsHeader + `
 [[releasables]]
 name = "pub"
 
-[[projects]]
+[[members]]
 path = "used"
 name = "used"
 library = true
+releasable = false
 
-[[projects]]
+[[members]]
 path = "unused"
 name = "unused"
 library = true
+releasable = false
 
-[[projects]]
+[[members]]
 path = "testonly"
 name = "testonly"
 library = true
+releasable = false
 
-[[projects]]
+[[members]]
 path = "published"
 name = "published"
 library = true
 releasable = "pub"
 
-[[projects]]
+[[members]]
 path = "devtool"
 name = "devtool"
 library = true
 dev_only = true
+releasable = false
 
-[[projects]]
+[[members]]
 path = "app"
 name = "app"
+releasable = false
 `,
 		"used/pyproject.toml":             "[project]\nname = \"used\"\n",
 		"used/used/__init__.py":           "import used.sub\n",
@@ -571,7 +576,7 @@ name = "app"
 
 func TestLesson29AssetDirsExcluded(t *testing.T) {
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py":              "",
 		"m/.venv/site/flask_user.py":     "import flask\n",
@@ -744,7 +749,7 @@ func TestGoNestedModuleDeclaredDeps(t *testing.T) {
 	// modules (conformance harnesses). The nested go.mod's requires are the
 	// member's declared deps — no false deps-undeclared.
 	fs := analyze(t, map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"conf\"\nname = \"conf\"\n\n[[projects]]\npath = \"lib\"\nname = \"lib\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"conf\"\nname = \"conf\"\n", "path = \"lib\"\nname = \"lib\"\n"),
 		"conf/harness/go.mod":            "module example.com/conf/harness\n\ngo 1.22\n\nrequire example.com/lib v0.1.0\n",
 		"conf/harness/main.go":           "package main\n\nimport \"example.com/lib\"\n\nfunc main() { _ = lib.V }\n",
 		"lib/go.mod":                     "module example.com/lib\n\ngo 1.22\n",
@@ -762,7 +767,7 @@ func TestGoNestedModuleDeclaredDeps(t *testing.T) {
 
 func TestLibraryStdout(t *testing.T) {
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n\n[[projects]]\npath = \"app\"\nname = \"app\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n", "path = \"app\"\nname = \"app\"\n"),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py":              "",
 		"m/pkg/core.py": `import sys
@@ -794,7 +799,7 @@ def work():
 
 func TestLibraryStdoutAllowList(t *testing.T) {
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py":              "def f():\n    print(\"allowed\")\n",
 		"strictcode.toml": `
@@ -810,7 +815,7 @@ py = ["print"]
 
 func TestLesson27DirectLoggingIsWarning(t *testing.T) {
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"m\"\nname = \"m\"\nlibrary = true\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"m\"\nname = \"m\"\nlibrary = true\n"),
 		"m/pyproject.toml":               "[project]\nname = \"m\"\n",
 		"m/pkg/__init__.py": `import logging
 
@@ -882,7 +887,7 @@ func TestLesson25NestedScopesIndependent(t *testing.T) {
 func TestUnreachableCodeRunsOnAllProjects(t *testing.T) {
 	// The approved departure: not library-gated.
 	files := map[string]string{
-		".rlsbl-monorepo/workspace.toml": "[[projects]]\npath = \"app\"\nname = \"app\"\n",
+		fixture.DeclarationsPath: fixture.Workspace("path = \"app\"\nname = \"app\"\n"),
 		"app/pyproject.toml":             "[project]\nname = \"app\"\n",
 		"app/cli/__init__.py":            "def main():\n    return 0\n    print(\"never\")\n",
 	}

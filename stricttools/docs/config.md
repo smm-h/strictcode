@@ -92,5 +92,6 @@ analysis, when the workspace is known.
 
 ## Workspace inputs
 
-strictcode also reads `workspace.toml` and each member's manifest as committed inputs. They are
+strictcode also reads rlsbl's release declarations
+(`.strictmetadata/releasables/releasables.toml`) and each member's manifest as committed inputs. They are
 described on [check semantics](../check-semantics/).
