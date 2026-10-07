@@ -42,6 +42,8 @@ release_branches = ["main"]
 
 [[releasables]]
 name = "core-rel"
+tag_format = "core-v{version}"
+publish_mode = "ci"
 
 [[members]]
 path = "."
@@ -56,6 +58,13 @@ library = true
 releasable = "core-rel"
 import_name = "core_lib"
 lint_allow = ["click"]
+
+[[members.pipelines]]
+name = "core-pypi"
+type = "pypi"
+target = "pypi"
+local = false
+artifact = "package"
 
 [[members]]
 path = "tools"
@@ -108,7 +117,7 @@ dev = ["pytest>=8"]
 	}
 
 	core := ws.MemberByName("core")
-	if core == nil || !core.Library || !core.Releasable || core.DevOnly {
+	if core == nil || !core.Library || !core.Published || core.DevOnly {
 		t.Fatalf("core flags wrong: %+v", core)
 	}
 	if core.Path != "core" {
@@ -144,7 +153,7 @@ dev = ["pytest>=8"]
 	}
 
 	tools := ws.MemberByName("tools")
-	if tools == nil || !tools.DevOnly || tools.Releasable {
+	if tools == nil || !tools.DevOnly || tools.Published {
 		t.Fatalf("tools flags wrong: %+v", tools)
 	}
 	ts := tools.Manifests[vocab.LangTS]
@@ -168,7 +177,7 @@ dev = ["pytest>=8"]
 	}
 
 	legacy := ws.MemberByName("legacy")
-	if legacy == nil || legacy.DevOnly || legacy.Releasable {
+	if legacy == nil || legacy.DevOnly || legacy.Published {
 		t.Fatalf("legacy flags wrong: %+v", legacy)
 	}
 	gomod := legacy.Manifests[vocab.LangGo]
@@ -181,8 +190,31 @@ dev = ["pytest>=8"]
 }
 
 // decl renders a releasables.toml with the given layout and member tables.
+// Every releasable a member names is declared, publishing nothing.
 func decl(layout string, members ...string) string {
+	return declWith(layout, "", members...)
+}
+
+// declWith renders a releasables.toml with the given layout, [[releasables]]
+// tables, and member tables; an empty releasables argument declares one
+// releasable publishing nothing for each name a member gives.
+func declWith(layout, releasables string, members ...string) string {
 	out := "format_version = 1\nrepository_layout = \"" + layout + "\"\nrelease_branches = [\"main\"]\n"
+	if releasables == "" {
+		seen := map[string]bool{}
+		for _, m := range members {
+			for _, line := range strings.Split(m, "\n") {
+				name, ok := strings.CutPrefix(line, "releasable = \"")
+				if !ok || seen[name] {
+					continue
+				}
+				seen[name] = true
+				name = strings.TrimSuffix(name, "\"")
+				releasables += "\n[[releasables]]\nname = \"" + name + "\"\ntag_format = \"v{version}\"\npublish_mode = \"none\"\n"
+			}
+		}
+	}
+	out += releasables
 	for _, m := range members {
 		out += "\n[[members]]\n" + m
 	}
@@ -206,6 +238,10 @@ func TestMalformedWorkspaceIsHardError(t *testing.T) {
 		"no-members":                decl("workspace"),
 		"standalone-two-members":    decl("standalone", "name = \"root\"\npath = \".\"\nreleasable = \"r\"\n", "name = \"x\"\npath = \"x\"\nreleasable = false\n"),
 		"standalone-not-at-root":    decl("standalone", "name = \"x\"\npath = \"x\"\nreleasable = \"r\"\n"),
+		"undeclared-releasable":     declWith("workspace", "\n", "name = \"x\"\npath = \"x\"\nreleasable = \"r\"\n"),
+		"releasable-without-mode":   declWith("workspace", "\n[[releasables]]\nname = \"r\"\n", "name = \"x\"\npath = \"x\"\nreleasable = \"r\"\n"),
+		"releasable-without-name":   declWith("workspace", "\n[[releasables]]\npublish_mode = \"ci\"\n", "name = \"x\"\npath = \"x\"\nreleasable = false\n"),
+		"duplicate-releasables":     declWith("workspace", "\n[[releasables]]\nname = \"r\"\npublish_mode = \"ci\"\n\n[[releasables]]\nname = \"r\"\npublish_mode = \"none\"\n", "name = \"x\"\npath = \"x\"\nreleasable = \"r\"\n"),
 	}
 	for name, content := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -229,7 +265,7 @@ func TestStandaloneLayoutReadsTheRootMember(t *testing.T) {
 	if ws.Single || ws.Layout != "standalone" {
 		t.Fatalf("standalone declarations read as %+v", ws)
 	}
-	if len(ws.Members) != 1 || ws.Members[0].Name != "root" || !ws.Members[0].Releasable {
+	if len(ws.Members) != 1 || ws.Members[0].Name != "root" || ws.Members[0].Published {
 		t.Fatalf("members: %+v", ws.Members)
 	}
 }

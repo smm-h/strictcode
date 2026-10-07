@@ -520,6 +520,13 @@ func TestLesson28DeadWorkspacePackages(t *testing.T) {
 		fixture.DeclarationsPath: fixture.DeclarationsHeader + `
 [[releasables]]
 name = "pub"
+tag_format = "pub-v{version}"
+publish_mode = "ci"
+
+[[releasables]]
+name = "quiet"
+tag_format = "quiet-v{version}"
+publish_mode = "none"
 
 [[members]]
 path = "used"
@@ -545,6 +552,32 @@ name = "published"
 library = true
 releasable = "pub"
 
+[[members.pipelines]]
+name = "published-pypi"
+type = "pypi"
+target = "pypi"
+local = false
+artifact = "package"
+
+[[members]]
+path = "nopipeline"
+name = "nopipeline"
+library = true
+releasable = "pub"
+
+[[members]]
+path = "unpublished"
+name = "unpublished"
+library = true
+releasable = "quiet"
+
+[[members.pipelines]]
+name = "unpublished-pypi"
+type = "pypi"
+target = "pypi"
+local = false
+artifact = "package"
+
 [[members]]
 path = "devtool"
 name = "devtool"
@@ -557,25 +590,29 @@ path = "app"
 name = "app"
 releasable = false
 `,
-		"used/pyproject.toml":             "[project]\nname = \"used\"\n",
-		"used/used/__init__.py":           "import used.sub\n",
-		"used/used/sub.py":                "",
-		"unused/pyproject.toml":           "[project]\nname = \"unused\"\n",
-		"unused/unused/__init__.py":       "",
-		"testonly/pyproject.toml":         "[project]\nname = \"testonly\"\n",
-		"testonly/testonly/__init__.py":   "",
-		"published/pyproject.toml":        "[project]\nname = \"published\"\n",
-		"published/published/__init__.py": "",
-		"devtool/pyproject.toml":          "[project]\nname = \"devtool\"\n",
-		"devtool/devtool/__init__.py":     "",
-		"app/pyproject.toml":              "[project]\nname = \"app\"\ndependencies = [\"used\", \"testonly\"]\n",
-		"app/app/__init__.py":             "import used\n",
-		"app/tests/test_t.py":             "import testonly\n",
+		"used/pyproject.toml":                 "[project]\nname = \"used\"\n",
+		"used/used/__init__.py":               "import used.sub\n",
+		"used/used/sub.py":                    "",
+		"unused/pyproject.toml":               "[project]\nname = \"unused\"\n",
+		"unused/unused/__init__.py":           "",
+		"testonly/pyproject.toml":             "[project]\nname = \"testonly\"\n",
+		"testonly/testonly/__init__.py":       "",
+		"published/pyproject.toml":            "[project]\nname = \"published\"\n",
+		"published/published/__init__.py":     "",
+		"nopipeline/pyproject.toml":           "[project]\nname = \"nopipeline\"\n",
+		"nopipeline/nopipeline/__init__.py":   "",
+		"unpublished/pyproject.toml":          "[project]\nname = \"unpublished\"\n",
+		"unpublished/unpublished/__init__.py": "",
+		"devtool/pyproject.toml":              "[project]\nname = \"devtool\"\n",
+		"devtool/devtool/__init__.py":         "",
+		"app/pyproject.toml":                  "[project]\nname = \"app\"\ndependencies = [\"used\", \"testonly\"]\n",
+		"app/app/__init__.py":                 "import used\n",
+		"app/tests/test_t.py":                 "import testonly\n",
 	})
 	dead := byRule(fs, "dead-workspace-packages")
 	msgs := map[string]string{}
 	for _, f := range dead {
-		for _, name := range []string{"unused", "testonly", "published", "devtool", "used", "app"} {
+		for _, name := range []string{"unused", "testonly", "published", "nopipeline", "unpublished", "devtool", "used", "app"} {
 			if strings.Contains(f.Message, "'"+name+"'") {
 				msgs[name] = f.Message
 			}
@@ -587,7 +624,15 @@ releasable = false
 	if m, ok := msgs["testonly"]; !ok || !strings.Contains(m, "test") {
 		t.Fatalf("test-only importers must produce a distinct message: %+v", dead)
 	}
-	// Exemptions: published (releasable), devtool (dev-only), app
+	// Only a published member is exempt: one whose releasable publishes
+	// (publish_mode ci) and which declares a pipeline. A member of a
+	// releasable that publishes nothing, or without a pipeline, is reported.
+	for _, unpublished := range []string{"nopipeline", "unpublished"} {
+		if _, ok := msgs[unpublished]; !ok {
+			t.Errorf("unpublished library member %q must be reported: %+v", unpublished, dead)
+		}
+	}
+	// Exemptions: published (published releasable member), devtool (dev-only), app
 	// (non-library), used (has production importer; self-import of used.sub
 	// never counts for itself).
 	for _, exempt := range []string{"published", "devtool", "app", "used"} {

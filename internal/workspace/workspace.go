@@ -103,10 +103,13 @@ type Member struct {
 	// Name is the workspace member name ("_" for single-project scans).
 	Name string
 	// Path is the member root relative to the workspace root ("." allowed).
-	Path       string
-	Library    bool
-	DevOnly    bool
-	Releasable bool // belongs to a releasable group (published externally)
+	Path    string
+	Library bool
+	DevOnly bool
+	// Published is true when the member is versioned under a releasable
+	// whose publish_mode is "ci" and the member declares a publish pipeline:
+	// such a member has consumers outside the workspace.
+	Published bool
 	// ImportName is the explicit Python import-name override from
 	// workspace.toml (resolution order step 3).
 	ImportName string
@@ -248,10 +251,14 @@ func Load(root string) (*Workspace, error) {
 	if !ok || len(members.Items()) == 0 {
 		return nil, fmt.Errorf("workspace: %s declares no [[members]]", DeclarationsFile)
 	}
+	publishModes, err := parseReleasables(doc)
+	if err != nil {
+		return nil, err
+	}
 	names := map[string]bool{}
 	paths := map[string]bool{}
 	for i, item := range members.Items() {
-		m, err := parseMember(item, i)
+		m, err := parseMember(item, i, publishModes)
 		if err != nil {
 			return nil, err
 		}
@@ -273,9 +280,34 @@ func Load(root string) (*Workspace, error) {
 	return ws, nil
 }
 
+// parseReleasables reads each [[releasables]] table's name and publish_mode,
+// which decide whether a member versioned under it is published.
+func parseReleasables(doc strictspec.Value) (map[string]string, error) {
+	modes := map[string]string{}
+	rels, ok := doc.Field("releasables")
+	if !ok {
+		return modes, nil
+	}
+	for i, item := range rels.Items() {
+		name, ok := stringField(item, "name")
+		if !ok || name == "" {
+			return nil, fmt.Errorf("workspace: %s: releasables[%d] has no name", DeclarationsFile, i)
+		}
+		if _, dup := modes[name]; dup {
+			return nil, fmt.Errorf("workspace: %s: releasable name %q is declared twice", DeclarationsFile, name)
+		}
+		mode, _ := stringField(item, "publish_mode")
+		if mode != "ci" && mode != "none" {
+			return nil, fmt.Errorf("workspace: %s: releasable %q: publish_mode must be \"ci\" or \"none\"", DeclarationsFile, name)
+		}
+		modes[name] = mode
+	}
+	return modes, nil
+}
+
 // parseMember reads the fields of one [[members]] table strictcode uses.
 // The document is rlsbl's, which validates every other key.
-func parseMember(p strictspec.Value, idx int) (*Member, error) {
+func parseMember(p strictspec.Value, idx int, publishModes map[string]string) (*Member, error) {
 	name, ok := stringField(p, "name")
 	if !ok || name == "" {
 		return nil, fmt.Errorf("workspace: %s: members[%d] has no name", DeclarationsFile, idx)
@@ -300,7 +332,12 @@ func parseMember(p strictspec.Value, idx int) (*Member, error) {
 		return nil, fmt.Errorf("workspace: %s: member %q has no releasable (a releasable name, or false)", DeclarationsFile, name)
 	}
 	if s, isStr := rel.AsString(); isStr && s != "" {
-		m.Releasable = true
+		mode, declared := publishModes[s]
+		if !declared {
+			return nil, fmt.Errorf("workspace: %s: member %q names the releasable %q, which no [[releasables]] table declares", DeclarationsFile, name, s)
+		}
+		pipelines, _ := p.Field("pipelines")
+		m.Published = mode == "ci" && len(pipelines.Items()) > 0
 	} else if b, isBool := rel.Bool(); !isBool || b {
 		return nil, fmt.Errorf("workspace: %s: member %q: releasable must be a releasable name or false", DeclarationsFile, name)
 	}

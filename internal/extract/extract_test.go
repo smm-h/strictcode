@@ -62,6 +62,11 @@ func boolAttr(t *testing.T, r relation.Row, name string) bool {
 func pyWorkspace() map[string]string {
 	return map[string]string{
 		fixture.DeclarationsPath: fixture.DeclarationsHeader + `
+[[releasables]]
+name = "core"
+tag_format = "v{version}"
+publish_mode = "none"
+
 [[members]]
 path = "core"
 name = "core"

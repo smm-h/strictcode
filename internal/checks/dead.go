@@ -232,12 +232,12 @@ func deadTS(ctx *Context, member string, suppressed map[string]bool) []findings.
 }
 
 // checkDeadWorkspacePackages: a library member no sibling imports. Dev-only,
-// non-library, and published releasable members are exempt; self-imports
+// non-library, and published members are exempt; self-imports
 // never count; test-only importers get a distinct message (lesson 28).
 func checkDeadWorkspacePackages(ctx *Context) []findings.Finding {
 	var out []findings.Finding
 	for _, m := range ctx.View.WS.Members {
-		if !m.Library || m.DevOnly || m.Releasable {
+		if !m.Library || m.DevOnly || m.Published {
 			continue
 		}
 		if ctx.suppressedMember("dead-workspace-packages", m.Name) {
