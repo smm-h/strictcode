@@ -296,3 +296,35 @@ func TestLesson46ImportNameDiffersFromDistributionName(t *testing.T) {
 		}
 	}
 }
+
+// The import-resolution cases of rlsbl's import scanner tests: a Go import
+// whose path merely begins with a member's module path is not that member,
+// a Node builtin is never a member even when a member shares its name, and
+// npm package names match members case-insensitively, scoped subpaths
+// included.
+func TestPortedImportResolution(t *testing.T) {
+	fs := analyze(t, map[string]string{
+		fixture.DeclarationsPath: fixture.Workspace("path = \"lib\"\nname = \"lib\"\n", "path = \"app\"\nname = \"app\"\n"),
+		"lib/go.mod":             "module example.com/lib\n\ngo 1.22\n",
+		"lib/lib.go":             "package lib\n",
+		"app/go.mod":             "module example.com/app\n\ngo 1.22\n",
+		"app/main.go":            "package main\n\nimport (\n\t\"fmt\"\n\t\"example.com/libx/foo\"\n)\n\nfunc main() { fmt.Println(foo.X) }\n",
+	})
+	if got := byRule(fs, "deps-undeclared"); len(got) != 0 {
+		t.Errorf("a module path sharing a prefix resolved to the member: %+v", got)
+	}
+
+	fs = analyze(t, map[string]string{
+		fixture.DeclarationsPath: fixture.Workspace("path = \"events\"\nname = \"events\"\n", "path = \"sdk\"\nname = \"sdk\"\n", "path = \"app\"\nname = \"app\"\n"),
+		"events/package.json":    `{"name": "events", "main": "./index.js"}`,
+		"events/index.js":        "export const e = 1;\n",
+		"sdk/package.json":       `{"name": "@x/sdk", "main": "./index.js"}`,
+		"sdk/index.js":           "export const s = 1;\n",
+		"app/package.json":       `{"name": "app", "main": "./index.js"}`,
+		"app/index.js":           "import { EventEmitter } from 'events';\nimport fs from 'node:fs';\nimport { s } from '@X/SDK/deep/path';\nexport const a = s;\n",
+	})
+	undeclared := byRule(fs, "deps-undeclared")
+	if len(undeclared) != 1 || !strings.Contains(undeclared[0].Message, "'sdk'") {
+		t.Fatalf("want only the undeclared @x/sdk import reported, never the builtin: %+v", undeclared)
+	}
+}

@@ -54,6 +54,16 @@ func TestIsTestContext(t *testing.T) {
 		{"src/contest.py", false},       // not conftest.py
 		{"src/app.testx.ts", false},     // .test. must be a full dot segment
 		{"src/protest_tools.py", false}, // *_test only as suffix before .py
+
+		// rlsbl's predicate cases not covered above.
+		{"deep/nested/__tests__/foo.test.js", true},
+		{"deep/nested/testdata/fixture.go", true},
+		{"src/Component.spec.tsx", true},
+		{"foo_test.py", true},
+		{"src/examples/demo.py", false},
+		{"testing/foo.py", false},
+		{"tested/module.py", false},
+		{"contest.py", false},
 	}
 	for _, c := range cases {
 		t.Run(c.path, func(t *testing.T) {
