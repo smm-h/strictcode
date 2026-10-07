@@ -436,3 +436,34 @@ func TestLesson38ExclusionKeysAreExempt(t *testing.T) {
 		t.Fatalf("an exclusion key was reported: %+v", got)
 	}
 }
+
+// Lesson 39: strictspec-certificate is off by default; switched on, it is
+// refused without a [strictspec_certificate] declaration, and once declared
+// it reports each reason the certificate blocks at the error severity.
+func TestLesson39StrictspecCertificate(t *testing.T) {
+	certJSON := `{"certificate_format_version": 1, "claims": [{"kind": "flip-scan", "grade": "violated", "statement": "narrowing without a bump"}]}`
+	files := pyProject("", map[string]string{"migrations/cert.json": certJSON})
+	fs, err := analyzeWith(t, files, newFakeTools(t).run)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := byRule(fs, "strictspec-certificate"); len(got) != 0 {
+		t.Fatalf("the rule ran while off: %+v", got)
+	}
+
+	files = withFiles(files, optionEntry("release", "strictspec-certificate", "", "error", "error"))
+	_, err = analyzeWith(t, files, newFakeTools(t).run)
+	if err == nil || !strings.Contains(err.Error(), "[strictspec_certificate]") {
+		t.Fatalf("on without a declaration was not refused: %v", err)
+	}
+
+	files["strictcode.toml"] = "format_version = 1\n[strictspec_certificate]\ncertificate = \"migrations/cert.json\"\n"
+	fs, err = analyzeWith(t, files, newFakeTools(t).run)
+	if err != nil {
+		t.Fatalf("declaring the certificate did not clear the refusal: %v", err)
+	}
+	got := byRule(fs, "strictspec-certificate")
+	if len(got) != 1 || got[0].Severity != "error" || got[0].Target.File != "migrations/cert.json" || !strings.Contains(got[0].Message, "violated") {
+		t.Fatalf("certificate findings: %+v", got)
+	}
+}

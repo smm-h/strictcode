@@ -58,6 +58,7 @@ var implemented = map[string]checkFn{
 	"format-scope-guard":        checkFormatScopeGuard,
 	"type-check":                checkTypeCheck,
 	"type-check-scope-guard":    checkTypeCheckScopeGuard,
+	"strictspec-certificate":    checkStrictspecCertificate,
 }
 
 // Run executes every check whose option is not off over the one shared

@@ -62,6 +62,7 @@ positives fixed there, each a red-green test in `internal/checks`.
 36. The `uv run` flags MUST reach the tool where the project declares it: `--group` for a dependency group other than `dev`, `--extra` for an optional-dependencies extra, none inside a uv workspace.
 37. A member nested inside a declared path MUST be left out of that path's ruff run, its files belonging to its own declared path.
 38. The scope guards MUST report a tool's own configuration that narrows or overrides the declared paths (ruff `include` and `extend-include`; mypy `files`, `packages`, and `modules`), MUST leave exclusion keys alone, and MUST report nothing while their tool rule is off.
+39. `strictspec-certificate` MUST block on a violated claim, an unsupported claim no adjudication entry discharges, and a dangling adjudication entry; MUST pass `corpus-supported` and `proven` claims; and MUST treat a missing or unreadable certificate or adjudication file as an error, never a pass.
 
 ## From real-code runs
 
