@@ -69,6 +69,7 @@ positives fixed there, each a red-green test in `internal/checks`.
 43. A member nested in another member's directory MUST be left out of the enclosing member's walk.
 44. A TypeScript entry point inside `tsconfig.json`'s `outDir` MUST resolve to its source under `rootDir`, files under `outDir` MUST NOT be scanned as source, and with no `rootDir` known reachability MUST abstain rather than report the sources dead.
 45. A src-layout Python package's modules MUST be named by their import path, not by their file path, so a module imported only from inside its package is alive.
+46. A member whose import name differs from its distribution name (a `core` distribution shipping `portal_core`, a `cloudflare` shipping `src/cf`) MUST be matched by the package directory it ships, so its dependents' imports are neither unused nor undeclared and the library is not dead.
 
 ## From real-code runs
 
