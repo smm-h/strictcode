@@ -282,3 +282,12 @@ func TestMatrixPythonToolsArePythonOnly(t *testing.T) {
 		}
 	}
 }
+
+func TestMatrixLibraryStdoutAllLanguages(t *testing.T) {
+	r, _ := ByID("library-stdout")
+	for _, lang := range vocab.Langs {
+		if c := MatrixCell(r, lang); c.Status != CellSupported {
+			t.Errorf("library-stdout on %s = %q, want supported", lang, c.Status)
+		}
+	}
+}
