@@ -34,7 +34,7 @@ document_syntax = "toml"
 role = "schema"
 root = "Config"
 targets = ["go"]
-description = "Validates strictcode.toml, the single configuration file (see stricttools/docs/config.md): rule toggles, severities, thresholds, and allow lists; analysis modes; group toggles; and suppressions in each rule's declared shape, each with a mandatory reason. Rule-ID validity (a retired rule's error shows its retirement record) and matching suppressions to their rule's shape are checked by the loader against the registry; suppressions naming things that no longer exist are the stale-suppression rule."
+description = "Validates strictcode.toml, the declarations file (see stricttools/docs/config.md): analysis modes; per-rule thresholds and allow lists; suppressions in each rule's declared shape, each with a mandatory reason; the Python tool declarations; and the strictspec certificate declaration. It switches nothing: whether a rule runs, and at which severity, is its strictcode:<rule id> option. Rule-ID validity (a retired rule's error shows its retirement record), matching suppressions to their rule's shape, and canonical paths are checked by the loader; suppressions naming things that no longer exist are the stale-suppression rule."
 
 [types.Config]
 type = "record"
@@ -43,14 +43,6 @@ type = "record"
 type = "Analysis"
 required = false
 
-[types.Config.fields.groups]
-type = "map"
-required = false
-key_pattern = "^[a-z][a-z0-9-]*$"
-order = "incidental"
-[types.Config.fields.groups.value]
-type = "GroupConfig"
-
 [types.Config.fields.rules]
 type = "map"
 required = false
@@ -58,6 +50,20 @@ key_pattern = "^[a-z][a-z0-9]*(-[a-z0-9]+)*$"
 order = "incidental"
 [types.Config.fields.rules.value]
 type = "RuleConfig"
+
+[types.Config.fields.python_tools]
+type = "map"
+required = false
+key_pattern = "^(lint|format|type-check)$"
+order = "incidental"
+description = "Which command each Python tool rule runs over which paths, keyed by the rule. A declaration says only what runs; whether the rule runs, and for which members, is its strictcode:<rule> option."
+[types.Config.fields.python_tools.value]
+type = "PythonTool"
+
+[types.Config.fields.strictspec_certificate]
+type = "StrictspecCertificate"
+required = false
+description = "The strictspec diff certificate the strictspec-certificate rule checks, and the adjudication file discharging its unsupported claims. Declaring it switches nothing: the rule runs while its strictcode:strictspec-certificate option is on."
 
 [types.Analysis]
 type = "record"
@@ -85,34 +91,9 @@ form = "forbidden-when"
 field = "python_type_checker"
 when = { field = "python_call_resolution", predicate = "equals", value = "syntactic" }
 
-[types.GroupConfig]
-type = "record"
-description = "A group toggle (group:<name>): enable/disable or re-severity every member rule in one stroke."
-
-[types.GroupConfig.fields.enabled]
-type = "boolean"
-required = false
-
-[types.GroupConfig.fields.severity]
-type = "enum"
-required = false
-values = ["error", "warning"]
-
-[[types.GroupConfig.constraints]]
-form = "at-least-one-of"
-fields = ["enabled", "severity"]
-
 [types.RuleConfig]
 type = "record"
-
-[types.RuleConfig.fields.enabled]
-type = "boolean"
-required = false
-
-[types.RuleConfig.fields.severity]
-type = "enum"
-required = false
-values = ["error", "warning"]
+description = "A rule's declarations: thresholds, allow lists, and suppressions. A rule is switched on, off, or to another severity only through its strictcode:<rule id> option."
 
 [types.RuleConfig.fields.thresholds]
 type = "map"
@@ -200,6 +181,40 @@ fields = ["path", "dep", "modules", "member"]
 [[types.Suppression.constraints]]
 form = "co-presence"
 fields = ["project", "dep"]
+
+[types.PythonTool]
+type = "record"
+description = "One Python tool run: uv run <tool> over paths, in cwd."
+
+[types.PythonTool.fields.paths]
+type = "array"
+required = true
+min_len = 1
+description = "What the tool checks, relative to cwd; declared, never inferred from the tool's own configuration."
+[types.PythonTool.fields.paths.item]
+type = "string"
+non_empty = true
+
+[types.PythonTool.fields.cwd]
+type = "string"
+required = false
+non_empty = true
+description = "The directory the tool runs in, relative to the workspace root; absent means the workspace root."
+
+[types.StrictspecCertificate]
+type = "record"
+
+[types.StrictspecCertificate.fields.certificate]
+type = "string"
+required = true
+non_empty = true
+description = "The certificate strictspec diff wrote (JSON), relative to the workspace root."
+
+[types.StrictspecCertificate.fields.adjudication]
+type = "string"
+required = false
+non_empty = true
+description = "A committed adjudication file (TOML) discharging the certificate's unsupported claims, relative to the workspace root."
 `,
 }
 
@@ -259,9 +274,10 @@ func ValidateBytesWithEvidence(input []byte, syntax string, evidence map[string]
 // Config is the frozen typed binding of the "Config" record. Fields are immutable by
 // convention (shallow-plus-generated-immutability); use With* for copy-on-write.
 type Config struct {
-	Analysis *Analysis
-	Groups   strictspec.Value
-	Rules    strictspec.Value
+	Analysis              *Analysis
+	Rules                 strictspec.Value
+	PythonTools           strictspec.Value
+	StrictspecCertificate *StrictspecCertificate
 }
 
 func bindConfig(v strictspec.Value) *Config {
@@ -272,11 +288,14 @@ func bindConfig(v strictspec.Value) *Config {
 	if fv, ok := v.Field("analysis"); ok {
 		out.Analysis = bindAnalysis(fv)
 	}
-	if fv, ok := v.Field("groups"); ok {
-		out.Groups = fv
-	}
 	if fv, ok := v.Field("rules"); ok {
 		out.Rules = fv
+	}
+	if fv, ok := v.Field("python_tools"); ok {
+		out.PythonTools = fv
+	}
+	if fv, ok := v.Field("strictspec_certificate"); ok {
+		out.StrictspecCertificate = bindStrictspecCertificate(fv)
 	}
 	return out
 }
@@ -288,17 +307,24 @@ func (x *Config) WithAnalysis(v *Analysis) *Config {
 	return &c
 }
 
-// WithGroups returns a copy of Config with Groups set to the given value.
-func (x *Config) WithGroups(v strictspec.Value) *Config {
-	c := *x
-	c.Groups = v
-	return &c
-}
-
 // WithRules returns a copy of Config with Rules set to the given value.
 func (x *Config) WithRules(v strictspec.Value) *Config {
 	c := *x
 	c.Rules = v
+	return &c
+}
+
+// WithPythonTools returns a copy of Config with PythonTools set to the given value.
+func (x *Config) WithPythonTools(v strictspec.Value) *Config {
+	c := *x
+	c.PythonTools = v
+	return &c
+}
+
+// WithStrictspecCertificate returns a copy of Config with StrictspecCertificate set to the given value.
+func (x *Config) WithStrictspecCertificate(v *StrictspecCertificate) *Config {
+	c := *x
+	c.StrictspecCertificate = v
 	return &c
 }
 
@@ -337,46 +363,9 @@ func (x *Analysis) WithPythonTypeChecker(v string) *Analysis {
 	return &c
 }
 
-// GroupConfig is the frozen typed binding of the "GroupConfig" record. Fields are immutable by
-// convention (shallow-plus-generated-immutability); use With* for copy-on-write.
-type GroupConfig struct {
-	Enabled  bool
-	Severity string
-}
-
-func bindGroupConfig(v strictspec.Value) *GroupConfig {
-	if v.Kind() != strictspec.KindRecord {
-		return nil
-	}
-	out := &GroupConfig{}
-	if fv, ok := v.Field("enabled"); ok {
-		out.Enabled = func() bool { r, _ := fv.Bool(); return r }()
-	}
-	if fv, ok := v.Field("severity"); ok {
-		out.Severity = func() string { r, _ := fv.AsString(); return r }()
-	}
-	return out
-}
-
-// WithEnabled returns a copy of GroupConfig with Enabled set to the given value.
-func (x *GroupConfig) WithEnabled(v bool) *GroupConfig {
-	c := *x
-	c.Enabled = v
-	return &c
-}
-
-// WithSeverity returns a copy of GroupConfig with Severity set to the given value.
-func (x *GroupConfig) WithSeverity(v string) *GroupConfig {
-	c := *x
-	c.Severity = v
-	return &c
-}
-
 // RuleConfig is the frozen typed binding of the "RuleConfig" record. Fields are immutable by
 // convention (shallow-plus-generated-immutability); use With* for copy-on-write.
 type RuleConfig struct {
-	Enabled      bool
-	Severity     string
 	Thresholds   strictspec.Value
 	Suppressions []*Suppression
 	Allow        strictspec.Value
@@ -388,12 +377,6 @@ func bindRuleConfig(v strictspec.Value) *RuleConfig {
 		return nil
 	}
 	out := &RuleConfig{}
-	if fv, ok := v.Field("enabled"); ok {
-		out.Enabled = func() bool { r, _ := fv.Bool(); return r }()
-	}
-	if fv, ok := v.Field("severity"); ok {
-		out.Severity = func() string { r, _ := fv.AsString(); return r }()
-	}
 	if fv, ok := v.Field("thresholds"); ok {
 		out.Thresholds = fv
 	}
@@ -407,20 +390,6 @@ func bindRuleConfig(v strictspec.Value) *RuleConfig {
 		out.Forbidden = fv
 	}
 	return out
-}
-
-// WithEnabled returns a copy of RuleConfig with Enabled set to the given value.
-func (x *RuleConfig) WithEnabled(v bool) *RuleConfig {
-	c := *x
-	c.Enabled = v
-	return &c
-}
-
-// WithSeverity returns a copy of RuleConfig with Severity set to the given value.
-func (x *RuleConfig) WithSeverity(v string) *RuleConfig {
-	c := *x
-	c.Severity = v
-	return &c
 }
 
 // WithThresholds returns a copy of RuleConfig with Thresholds set to the given value.
@@ -527,6 +496,76 @@ func (x *Suppression) WithModules(v []string) *Suppression {
 func (x *Suppression) WithMember(v string) *Suppression {
 	c := *x
 	c.Member = v
+	return &c
+}
+
+// PythonTool is the frozen typed binding of the "PythonTool" record. Fields are immutable by
+// convention (shallow-plus-generated-immutability); use With* for copy-on-write.
+type PythonTool struct {
+	Paths []string
+	Cwd   string
+}
+
+func bindPythonTool(v strictspec.Value) *PythonTool {
+	if v.Kind() != strictspec.KindRecord {
+		return nil
+	}
+	out := &PythonTool{}
+	if fv, ok := v.Field("paths"); ok {
+		out.Paths = bindSlice(fv, func(e strictspec.Value) string { return func() string { r, _ := e.AsString(); return r }() })
+	}
+	if fv, ok := v.Field("cwd"); ok {
+		out.Cwd = func() string { r, _ := fv.AsString(); return r }()
+	}
+	return out
+}
+
+// WithPaths returns a copy of PythonTool with Paths set to the given value.
+func (x *PythonTool) WithPaths(v []string) *PythonTool {
+	c := *x
+	c.Paths = v
+	return &c
+}
+
+// WithCwd returns a copy of PythonTool with Cwd set to the given value.
+func (x *PythonTool) WithCwd(v string) *PythonTool {
+	c := *x
+	c.Cwd = v
+	return &c
+}
+
+// StrictspecCertificate is the frozen typed binding of the "StrictspecCertificate" record. Fields are immutable by
+// convention (shallow-plus-generated-immutability); use With* for copy-on-write.
+type StrictspecCertificate struct {
+	Certificate  string
+	Adjudication string
+}
+
+func bindStrictspecCertificate(v strictspec.Value) *StrictspecCertificate {
+	if v.Kind() != strictspec.KindRecord {
+		return nil
+	}
+	out := &StrictspecCertificate{}
+	if fv, ok := v.Field("certificate"); ok {
+		out.Certificate = func() string { r, _ := fv.AsString(); return r }()
+	}
+	if fv, ok := v.Field("adjudication"); ok {
+		out.Adjudication = func() string { r, _ := fv.AsString(); return r }()
+	}
+	return out
+}
+
+// WithCertificate returns a copy of StrictspecCertificate with Certificate set to the given value.
+func (x *StrictspecCertificate) WithCertificate(v string) *StrictspecCertificate {
+	c := *x
+	c.Certificate = v
+	return &c
+}
+
+// WithAdjudication returns a copy of StrictspecCertificate with Adjudication set to the given value.
+func (x *StrictspecCertificate) WithAdjudication(v string) *StrictspecCertificate {
+	c := *x
+	c.Adjudication = v
 	return &c
 }
 

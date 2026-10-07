@@ -58,7 +58,8 @@
       "interactive": false,
       "config_fields": [],
       "grants": [],
-      "forwarding": null
+      "forwarding": null,
+      "requires": []
     },
     "group": {
       "commands": {},
@@ -260,6 +261,90 @@
       "name": "registry",
       "help": "Rule registry artifacts (mint-once IDs and retired-rule records)",
       "commands": {
+        "rules": {
+          "name": "rules",
+          "help": "Print every rule strictcode implements, by rule ID, with its strictcode:<rule id> option (ranking, default, scope, and subject document); with --json the list is the payload",
+          "effect": "read_only",
+          "payload_schema": {
+            "additionalProperties": false,
+            "properties": {
+              "format_version": {
+                "const": 1
+              },
+              "rules": {
+                "items": {
+                  "additionalProperties": false,
+                  "properties": {
+                    "description": {
+                      "type": "string"
+                    },
+                    "id": {
+                      "type": "string"
+                    },
+                    "option": {
+                      "additionalProperties": false,
+                      "properties": {
+                        "default": {
+                          "enum": [
+                            "error",
+                            "warn",
+                            "off"
+                          ]
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "scope": {
+                          "enum": [
+                            "none",
+                            "path"
+                          ]
+                        },
+                        "subject": {
+                          "type": "string"
+                        },
+                        "values": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "subject",
+                        "values",
+                        "default",
+                        "scope"
+                      ],
+                      "type": "object"
+                    },
+                    "severity": {
+                      "enum": [
+                        "error",
+                        "warning"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "severity",
+                    "description",
+                    "option"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "strictcode_version": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "format_version",
+              "strictcode_version",
+              "rules"
+            ],
+            "type": "object"
+          }
+        },
         "dump": {
           "name": "dump",
           "help": "Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON",

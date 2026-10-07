@@ -193,6 +193,40 @@
       }
     },
     {
+      "id": "deps-stale",
+      "severity": "error",
+      "description": "An intra-workspace dependency constraint in a manifest that the dependency member's declared version does not satisfy.",
+      "requires": [
+        "declared-dependency-extraction"
+      ],
+      "uses": [],
+      "groups": [],
+      "suppression": "project-dep",
+      "fix_tier": 3,
+      "planned_fixes": [
+        {
+          "tier": 2,
+          "description": "Raise the constraint to admit the dependency's current version."
+        }
+      ],
+      "not_applicable": {
+        "go": "a go.mod requirement names a module version minimal version selection resolves, and a workspace member's go.mod declares no version of its own to compare it with"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "a go.mod requirement names a module version minimal version selection resolves, and a workspace member's go.mod declares no version of its own to compare it with"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "supported"
+        }
+      }
+    },
+    {
       "id": "dead-modules",
       "severity": "warning",
       "description": "Source units unreachable or unreferenced, per the per-language algorithms on the check semantics page.",
@@ -338,10 +372,12 @@
       "severity": "error",
       "description": "A library writing to standard streams (print, sys.stdout.write, fmt.Print*, console.log family).",
       "requires": [
+        "import-extraction"
+      ],
+      "uses": [
         "callable-extraction",
         "call-resolution-syntactic"
       ],
-      "uses": [],
       "groups": [
         "library"
       ],
@@ -352,13 +388,13 @@
       "language_independent": false,
       "support": {
         "go": {
-          "status": "planned"
+          "status": "supported"
         },
         "py": {
           "status": "supported"
         },
         "ts": {
-          "status": "planned"
+          "status": "supported"
         }
       }
     },
@@ -452,6 +488,194 @@
           "status": "planned"
         }
       }
+    },
+    {
+      "id": "lint",
+      "severity": "error",
+      "description": "ruff check reports a violation in the paths the [python_tools.lint] declaration names, run through the project's environment with uv run.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "runs ruff, a Python linter",
+        "ts": "runs ruff, a Python linter"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "runs ruff, a Python linter"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "n/a",
+          "reason": "runs ruff, a Python linter"
+        }
+      }
+    },
+    {
+      "id": "lint-scope-guard",
+      "severity": "error",
+      "description": "ruff's own configuration narrows the paths the [python_tools.lint] declaration names: include or extend-include in pyproject.toml [tool.ruff], ruff.toml, or .ruff.toml.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "guards ruff, a Python linter",
+        "ts": "guards ruff, a Python linter"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "guards ruff, a Python linter"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "n/a",
+          "reason": "guards ruff, a Python linter"
+        }
+      }
+    },
+    {
+      "id": "format",
+      "severity": "error",
+      "description": "ruff format --check reports a file it would reformat in the paths the [python_tools.format] declaration names, run through the project's environment with uv run.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "runs ruff, a Python formatter",
+        "ts": "runs ruff, a Python formatter"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "runs ruff, a Python formatter"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "n/a",
+          "reason": "runs ruff, a Python formatter"
+        }
+      }
+    },
+    {
+      "id": "format-scope-guard",
+      "severity": "error",
+      "description": "ruff's own configuration narrows the paths the [python_tools.format] declaration names: include or extend-include in pyproject.toml [tool.ruff], ruff.toml, or .ruff.toml.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "guards ruff, a Python formatter",
+        "ts": "guards ruff, a Python formatter"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "guards ruff, a Python formatter"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "n/a",
+          "reason": "guards ruff, a Python formatter"
+        }
+      }
+    },
+    {
+      "id": "type-check",
+      "severity": "error",
+      "description": "mypy reports an error in the paths the [python_tools.type-check] declaration names, run through the project's environment with uv run.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "runs mypy, a Python type checker",
+        "ts": "runs mypy, a Python type checker"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "runs mypy, a Python type checker"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "n/a",
+          "reason": "runs mypy, a Python type checker"
+        }
+      }
+    },
+    {
+      "id": "type-check-scope-guard",
+      "severity": "error",
+      "description": "mypy's own configuration declares a scope the paths of the [python_tools.type-check] declaration silently override: files, packages, or modules in pyproject.toml [tool.mypy], mypy.ini, .mypy.ini, or setup.cfg [mypy].",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {
+        "go": "guards mypy, a Python type checker",
+        "ts": "guards mypy, a Python type checker"
+      },
+      "language_independent": false,
+      "support": {
+        "go": {
+          "status": "n/a",
+          "reason": "guards mypy, a Python type checker"
+        },
+        "py": {
+          "status": "supported"
+        },
+        "ts": {
+          "status": "n/a",
+          "reason": "guards mypy, a Python type checker"
+        }
+      }
+    },
+    {
+      "id": "strictspec-certificate",
+      "severity": "error",
+      "description": "The strictspec diff certificate the [strictspec_certificate] declaration names holds a violated claim, an unsupported claim no adjudication entry discharges, or an adjudication entry that discharges no claim.",
+      "requires": [],
+      "uses": [],
+      "groups": [],
+      "suppression": "none",
+      "fix_tier": 3,
+      "planned_fixes": [],
+      "not_applicable": {},
+      "language_independent": true,
+      "support": {}
     }
   ],
   "groups": {
