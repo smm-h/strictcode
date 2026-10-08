@@ -87,8 +87,7 @@
   },
   "en/internal-certificate.md": {
     "content": "6fe51123f488b10f38e09e50fc4670450ed385f127af59e193cbb2beb0300adb",
-    "description": "abbee5626fcd2ad8729a7c776c6cecb75e45993bed0f6e7ba72e47b8f9f42d8d",
-    "seed_hash": "abbee5626fcd2ad8729a7c776c6cecb75e45993bed0f6e7ba72e47b8f9f42d8d",
+    "description": "d2cc111583b1ce8c984503f0a535a3094e8a2cb0c8d8e172350158d3c7b8addd",
     "source_docstring": "051e6d4655539bd43ae449c8672b8acd424182921b807814bce38464e5121c0a"
   },
   "en/internal-checks.md": {
@@ -127,8 +126,7 @@
   },
   "en/internal-options.md": {
     "content": "7b5fb96e8e5a5772a3d4ae4f9823ccc1c53979850e09c9536bea517280d57294",
-    "description": "bcce05a0bb43e98a8cd09d5c672407711ceec8022d70ecd3cad96d60b24b4041",
-    "seed_hash": "bcce05a0bb43e98a8cd09d5c672407711ceec8022d70ecd3cad96d60b24b4041",
+    "description": "cd2194d142d131e5dc8b1fda030701d5d3a8bc993151bd537fbede1df61e6985",
     "source_docstring": "d33d30164e0cc5e6d1273b07c765ee370bb6ec3cf2443e1790f3a120cb619781"
   },
   "en/internal-registrydump.md": {

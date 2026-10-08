@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "name": "strictcode",
+  "name": "release-checkout",
   "slug": "strictcode",
   "version": "0.2.0",
   "description": "A deterministic linter for architecture, with tiered auto-fixes: strictcode builds a graph of a codebase's modules, callables, and types, and enforces dependency hygiene, dead-code, cycle, and library-boundary rules across Python, Go, and TypeScript/JavaScript",
@@ -4257,7 +4257,7 @@
     }
   ],
   "posts": [],
-  "last_gen": "2026-10-08T19:27:40.755541+00:00",
+  "last_gen": "2026-10-08T19:28:35.564499+00:00",
   "theme": "minimal",
   "vocabulary": {
     "accepted": [
