@@ -159,7 +159,6 @@ func TestFixFallsBackToTheCurrentDirectory(t *testing.T) {
 func TestMutatingFallbacksAreDocumented(t *testing.T) {
 	for _, tc := range []struct{ argv, want string }{
 		{"fix", defaultConfigName},
-		{"analyze", defaultConfigName},
 		{"registry dump", defaultRegistryOut},
 	} {
 		res := newApp().Test(append(strings.Fields(tc.argv), "--help"))
@@ -169,21 +168,17 @@ func TestMutatingFallbacksAreDocumented(t *testing.T) {
 	}
 }
 
-// analyze is declared mutating, because its Python tool rules run `uv run`,
-// which can write .venv and uv.lock; a preview could not see those writes, so
-// --dry-run is refused, naming them.
-func TestAnalyzeDeclaresTheToolRulesWrites(t *testing.T) {
+// analyze is declared read-only: its Python tool rules run
+// `uv run --frozen --no-sync` and refuse a missing environment, so it writes
+// nothing.
+func TestAnalyzeIsDeclaredReadOnly(t *testing.T) {
 	res := newApp().Test([]string{"help", "--json"})
 	if !strings.Contains(res.Stdout, `"name": "analyze"`) {
 		t.Fatalf("help --json does not describe analyze:\n%s", res.Stdout)
 	}
 	analyze := res.Stdout[strings.Index(res.Stdout, `"name": "analyze"`):]
-	if i := strings.Index(analyze, `"effect": `); i < 0 || !strings.HasPrefix(analyze[i:], `"effect": "mutating"`) {
-		t.Errorf("analyze is not declared mutating:\n%s", analyze)
-	}
-	res = newApp().Test([]string{"analyze", analyzableProject(t), "--dry-run"})
-	if res.ExitCode == 0 || !strings.Contains(res.Stdout+res.Stderr, "uv.lock") {
-		t.Fatalf("analyze --dry-run was not refused naming the writes; exit %d:\n%s%s", res.ExitCode, res.Stdout, res.Stderr)
+	if i := strings.Index(analyze, `"effect": `); i < 0 || !strings.HasPrefix(analyze[i:], `"effect": "read_only"`) {
+		t.Errorf("analyze is not declared read-only:\n%s", analyze)
 	}
 }
 
