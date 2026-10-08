@@ -52,6 +52,7 @@
       "flags": [],
       "flag_sets": [],
       "args": [],
+      "args_after_separator": null,
       "tags": [],
       "constraints": [],
       "hidden": false,
@@ -83,7 +84,7 @@
   },
   "project_id": "github.com/smm-h/strictcode",
   "name": "strictcode",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "help": "strictcode: a deterministic linter for architecture, with tiered auto-fixes",
   "commands": {
     "analyze": {

@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "A deterministic linter for architecture, with tiered auto-fixes: strictcode builds a graph of a codebase's modules, callables, and types, and enforces dependency hygiene, dead-code, cycle, and library-boundary rules across Python, Go, and TypeScript/JavaScript",
   "repo": "https://github.com/smm-h/strictcode",
   "base_url": "https://smmh.dev/strictcode",
@@ -40,7 +40,7 @@
   },
   "versions": [
     {
-      "version": "0.2.0"
+      "version": "0.3.0"
     }
   ],
   "locales": [

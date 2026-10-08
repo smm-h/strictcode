@@ -2,7 +2,9 @@
 
 # Changelog
 
-## Unreleased
+## 0.3.0
+
+strictcode takes over the source checks rlsbl used to run: rules switched through options, workspace members read from rlsbl's release declarations, the Python tool rules, deps-stale, the strictspec certificate rule, and registry rules for rlsbl to ask; it parses with the cgofree tree-sitter modules, so building it needs only Go.
 
 ### Breaking
 
