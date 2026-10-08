@@ -31,7 +31,7 @@
     "description": "8cbad329aaf4c00a4b965b95fb13772b57893eff30757ea5bd5e3d76b8a9a9ea"
   },
   "en/cli-registry.md": {
-    "content": "cc56d9a7ff5646509588a3cda00d3cfead6a37965d6a15edd8df7a544ea54559",
+    "content": "c605a600fc6c39024668d14223a50ea3615dbc2ae0e1fe373ac674cdc6029403",
     "description": "43eacce462cd802deca6a6cb934e5dd980fae18a227576e9f16b181120a1b716",
     "schema_hash": "58d3c3770cc88b72aa9b18c704c5fd121a015dd38cbe4b1dbea74189e5086814"
   },
@@ -46,8 +46,8 @@
     "source_docstring": "b747958e3e536baf383894eb887d4782d83e3422a4fe18b5f12bcb552d19b5a9"
   },
   "en/config.md": {
-    "content": "920560c43da8f8d4382fb61314abd8a3058dd9a8ac08232c8dbc8b61cd6d0e16",
-    "description": "f581448e583730267bea669b81fcbf3c0de6880c3cde911c777738968dc090e5"
+    "content": "8e5e8faf07f0f43ea4db202017040499d919dd25186e760c059d5056be172744",
+    "description": "017605c845d1fcbbc6d56608744dcbb5f3e1e03db044978b3538c02fe18d5a74"
   },
   "en/decisions.md": {
     "content": "2a96f4579da1bbfa686e00295e427bae676d480f127f0de0744c7438326c310e",
@@ -62,7 +62,7 @@
     "description": "a2b575cdee0715ec7c53fd39b90e06870cb8d9812fa6ce9af844b4722e9b1d3c"
   },
   "en/gen-index.md": {
-    "content": "e87da548e46b5c00253ce37d1c909526e8e9f11bec72c1c000f77d16d7ff82a4",
+    "content": "7052288a4608dd59815c8c63a73625103778bf794db19fd58d252eef948b8e2c",
     "description": "146b2a9eac7d4675a0811735c0325ae03162004c1f9d9374b9677ec3bc43c41d"
   },
   "en/glossary.md": {
@@ -84,6 +84,12 @@
   "en/installation.md": {
     "content": "1991a276aba5e312cf9974658d0dd650c02f359a326e46ea8a3d57d48cf22f0b",
     "description": "f04399cb846fac429cc04b632d1189f2c8679c35273dd5a24707bf8e818c7c76"
+  },
+  "en/internal-certificate.md": {
+    "content": "6fe51123f488b10f38e09e50fc4670450ed385f127af59e193cbb2beb0300adb",
+    "description": "abbee5626fcd2ad8729a7c776c6cecb75e45993bed0f6e7ba72e47b8f9f42d8d",
+    "seed_hash": "abbee5626fcd2ad8729a7c776c6cecb75e45993bed0f6e7ba72e47b8f9f42d8d",
+    "source_docstring": "051e6d4655539bd43ae449c8672b8acd424182921b807814bce38464e5121c0a"
   },
   "en/internal-checks.md": {
     "content": "a2c0d923d58841ed065cdf2746408af0eca51fc557e1b351e370035c31b7e9fa",
@@ -118,6 +124,12 @@
     "content": "ac9a74b03b9ab0eac01f9e8eea9320a01a0709962f716c40fb12bf227173f523",
     "description": "c571ef36f3daddf677d7321cee088f19cdfe4b738b6da5ce29d6fb8b4a8d669d",
     "source_docstring": "185fce9896a3dce53b36666bf471008bed4de9309dc2dd78c3f15b761dcfcb6d"
+  },
+  "en/internal-options.md": {
+    "content": "7b5fb96e8e5a5772a3d4ae4f9823ccc1c53979850e09c9536bea517280d57294",
+    "description": "bcce05a0bb43e98a8cd09d5c672407711ceec8022d70ecd3cad96d60b24b4041",
+    "seed_hash": "bcce05a0bb43e98a8cd09d5c672407711ceec8022d70ecd3cad96d60b24b4041",
+    "source_docstring": "d33d30164e0cc5e6d1273b07c765ee370bb6ec3cf2443e1790f3a120cb619781"
   },
   "en/internal-registrydump.md": {
     "content": "7fe7f841051ab1bc92dc3534b057d72be086994e2fe5529b9690fcdff1fd9ee4",
@@ -204,8 +216,8 @@
     "description": "1c5ae80652433bf1ea6d4842406f5eddf64116aaf15ae47166a504e8d52b08bc"
   },
   "en/rlsbl-integration.md": {
-    "content": "b841447401afb1f6e59eb3415d80d4f9ecb63eff6a58ad61cf6fbeeb680115c7",
-    "description": "0338f9b3816dfcaf2d153a6f3fa9273702efe1fe5515c9dae3352133b830e7c1"
+    "content": "2f6b9dbe590c065267d162e6591a0ddd3824c7bf2bb4ce9e85e719a8044c0cce",
+    "description": "781e67931a919a751c26df14180576d02168f2b30e7b172516ed6fac501533d3"
   },
   "en/rules.md": {
     "content": "35d365dfec0efcbbf847430097add81d00b7c54dde76e5179b988e80249078a6",
@@ -231,6 +243,10 @@
     "content": "30783cd41e1d7527bd59f5523425a1b1caf9c7b674288aeb74ac1f8e7861823d",
     "description": "09fa02da2f77d2ed223db4ceb7bfc45da6b4cdad32c3337ff3028f97bbc7d312"
   },
+  "en/rules/deps-stale.md": {
+    "content": "fcd2354f6cf5e7929916f2b618c97246e82fdf5f35d885d0c74fbd249d8983b9",
+    "description": "9d5456d736d5294f26c9fdb6edc0989e1aa74d196f9952b082f2fc1ec7ab3c7c"
+  },
   "en/rules/deps-undeclared.md": {
     "content": "ff437e6d16d6670321f93468a6dc47c8eb72ab0e08d7cdc2c89fb36cc166743a",
     "description": "7717831e8d2c06676f00a619dad0ef09e8d50c2aa55e80e728229cd5bcd1fc3d"
@@ -238,6 +254,14 @@
   "en/rules/deps-unused.md": {
     "content": "61ca892fe7c56f8187c809115f2a608f7ac2262b72843d0405155976a75d70d8",
     "description": "bb20e42cbe25febfd264fafdd187763b6b83b02f9368e3b09fc84326f5911434"
+  },
+  "en/rules/format-scope-guard.md": {
+    "content": "a4fbe2c0e268d3cefa2d3a09157094607f861e3daeb232dfe891704c0d450145",
+    "description": "1b7c8bbd62a26e3adc0e3ebb40c9c0765e8a781fdf2cd456ee82c089b3e4ebe2"
+  },
+  "en/rules/format.md": {
+    "content": "d4d4819d7e5504db4be4d62a4bafc40354e9f242b39552eb239fbca91fee62b8",
+    "description": "35a051dc365ff9d69cdc27fae91aa6b539ca384cded06e51165008b82bfa29cf"
   },
   "en/rules/import-cycles.md": {
     "content": "0ed5f2319cf4fe95b307d1608a8b075de360132983251937e1684654df124220",
@@ -259,9 +283,29 @@
     "content": "1ee7dda511e03dc6de717771d46c17ff924e5574edc5e8bab1a26ea389192dcd",
     "description": "1fdd88ac953c94f6db0b1f7e8cb6588a7cbb952628c1fb00f274129961b384f0"
   },
+  "en/rules/lint-scope-guard.md": {
+    "content": "36c0219de4ae34f145a565123d2d43fbe2e930f6384e4ddcf2aae8fc017c36f0",
+    "description": "16b17e55a34738df8fc701c08bf073a8f0da85556a6068c5dd16969106d3c1f1"
+  },
+  "en/rules/lint.md": {
+    "content": "b022e048a0a03a3b636a5f4579fb828684e048e6e0c85ba5005ec33d3c75f82e",
+    "description": "336c04e9e82aabceeb2082e087813c4e5f0ac4447de9892bb83699a86bf8d23a"
+  },
   "en/rules/stale-suppression.md": {
     "content": "ed197752f70592a177c68f46b9baa6ac85b001ae74960b14dbd427e9fb140f1f",
     "description": "1badcf81689c423c0a74f2bf479f92f298bf30b4058644f5819bc0240bf41bf8"
+  },
+  "en/rules/strictspec-certificate.md": {
+    "content": "fe41e180b15c55ab00e2700fbdc80ecfc939ff39f26cbdf6631e570346ccb884",
+    "description": "54780182fc9e1e5a14d7508212256913f4c3ccdbd6d2e408103c9d28c8c6726a"
+  },
+  "en/rules/type-check-scope-guard.md": {
+    "content": "d57baa813e9d68be8feb2bb51fb53bd6165b91a5598071314dd24b0cf131a1eb",
+    "description": "bdcf3ac554790cb13bb55bb33f76cd62422ce04cc7f5ba25faa259f4d1f54381"
+  },
+  "en/rules/type-check.md": {
+    "content": "ee0f290695f1be3465b30df71456b0edefc39edb1a7a0d64a54e1f45555b449f",
+    "description": "80fbe01bb43515ae37983714bffe3c2fa3eef25894d458cdadc9f13504130f00"
   },
   "en/rules/unreachable-code.md": {
     "content": "ac4c4fc5f9df14bdfb8a24745082efb95b60320761e3ff1bff46da4906faa4eb",
