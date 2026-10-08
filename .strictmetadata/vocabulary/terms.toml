@@ -25,6 +25,10 @@ word = "scip"
 meaning = "SCIP, Sourcegraph's language-agnostic code index of definitions, references, and symbols, listed in strictcode's prior art."
 
 [[accepted]]
+word = "src"
+meaning = "the conventional source directory name, as a path segment"
+
+[[accepted]]
 word = "strictcode"
 meaning = "This project: a source-analysis tool that builds an import and call graph for Python, Go, and TypeScript and checks it against declared rules."
 
