@@ -23,3 +23,5 @@ benchmark/binding-eval/binding-eval
 /strictcode
 go.work
 go.work.sum
+
+coverage/
