@@ -35,16 +35,19 @@ strictcode fix . --apply       # apply them, verified against the re-extracted g
 | `analyze` | Analyze a project or workspace directory and report findings |
 | `fix` | Apply tier-1 (guaranteed behavior-preserving) fixes with post-fix graph re-verification |
 | **registry** | Rule registry artifacts (mint-once IDs and retired-rule records) |
+| `registry rules` | Print every rule strictcode implements, by rule ID, with its strictcode:<rule id> option (ranking, default, scope, and subject document); with --json the list is the payload |
 | `registry dump` | Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON |
 
-Configuration lives in `strictcode.toml` at the analyzed directory: rule toggles, severities,
-analysis modes, and suppressions, each with a mandatory reason.
+Every rule is an option, `strictcode:<rule id>`, filed under `.strictmetadata/options/`: its
+default is the rule's severity, and an entry switches it off or to another severity. Declarations
+live in `strictcode.toml` at the analyzed directory: analysis modes, allow lists, suppressions each
+with a mandatory reason, the Python tools some rules run, and the strictspec certificate.
 
 ## Documentation
 
 The documentation site covers the graph model, every rule, configuration, the support matrix by
 language, and the decisions behind the design, including the alternatives that were rejected. Its
-source is in `stricttools/docs/`.
+source is in `.strictmetadata/docs/`.
 
 ## License
 

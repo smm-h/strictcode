@@ -187,6 +187,11 @@
         },
         {
           "level": 2,
+          "text": "`registry rules`",
+          "anchor": "registry-rules"
+        },
+        {
+          "level": 2,
           "text": "`registry dump`",
           "anchor": "registry-dump"
         },
@@ -263,6 +268,11 @@
         },
         {
           "level": 2,
+          "text": "registry rules",
+          "anchor": "registry-rules"
+        },
+        {
+          "level": 2,
           "text": "registry dump",
           "anchor": "registry-dump"
         },
@@ -319,6 +329,11 @@
         },
         {
           "level": 2,
+          "text": "Options",
+          "anchor": "options"
+        },
+        {
+          "level": 2,
           "text": "Top level",
           "anchor": "top-level"
         },
@@ -329,13 +344,18 @@
         },
         {
           "level": 2,
-          "text": "Groups",
-          "anchor": "groups"
+          "text": "Rules",
+          "anchor": "rules"
         },
         {
           "level": 2,
-          "text": "Rules",
-          "anchor": "rules"
+          "text": "Python tools",
+          "anchor": "python-tools"
+        },
+        {
+          "level": 2,
+          "text": "strictspec certificate",
+          "anchor": "strictspec-certificate"
         },
         {
           "level": 2,
@@ -738,6 +758,38 @@
       ]
     },
     {
+      "path": "internal-certificate.md",
+      "title": "internal/certificate",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/certificate",
+          "anchor": "internalcertificate"
+        },
+        {
+          "level": 2,
+          "text": "`internal/certificate`",
+          "anchor": "internalcertificate"
+        },
+        {
+          "level": 3,
+          "text": "`ErrNoCertificate`",
+          "anchor": "errnocertificate"
+        },
+        {
+          "level": 3,
+          "text": "`Blocker`",
+          "anchor": "blocker"
+        },
+        {
+          "level": 3,
+          "text": "`Evaluate`",
+          "anchor": "evaluate"
+        }
+      ]
+    },
+    {
       "path": "internal-checks.md",
       "title": "internal/checks",
       "type": "doc",
@@ -751,6 +803,26 @@
           "level": 2,
           "text": "`internal/checks`",
           "anchor": "internalchecks"
+        },
+        {
+          "level": 3,
+          "text": "`ToolTimeout`",
+          "anchor": "tooltimeout"
+        },
+        {
+          "level": 3,
+          "text": "`ToolRun`",
+          "anchor": "toolrun"
+        },
+        {
+          "level": 3,
+          "text": "`ToolResult`",
+          "anchor": "toolresult"
+        },
+        {
+          "level": 3,
+          "text": "`ToolRunner`",
+          "anchor": "toolrunner"
         },
         {
           "level": 3,
@@ -816,6 +888,16 @@
         },
         {
           "level": 3,
+          "text": "`PythonTool`",
+          "anchor": "pythontool"
+        },
+        {
+          "level": 3,
+          "text": "`Certificate`",
+          "anchor": "certificate"
+        },
+        {
+          "level": 3,
           "text": "`Analysis`",
           "anchor": "analysis"
         },
@@ -838,6 +920,11 @@
           "level": 3,
           "text": "`Parse`",
           "anchor": "parse"
+        },
+        {
+          "level": 3,
+          "text": "`PythonTool.RootPaths`",
+          "anchor": "pythontoolrootpaths"
         },
         {
           "level": 3,
@@ -868,13 +955,28 @@
         },
         {
           "level": 3,
+          "text": "`Inputs`",
+          "anchor": "inputs"
+        },
+        {
+          "level": 3,
           "text": "`Result`",
           "anchor": "result"
         },
         {
           "level": 3,
+          "text": "`Load`",
+          "anchor": "load"
+        },
+        {
+          "level": 3,
           "text": "`Analyze`",
           "anchor": "analyze"
+        },
+        {
+          "level": 3,
+          "text": "`ExecRunner`",
+          "anchor": "execrunner"
         }
       ]
     },
@@ -937,6 +1039,11 @@
           "level": 3,
           "text": "`Extract`",
           "anchor": "extract"
+        },
+        {
+          "level": 3,
+          "text": "`DependencyMember`",
+          "anchor": "dependencymember"
         },
         {
           "level": 3,
@@ -1061,8 +1168,145 @@
         },
         {
           "level": 3,
+          "text": "`DeclarationsPath`",
+          "anchor": "declarationspath"
+        },
+        {
+          "level": 3,
+          "text": "`DeclarationsHeader`",
+          "anchor": "declarationsheader"
+        },
+        {
+          "level": 3,
+          "text": "`Workspace`",
+          "anchor": "workspace"
+        },
+        {
+          "level": 3,
           "text": "`Write`",
           "anchor": "write"
+        }
+      ]
+    },
+    {
+      "path": "internal-options.md",
+      "title": "internal/options",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "internal/options",
+          "anchor": "internaloptions"
+        },
+        {
+          "level": 2,
+          "text": "`internal/options`",
+          "anchor": "internaloptions"
+        },
+        {
+          "level": 3,
+          "text": "`Namespace`",
+          "anchor": "namespace"
+        },
+        {
+          "level": 3,
+          "text": "`Error`",
+          "anchor": "error"
+        },
+        {
+          "level": 3,
+          "text": "`Warn`",
+          "anchor": "warn"
+        },
+        {
+          "level": 3,
+          "text": "`Off`",
+          "anchor": "off"
+        },
+        {
+          "level": 3,
+          "text": "`Value`",
+          "anchor": "value"
+        },
+        {
+          "level": 3,
+          "text": "`Resolved`",
+          "anchor": "resolved"
+        },
+        {
+          "level": 3,
+          "text": "`ID`",
+          "anchor": "id"
+        },
+        {
+          "level": 3,
+          "text": "`EntryFile`",
+          "anchor": "entryfile"
+        },
+        {
+          "level": 3,
+          "text": "`SwitchOff`",
+          "anchor": "switchoff"
+        },
+        {
+          "level": 3,
+          "text": "`Ranking`",
+          "anchor": "ranking"
+        },
+        {
+          "level": 3,
+          "text": "`Default`",
+          "anchor": "default"
+        },
+        {
+          "level": 3,
+          "text": "`Scope`",
+          "anchor": "scope"
+        },
+        {
+          "level": 3,
+          "text": "`Severity`",
+          "anchor": "severity"
+        },
+        {
+          "level": 3,
+          "text": "`Registry`",
+          "anchor": "registry"
+        },
+        {
+          "level": 3,
+          "text": "`Checked`",
+          "anchor": "checked"
+        },
+        {
+          "level": 3,
+          "text": "`Defaults`",
+          "anchor": "defaults"
+        },
+        {
+          "level": 3,
+          "text": "`Load`",
+          "anchor": "load"
+        },
+        {
+          "level": 3,
+          "text": "`Resolved.Value`",
+          "anchor": "resolvedvalue"
+        },
+        {
+          "level": 3,
+          "text": "`Resolved.ValueFor`",
+          "anchor": "resolvedvaluefor"
+        },
+        {
+          "level": 3,
+          "text": "`Resolved.Runs`",
+          "anchor": "resolvedruns"
+        },
+        {
+          "level": 3,
+          "text": "`Resolved.OnPaths`",
+          "anchor": "resolvedonpaths"
         }
       ]
     },
@@ -1088,8 +1332,43 @@
         },
         {
           "level": 3,
+          "text": "`RulesFormatVersion`",
+          "anchor": "rulesformatversion"
+        },
+        {
+          "level": 3,
+          "text": "`RulesSchema`",
+          "anchor": "rulesschema"
+        },
+        {
+          "level": 3,
+          "text": "`RuleOption`",
+          "anchor": "ruleoption"
+        },
+        {
+          "level": 3,
+          "text": "`RuleEntry`",
+          "anchor": "ruleentry"
+        },
+        {
+          "level": 3,
+          "text": "`RulesList`",
+          "anchor": "ruleslist"
+        },
+        {
+          "level": 3,
           "text": "`RegistryJSON`",
           "anchor": "registryjson"
+        },
+        {
+          "level": 3,
+          "text": "`Rules`",
+          "anchor": "rules"
+        },
+        {
+          "level": 3,
+          "text": "`RenderRules`",
+          "anchor": "renderrules"
         }
       ]
     },
@@ -1464,11 +1743,6 @@
         },
         {
           "level": 3,
-          "text": "`GroupConfig`",
-          "anchor": "groupconfig"
-        },
-        {
-          "level": 3,
           "text": "`RuleConfig`",
           "anchor": "ruleconfig"
         },
@@ -1476,6 +1750,16 @@
           "level": 3,
           "text": "`Suppression`",
           "anchor": "suppression"
+        },
+        {
+          "level": 3,
+          "text": "`PythonTool`",
+          "anchor": "pythontool"
+        },
+        {
+          "level": 3,
+          "text": "`StrictspecCertificate`",
+          "anchor": "strictspeccertificate"
         },
         {
           "level": 3,
@@ -1499,13 +1783,18 @@
         },
         {
           "level": 3,
-          "text": "`Config.WithGroups`",
-          "anchor": "configwithgroups"
+          "text": "`Config.WithRules`",
+          "anchor": "configwithrules"
         },
         {
           "level": 3,
-          "text": "`Config.WithRules`",
-          "anchor": "configwithrules"
+          "text": "`Config.WithPythonTools`",
+          "anchor": "configwithpythontools"
+        },
+        {
+          "level": 3,
+          "text": "`Config.WithStrictspecCertificate`",
+          "anchor": "configwithstrictspeccertificate"
         },
         {
           "level": 3,
@@ -1516,26 +1805,6 @@
           "level": 3,
           "text": "`Analysis.WithPythonTypeChecker`",
           "anchor": "analysiswithpythontypechecker"
-        },
-        {
-          "level": 3,
-          "text": "`GroupConfig.WithEnabled`",
-          "anchor": "groupconfigwithenabled"
-        },
-        {
-          "level": 3,
-          "text": "`GroupConfig.WithSeverity`",
-          "anchor": "groupconfigwithseverity"
-        },
-        {
-          "level": 3,
-          "text": "`RuleConfig.WithEnabled`",
-          "anchor": "ruleconfigwithenabled"
-        },
-        {
-          "level": 3,
-          "text": "`RuleConfig.WithSeverity`",
-          "anchor": "ruleconfigwithseverity"
         },
         {
           "level": 3,
@@ -1586,6 +1855,26 @@
           "level": 3,
           "text": "`Suppression.WithMember`",
           "anchor": "suppressionwithmember"
+        },
+        {
+          "level": 3,
+          "text": "`PythonTool.WithPaths`",
+          "anchor": "pythontoolwithpaths"
+        },
+        {
+          "level": 3,
+          "text": "`PythonTool.WithCwd`",
+          "anchor": "pythontoolwithcwd"
+        },
+        {
+          "level": 3,
+          "text": "`StrictspecCertificate.WithCertificate`",
+          "anchor": "strictspeccertificatewithcertificate"
+        },
+        {
+          "level": 3,
+          "text": "`StrictspecCertificate.WithAdjudication`",
+          "anchor": "strictspeccertificatewithadjudication"
         }
       ]
     },
@@ -2992,8 +3281,33 @@
         },
         {
           "level": 3,
+          "text": "`SourceRegistry`",
+          "anchor": "sourceregistry"
+        },
+        {
+          "level": 3,
+          "text": "`SourcePath`",
+          "anchor": "sourcepath"
+        },
+        {
+          "level": 3,
+          "text": "`SourceWorkspace`",
+          "anchor": "sourceworkspace"
+        },
+        {
+          "level": 3,
+          "text": "`DeclarationsFile`",
+          "anchor": "declarationsfile"
+        },
+        {
+          "level": 3,
           "text": "`DepScope`",
           "anchor": "depscope"
+        },
+        {
+          "level": 3,
+          "text": "`DepSource`",
+          "anchor": "depsource"
         },
         {
           "level": 3,
@@ -3022,8 +3336,18 @@
         },
         {
           "level": 3,
+          "text": "`ParseRequirement`",
+          "anchor": "parserequirement"
+        },
+        {
+          "level": 3,
           "text": "`ParseGoMod`",
           "anchor": "parsegomod"
+        },
+        {
+          "level": 3,
+          "text": "`IsInside`",
+          "anchor": "isinside"
         },
         {
           "level": 3,
@@ -3044,6 +3368,16 @@
           "level": 3,
           "text": "`Workspace.MemberByName`",
           "anchor": "workspacememberbyname"
+        },
+        {
+          "level": 3,
+          "text": "`Workspace.MemberAt`",
+          "anchor": "workspacememberat"
+        },
+        {
+          "level": 3,
+          "text": "`Workspace.Owner`",
+          "anchor": "workspaceowner"
         }
       ]
     },
@@ -3061,6 +3395,11 @@
           "level": 2,
           "text": "From the donor",
           "anchor": "from-the-donor"
+        },
+        {
+          "level": 2,
+          "text": "From the rlsbl port",
+          "anchor": "from-the-rlsbl-port"
         },
         {
           "level": 2,
@@ -3253,8 +3592,8 @@
         },
         {
           "level": 2,
-          "text": "Lineage",
-          "anchor": "lineage"
+          "text": "Origin",
+          "anchor": "origin"
         },
         {
           "level": 2,
@@ -3372,6 +3711,33 @@
       ]
     },
     {
+      "path": "rules/deps-stale.md",
+      "title": "deps-stale",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`deps-stale`",
+          "anchor": "deps-stale"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
       "path": "rules/deps-undeclared.md",
       "title": "deps-undeclared",
       "type": "doc",
@@ -3417,6 +3783,60 @@
           "level": 2,
           "text": "Lineage",
           "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/format-scope-guard.md",
+      "title": "format-scope-guard",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`format-scope-guard`",
+          "anchor": "format-scope-guard"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/format.md",
+      "title": "format",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`format`",
+          "anchor": "format"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
         },
         {
           "level": 2,
@@ -3550,13 +3970,67 @@
         },
         {
           "level": 2,
-          "text": "Lineage",
-          "anchor": "lineage"
+          "text": "Origin",
+          "anchor": "origin"
         },
         {
           "level": 2,
           "text": "Configuring",
           "anchor": "configuring"
+        }
+      ]
+    },
+    {
+      "path": "rules/lint-scope-guard.md",
+      "title": "lint-scope-guard",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`lint-scope-guard`",
+          "anchor": "lint-scope-guard"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/lint.md",
+      "title": "lint",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`lint`",
+          "anchor": "lint"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
         }
       ]
     },
@@ -3579,6 +4053,87 @@
           "level": 2,
           "text": "Lineage",
           "anchor": "lineage"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/strictspec-certificate.md",
+      "title": "strictspec-certificate",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`strictspec-certificate`",
+          "anchor": "strictspec-certificate"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/type-check-scope-guard.md",
+      "title": "type-check-scope-guard",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`type-check-scope-guard`",
+          "anchor": "type-check-scope-guard"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
+        },
+        {
+          "level": 2,
+          "text": "Suppressing",
+          "anchor": "suppressing"
+        }
+      ]
+    },
+    {
+      "path": "rules/type-check.md",
+      "title": "type-check",
+      "type": "doc",
+      "headings": [
+        {
+          "level": 1,
+          "text": "`type-check`",
+          "anchor": "type-check"
+        },
+        {
+          "level": 2,
+          "text": "Semantics",
+          "anchor": "semantics"
+        },
+        {
+          "level": 2,
+          "text": "Origin",
+          "anchor": "origin"
         },
         {
           "level": 2,
@@ -3702,7 +4257,7 @@
     }
   ],
   "posts": [],
-  "last_gen": "2026-09-29T14:37:25.906251+00:00",
+  "last_gen": "2026-10-08T19:27:40.755541+00:00",
   "theme": "minimal",
   "vocabulary": {
     "accepted": [
@@ -3731,6 +4286,10 @@
         "aliases": []
       },
       {
+        "word": "src",
+        "aliases": []
+      },
+      {
         "word": "strictcode",
         "aliases": []
       },
@@ -3740,6 +4299,10 @@
       },
       {
         "word": "stricttools",
+        "aliases": []
+      },
+      {
+        "word": "tsconfig's",
         "aliases": []
       }
     ],

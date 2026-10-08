@@ -11,6 +11,12 @@ nav_order = 3
 
 Rule registry artifacts (mint-once IDs and retired-rule records)
 
+## registry rules
+
+Print every rule strictcode implements, by rule ID, with its strictcode:<rule id> option (ranking, default, scope, and subject document); with --json the list is the payload
+
+**Effect:** read_only
+
 ## registry dump
 
 Write the committed registry dump (rules with their per-language support cells, groups, and retired-rule records) as JSON

@@ -11,6 +11,7 @@ nav_order = 90
 
 - [cmd/strictcode](../cmd-strictcode/)
 - [cmd/vocabgen](../cmd-vocabgen/)
+- [internal/certificate](../internal-certificate/)
 - [internal/checks](../internal-checks/)
 - [internal/config](../internal-config/)
 - [internal/engine](../internal-engine/)
@@ -18,6 +19,7 @@ nav_order = 90
 - [internal/findings](../internal-findings/)
 - [internal/fix](../internal-fix/)
 - [internal/fixture](../internal-fixture/)
+- [internal/options](../internal-options/)
 - [internal/registrydump](../internal-registrydump/)
 - [internal/relation](../internal-relation/)
 - [internal/rules](../internal-rules/)
