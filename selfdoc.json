@@ -15,10 +15,15 @@
     {"path": "internal/", "language": "go"},
     {"path": "cmd/", "language": "go"}
   ],
-  "docs": "stricttools/docs/",
-  "output": "stricttools/.docs-cache/build/",
+  "docs": ".strictmetadata/docs/",
+  "output": ".strictmetadata/.docs-cache/build/",
   "root_files": [
-    "stricttools/docs/_README.md"
+    {
+      "template": ".strictmetadata/docs/_README.md",
+      "outputs": [
+        "README.md"
+      ]
+    }
   ],
   "directives": {
     "rule-table": "scripts/directives/rule_table.py",
