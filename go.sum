@@ -1,5 +1,13 @@
 github.com/BurntSushi/toml v1.6.0 h1:dRaEfpa2VI55EwlIW72hMRHdWouJeRF7TPYhI+AUQjk=
 github.com/BurntSushi/toml v1.6.0/go.mod h1:ukJfTF/6rtPPRCnwkur4qwRxa8vTRFBF0uk2lLoLwho=
+github.com/cgofree/tree-sitter v0.1.0 h1:cKJnL4+OIphPEn/fes2+Pd7C65FyWYUEcbbGdKRpmgU=
+github.com/cgofree/tree-sitter v0.1.0/go.mod h1:6g9HzBnpiyU6f4bWL9mj4O8SnYPq2jsUdZsN9LEfJoc=
+github.com/cgofree/tree-sitter-go v0.1.0 h1:57XHQN565k9+YOZq9zieLx2377h6O1cAqOupswTxmA0=
+github.com/cgofree/tree-sitter-go v0.1.0/go.mod h1:pDv2+l5tg8WFPXYlNptcPhjpZdsxc/mwCyhEs/wM+W4=
+github.com/cgofree/tree-sitter-python v0.1.0 h1:fYZnFCInjFM3+UjvfIxsHAF3aVTY817qGTKhPp9Zz1w=
+github.com/cgofree/tree-sitter-python v0.1.0/go.mod h1:2MpF93e/xcGiLwZ1BlmZ67ugCtRCc1jolCr5jp0kqEk=
+github.com/cgofree/tree-sitter-typescript v0.1.0 h1:/EytL78NX4Gcb82hkV0tVe7quxcvvSRuPBRVpyFkQeY=
+github.com/cgofree/tree-sitter-typescript v0.1.0/go.mod h1:gOcwLWrsmJtnHaZ1amcCVnLRRmhEuyALuSD3Dn/bwkM=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3 h1:1EYB5IzjZawrrnELUi78f9fPu57HuXjmddZPjrls/28=
 github.com/santhosh-tekuri/jsonschema/v6 v6.0.3/go.mod h1:JXeL+ps8p7/KNMjDQk3TCwPpBy0wYklyWTfbkIzdIFU=
 github.com/smm-h/go-toml-edit v0.4.0 h1:SewwlafoSSxp2O52Ro5S/xC74vutGoUo84Sa7GcbMJQ=

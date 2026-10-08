@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	strictcode "github.com/smm-h/strictcode"
 	"github.com/smm-h/strictcode/internal/engine"
@@ -168,7 +169,7 @@ func analyzeHandler(ctx *strictcli.Context, kwargs map[string]interface{}) stric
 	}
 	ctx.Payload(doc)
 	if !ctx.JSON() {
-		fmt.Print(findings.RenderText(res.Findings))
+		ctx.Out(strings.TrimSuffix(findings.RenderText(res.Findings), "\n"))
 	}
 	if findings.FailRun(res.Findings) {
 		return strictcli.Exit(1)
@@ -199,14 +200,14 @@ func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli
 	}
 	plans := fix.PlanUnreachableRemovals(res, in.Cfg, in.Opts)
 	if len(plans) == 0 {
-		fmt.Println("no tier-1 fixes to apply")
+		ctx.Out("no tier-1 fixes to apply")
 		return strictcli.Exit(0)
 	}
 	for _, p := range plans {
-		fmt.Printf("%s: %s [%s] (bytes %d..%d)\n", p.File, p.Description, p.Rule, p.Start, p.End)
+		ctx.Out(fmt.Sprintf("%s: %s [%s] (bytes %d..%d)", p.File, p.Description, p.Rule, p.Start, p.End))
 	}
 	if !apply {
-		fmt.Printf("%d fix(es) planned (preview; pass --apply to write)\n", len(plans))
+		ctx.Out(fmt.Sprintf("%d fix(es) planned (preview; pass --apply to write)", len(plans)))
 		return strictcli.Exit(0)
 	}
 	report, err := fix.Apply(ws, res, plans)
@@ -214,7 +215,7 @@ func fixHandler(ctx *strictcli.Context, kwargs map[string]interface{}) strictcli
 		ctx.Error(err.Error())
 		return strictcli.Exit(2)
 	}
-	fmt.Printf("applied %d fix(es) across %d file(s); post-fix graph verified\n", len(report.Applied), report.FilesEdited)
+	ctx.Out(fmt.Sprintf("applied %d fix(es) across %d file(s); post-fix graph verified", len(report.Applied), report.FilesEdited))
 	return strictcli.Exit(0)
 }
 
@@ -224,7 +225,7 @@ func registryRulesHandler(ctx *strictcli.Context, kwargs map[string]interface{})
 	list := registrydump.Rules(strictcode.Version)
 	ctx.Payload(list)
 	if !ctx.JSON() {
-		fmt.Print(registrydump.RenderRules(list))
+		ctx.Out(strings.TrimSuffix(registrydump.RenderRules(list), "\n"))
 	}
 	return strictcli.Exit(0)
 }
