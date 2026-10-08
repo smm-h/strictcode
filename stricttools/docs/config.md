@@ -88,8 +88,8 @@ paths = ["src", "tests"]
 ```
 
 A `[python_tools.<rule>]` declaration names which command `lint`, `format`, or `type-check` runs
-over which paths: `uv run ruff check`, `uv run ruff format --check`, or `uv run mypy`, in `cwd`
-over `paths`. Paths are canonical and relative to `cwd`, and `cwd` is relative to the workspace
+over which paths: `ruff check`, `ruff format --check`, or `mypy`, each through
+`uv run --frozen --no-sync`, in `cwd` over `paths`. Paths are canonical and relative to `cwd`, and `cwd` is relative to the workspace
 root. A declaration runs nothing on its own: the rule's option decides for which members it runs,
 and a member whose option is on but whose directory no declared path lies in is refused, naming
 the member's path. See the [lint](../rules/lint/), [format](../rules/format/), and

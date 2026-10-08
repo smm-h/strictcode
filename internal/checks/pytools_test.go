@@ -10,8 +10,8 @@ import (
 	"github.com/smm-h/strictcode/internal/fixture"
 )
 
-// fakeTools answers tool runs by the argv after "uv run" and any group
-// flags, recording every run.
+// fakeTools answers tool runs by the argv after "uv run --frozen --no-sync"
+// and any group flags, recording every run.
 type fakeTools struct {
 	t       *testing.T
 	answers map[string]ToolResult
@@ -26,13 +26,13 @@ func newFakeTools(t *testing.T) *fakeTools {
 
 func (f *fakeTools) run(run ToolRun) (ToolResult, error) {
 	f.runs = append(f.runs, run)
-	if len(run.Argv) < 2 || run.Argv[0] != "uv" || run.Argv[1] != "run" {
-		f.t.Fatalf("a tool must run through uv run: %v", run.Argv)
+	if len(run.Argv) < 4 || !reflect.DeepEqual(run.Argv[:4], []string{"uv", "run", "--frozen", "--no-sync"}) {
+		f.t.Fatalf("a tool must run through uv run --frozen --no-sync: %v", run.Argv)
 	}
 	if run.Timeout != ToolTimeout {
 		f.t.Errorf("tool run without the tool timeout: %v", run.Timeout)
 	}
-	rest := run.Argv[2:]
+	rest := run.Argv[4:]
 	for len(rest) >= 2 && (rest[0] == "--group" || rest[0] == "--extra") {
 		rest = rest[2:]
 	}
@@ -57,11 +57,12 @@ func (f *fakeTools) toolRun(sub string) ToolRun {
 	return ToolRun{}
 }
 
-// pyProject is a single-project Python fixture with the given strictcode.toml
-// and options entries.
+// pyProject is a single-project Python fixture, its environment created,
+// with the given strictcode.toml and options entries.
 func pyProject(strictcodeToml string, entries map[string]string) map[string]string {
 	files := map[string]string{
 		"pyproject.toml":   "[project]\nname = \"p\"\nversion = \"0.1.0\"\n",
+		".venv/":           "",
 		"pkg/__init__.py":  "",
 		"tests/test_a.py":  "import pkg\n",
 		"strictcode.toml":  "format_version = 1\n" + strictcodeToml,
@@ -221,12 +222,13 @@ func strconvQuote(s string) string {
 }
 
 // Lesson 35: the composed command lines, verbatim, and the directory each
-// runs in.
+// runs in. --frozen --no-sync keep uv from syncing the environment or
+// rewriting uv.lock, so analyze writes nothing.
 func TestLesson35ToolCommandLines(t *testing.T) {
 	cases := map[string][]string{
-		"lint":       {"uv", "run", "ruff", "check", "--output-format=json", "--quiet", "pkg", "tests"},
-		"format":     {"uv", "run", "ruff", "format", "--check", "pkg", "tests"},
-		"type-check": {"uv", "run", "mypy", "pkg", "tests"},
+		"lint":       {"uv", "run", "--frozen", "--no-sync", "ruff", "check", "--output-format=json", "--quiet", "pkg", "tests"},
+		"format":     {"uv", "run", "--frozen", "--no-sync", "ruff", "format", "--check", "pkg", "tests"},
+		"type-check": {"uv", "run", "--frozen", "--no-sync", "mypy", "pkg", "tests"},
 	}
 	for rule, want := range cases {
 		t.Run(rule, func(t *testing.T) {
@@ -235,7 +237,7 @@ func TestLesson35ToolCommandLines(t *testing.T) {
 			if _, err := analyzeWith(t, files, tools.run); err != nil {
 				t.Fatal(err)
 			}
-			run := tools.toolRun(strings.Join(want[2:4], " "))
+			run := tools.toolRun(strings.Join(want[4:6], " "))
 			if !reflect.DeepEqual(run.Argv, want) {
 				t.Errorf("argv %v, want %v", run.Argv, want)
 			}
@@ -497,6 +499,7 @@ func TestAToolProblemInAFileNoMemberOwnsIsRefused(t *testing.T) {
 	}
 	files[fixture.DeclarationsPath] = fixture.Workspace("path = \".\"\nname = \"root\"\n", "path = \"core\"\nname = \"core\"\n", "path = \"tools\"\nname = \"tools\"\n")
 	files["pyproject.toml"] = "[project]\nname = \"root\"\nversion = \"1.0.0\"\n"
+	files[".venv/"] = ""
 	files["strictcode.toml"] = "format_version = 1\n[python_tools.lint]\npaths = [\"core\", \"tools\", \"conftest.py\"]\n"
 	fs, err := analyzeWith(t, files, tools.run)
 	if err != nil {
@@ -550,6 +553,58 @@ func TestSwitchingTheOptionOffClearsEachAdoptionRefusal(t *testing.T) {
 			c.files = withFiles(c.files, optionEntry(c.subject, c.rule, c.scope, "off", "error"))
 			if _, err := analyzeWith(t, c.files, newFakeTools(t).run); err != nil {
 				t.Fatalf("switching the option off did not clear the refusal: %v", err)
+			}
+		})
+	}
+}
+
+// A tool rule whose project environment does not exist is refused before any
+// tool runs, since uv run would create it: the refusal names the environment
+// and the uv sync command line that creates it, and creating the environment
+// clears it. A uv workspace member's environment is the workspace root's.
+func TestAMissingEnvironmentIsRefusedNamingTheCommandThatCreatesIt(t *testing.T) {
+	cases := map[string]struct {
+		files      map[string]string
+		rule       string
+		env, sync  string
+		createPath string
+	}{
+		"lint": {
+			pyProject("[python_tools.lint]\npaths = [\"pkg\"]\n", optionEntry("code", "lint", "", "error", "error")),
+			"lint", ".venv", "`uv sync` in .", ".venv/"},
+		"format": {
+			pyProject("[python_tools.format]\npaths = [\"pkg\"]\n", optionEntry("code", "format", "", "error", "error")),
+			"format", ".venv", "`uv sync` in .", ".venv/"},
+		"type-check": {
+			pyProject("[python_tools.type-check]\npaths = [\"pkg\"]\n", optionEntry("code", "type-check", "", "error", "error")),
+			"type-check", ".venv", "`uv sync` in .", ".venv/"},
+		"a dependency group": {
+			withFiles(pyProject("[python_tools.lint]\npaths = [\"pkg\"]\n", optionEntry("code", "lint", "", "error", "error")),
+				map[string]string{"pyproject.toml": "[project]\nname = \"p\"\nversion = \"0.1.0\"\n\n[dependency-groups]\nlint = [\"ruff\"]\n"}),
+			"lint", ".venv", "`uv sync --group lint` in .", ".venv/"},
+		"a uv workspace member": {
+			withFiles(pyProject("[python_tools.lint]\ncwd = \"pkg\"\npaths = [\".\"]\n", optionEntry("code", "lint", "", "error", "error")),
+				map[string]string{
+					"pyproject.toml":     "[project]\nname = \"p\"\nversion = \"0.1.0\"\n\n[tool.uv.workspace]\nmembers = [\"pkg\"]\n",
+					"pkg/pyproject.toml": "[project]\nname = \"pkg\"\nversion = \"0.1.0\"\n",
+					"pkg/.venv/":         "",
+				}),
+			"lint", ".venv", "`uv sync` in pkg", ".venv/"},
+	}
+	for name, c := range cases {
+		t.Run(name, func(t *testing.T) {
+			delete(c.files, ".venv/")
+			tools := newFakeTools(t)
+			_, err := analyzeWith(t, c.files, tools.run)
+			if err == nil || !strings.Contains(err.Error(), c.rule+": ") || !strings.Contains(err.Error(), "the project environment "+c.env+" does not exist") || !strings.Contains(err.Error(), c.sync) {
+				t.Fatalf("a missing environment was not refused naming %s and %s: %v", c.env, c.sync, err)
+			}
+			if len(tools.runs) != 0 {
+				t.Fatalf("a tool ran without its environment: %v", tools.runs)
+			}
+			c.files = withFiles(c.files, map[string]string{c.createPath: ""})
+			if _, err := analyzeWith(t, c.files, newFakeTools(t).run); err != nil {
+				t.Fatalf("creating the environment did not clear the refusal: %v", err)
 			}
 		})
 	}

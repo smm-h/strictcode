@@ -127,16 +127,88 @@ func quoteJoin(items []string) string {
 	return strings.Join(q, ", ")
 }
 
+// uvRun is the start of every command line a Python tool rule runs, and the
+// absolute directory it runs in (the declaration's): `uv run --frozen
+// --no-sync` and the group flags reaching the tool. --frozen and --no-sync
+// keep uv from rewriting uv.lock and from syncing the environment, so
+// analyze writes nothing; uv run still creates a missing project
+// environment, so one that does not exist is refused, naming the uv sync
+// command line that creates it.
+func (ctx *Context) uvRun(plan *toolPlan) ([]string, string, error) {
+	root := ctx.View.WS.Root
+	tool := pythonTools[plan.rule]
+	dir := filepath.Join(root, filepath.FromSlash(plan.decl.Cwd))
+	flags, err := uvGroupFlags(root, plan.decl.Cwd, tool.binary)
+	if err != nil {
+		return nil, "", err
+	}
+	env, err := uvProjectEnvironment(dir)
+	if err != nil {
+		return nil, "", fmt.Errorf("%s: %w", plan.rule, err)
+	}
+	if env != "" {
+		info, err := os.Stat(env)
+		if err != nil && !os.IsNotExist(err) {
+			return nil, "", fmt.Errorf("%s: %w", plan.rule, err)
+		}
+		if err != nil || !info.IsDir() {
+			shown := env
+			if rel, err := filepath.Rel(root, env); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				shown = filepath.ToSlash(rel)
+			}
+			sync := strings.Join(append([]string{"uv", "sync"}, flags...), " ")
+			return nil, "", fmt.Errorf("%s: the project environment %s does not exist, and `uv run` would create it, while analyze writes nothing: create it by running `%s` in %s",
+				plan.rule, shown, sync, plan.decl.Cwd)
+		}
+	}
+	argv := append([]string{"uv", "run", "--frozen", "--no-sync"}, flags...)
+	return argv, dir, nil
+}
+
+// uvProjectEnvironment is the absolute path of the project environment uv
+// run uses from dir, as uv discovers it: the .venv beside the nearest
+// pyproject.toml in dir or above it, or beside the uv workspace root above
+// that project, an ancestor whose pyproject.toml declares
+// [tool.uv.workspace]. The search does not stop at the analyzed root, since
+// uv's does not. It is "" when no pyproject.toml is found, where uv runs
+// without a project and creates no environment.
+func uvProjectEnvironment(dir string) (string, error) {
+	project := ""
+	for d := dir; ; d = filepath.Dir(d) {
+		doc, ok, err := readTOML(filepath.Join(d, "pyproject.toml"))
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			if project == "" {
+				project = d
+			}
+			if tool, has := doc.Field("tool"); has {
+				if uv, has := tool.Field("uv"); has {
+					if _, has := uv.Field("workspace"); has {
+						return filepath.Join(d, ".venv"), nil
+					}
+				}
+			}
+		}
+		if filepath.Dir(d) == d {
+			break
+		}
+	}
+	if project == "" {
+		return "", nil
+	}
+	return filepath.Join(project, ".venv"), nil
+}
+
 // runTool runs the plan's tool with extra arguments before the declared
 // paths, through uv run in the declaration's directory.
 func (ctx *Context) runTool(plan *toolPlan, extra []string) (ToolResult, error) {
 	tool := pythonTools[plan.rule]
-	dir := filepath.Join(ctx.View.WS.Root, filepath.FromSlash(plan.decl.Cwd))
-	flags, err := uvGroupFlags(ctx.View.WS.Root, plan.decl.Cwd, tool.binary)
+	argv, dir, err := ctx.uvRun(plan)
 	if err != nil {
 		return ToolResult{}, err
 	}
-	argv := append([]string{"uv", "run"}, flags...)
 	argv = append(argv, tool.binary)
 	argv = append(argv, tool.args...)
 	argv = append(argv, extra...)
@@ -296,13 +368,11 @@ func checkLint(ctx *Context) []findings.Finding {
 
 // requireRuffMinimum refuses a ruff older than ruffMinimum.
 func (ctx *Context) requireRuffMinimum(plan *toolPlan) error {
-	tool := pythonTools[plan.rule]
-	flags, err := uvGroupFlags(ctx.View.WS.Root, plan.decl.Cwd, tool.binary)
+	argv, dir, err := ctx.uvRun(plan)
 	if err != nil {
 		return err
 	}
-	argv := append(append([]string{"uv", "run"}, flags...), "ruff", "--version")
-	dir := filepath.Join(ctx.View.WS.Root, filepath.FromSlash(plan.decl.Cwd))
+	argv = append(argv, "ruff", "--version")
 	res, err := ctx.Runner(ToolRun{Dir: dir, Argv: argv, Timeout: ToolTimeout})
 	if err != nil {
 		return fmt.Errorf("%s: `%s` did not run: %w", plan.rule, strings.Join(argv, " "), err)

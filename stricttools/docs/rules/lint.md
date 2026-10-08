@@ -11,12 +11,18 @@ nav_order = 150
 
 ## Semantics
 
-`uv run ruff check --output-format=json --quiet <paths>` runs in the declaration's `cwd` over its
-`paths` (see [configuration](../../config/#python-tools)), and each violation in ruff's JSON output
-is one finding, at the file and line ruff names, with ruff's code and message. The `uv run` flags
-reach ruff where the project declares it: `--group <name>` for a dependency group other than
-`dev`, `--extra <name>` for an optional-dependencies extra, and none otherwise or inside a uv
-workspace.
+`uv run --frozen --no-sync ruff check --output-format=json --quiet <paths>` runs in the
+declaration's `cwd` over its `paths` (see [configuration](../../config/#python-tools)), and each
+violation in ruff's JSON output is one finding, at the file and line ruff names, with ruff's code
+and message. The `uv run` flags reach ruff where the project declares it: `--group <name>` for a
+dependency group other than `dev`, `--extra <name>` for an optional-dependencies extra, and none
+otherwise or inside a uv workspace.
+
+`--frozen` and `--no-sync` keep uv from rewriting `uv.lock` and from syncing the project's
+environment, so `strictcode analyze` writes nothing. `uv run` would still create a missing
+environment, so a project environment that does not exist (the `.venv` beside the nearest
+`pyproject.toml` above `cwd`, or beside the uv workspace root it belongs to) is refused before
+any tool runs, naming the `uv sync` command line, with the same flags, that creates it.
 
 The rule is adopted, not on by default: `strictcode:lint` defaults to `off` and takes a path scope
 naming one workspace member's directory. A finding takes the value of the member owning its file,

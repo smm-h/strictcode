@@ -11,12 +11,13 @@ nav_order = 170
 
 ## Semantics
 
-`uv run ruff format --check <paths>` runs in the declaration's `cwd` over its `paths`, and each
-`Would reformat: <file>` line is one finding at that file. ruff exits 1 when it would reformat a
-file; any other non-zero exit, or an exit 1 naming no file, is an error carrying ruff's output.
+`uv run --frozen --no-sync ruff format --check <paths>` runs in the declaration's `cwd` over its
+`paths`, and each `Would reformat: <file>` line is one finding at that file. ruff exits 1 when it
+would reformat a file; any other non-zero exit, or an exit 1 naming no file, is an error carrying
+ruff's output.
 
-Adoption, path scopes, the `uv run` flags, the refusals, and nested members work as for
-[`lint`](../lint/).
+Adoption, path scopes, the `uv run` flags, the refusal of a missing environment, the other
+refusals, and nested members work as for [`lint`](../lint/).
 
 ## Origin
 

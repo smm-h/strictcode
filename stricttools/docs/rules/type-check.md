@@ -11,12 +11,13 @@ nav_order = 190
 
 ## Semantics
 
-`uv run mypy <paths>` runs in the declaration's `cwd` over its `paths`, and each
+`uv run --frozen --no-sync mypy <paths>` runs in the declaration's `cwd` over its `paths`, and each
 `<file>:<line>: error: <message>` line mypy prints is one finding at that file and line. mypy
 exits 1 when it found errors; any other non-zero exit, or an exit 1 with no error line, is an
 error carrying mypy's output. Notes are not findings.
 
-Adoption, path scopes, the `uv run` flags, and the refusals work as for [`lint`](../lint/).
+Adoption, path scopes, the `uv run` flags, the refusal of a missing environment, and the other
+refusals work as for [`lint`](../lint/).
 
 ## Origin
 
