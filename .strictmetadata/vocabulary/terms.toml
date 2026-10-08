@@ -35,3 +35,7 @@ meaning = "The StrictTools schema tool whose TOML schemas validate every machine
 [[accepted]]
 word = "stricttools"
 meaning = "StrictTools, the tool family strictcode belongs to, whose repositories live under stricttools/tools."
+
+[[accepted]]
+word = "tsconfig's"
+meaning = "the possessive of tsconfig, TypeScript's project configuration file"
