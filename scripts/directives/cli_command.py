@@ -1,4 +1,4 @@
-"""cli-command: one strictcode command's arguments and flags, from .strictcli/schema.json.
+"""cli-command: one strictcode command's arguments and flags, from .strictmetadata/.cli-schema/schema.json.
 
 Usage:
   :-: cli-command name="analyze"

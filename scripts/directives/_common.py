@@ -3,7 +3,7 @@
 Every directive renders Markdown from a committed machine-read artifact:
 schema/registry.json (written by `strictcode registry dump`),
 schema/vocabulary.toml, schema/profiles/*.toml, the strictspec schemas under
-schema/strictspec/, and .strictcli/schema.json. None of them recomputes
+schema/strictspec/, and .strictmetadata/.cli-schema/schema.json. None of them recomputes
 anything the Go code decides; each one only formats data. Every missing file,
 unknown key, or malformed value raises, so selfdoc stops the build instead of
 publishing a page with a hole in it.
@@ -16,7 +16,7 @@ from pathlib import Path
 REGISTRY = Path("schema/registry.json")
 VOCABULARY = Path("schema/vocabulary.toml")
 PROFILES = Path("schema/profiles")
-CLI_SCHEMA = Path(".strictcli/schema.json")
+CLI_SCHEMA = Path(".strictmetadata/.cli-schema/schema.json")
 
 
 def load_registry():

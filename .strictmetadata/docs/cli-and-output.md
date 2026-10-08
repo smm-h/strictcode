@@ -8,7 +8,7 @@ nav_order = 310
 
 strictcode's command line is built on strictcli, so flag conventions are enforced when the
 commands are registered, and `--help`, `--json`, and `--dump-schema` come from the framework. The
-tables on this page are rendered from `.strictcli/schema.json`, the schema strictcli dumps.
+tables on this page are rendered from `.strictmetadata/.cli-schema/schema.json`, the schema strictcli dumps.
 
 ## Commands
 
