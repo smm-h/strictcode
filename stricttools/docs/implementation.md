@@ -29,7 +29,7 @@ error-tolerant, and very actively maintained. There is one parsing path, the gra
 tree-sitter trees, and no regular-expression fallback anywhere.
 
 strictcode uses **the cgofree tree-sitter packages**: the official C runtime
-(`github.com/stricttools/cgofree/generated/tree-sitter`) and the official grammars for Python, Go, TypeScript, and TSX,
+(`github.com/cgofree/tree-sitter`) and the official grammars for Python, Go, TypeScript, and TSX,
 each compiled to WebAssembly and translated to Go, with every translation checked against a native
 C build of the same upstream tag. The result is pure Go: building needs no C compiler and works
 with `CGO_ENABLED=0`. The `internal/treesitter` package is the single integration layer. It:
