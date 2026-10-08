@@ -188,7 +188,7 @@ func TestRowValidation(t *testing.T) {
 }
 
 func TestCallsResolutionIsMandatory(t *testing.T) {
-	// stricttools/docs/vocabulary.md: calls.resolution is mandatory, no default.
+	// .strictmetadata/docs/vocabulary.md: calls.resolution is mandatory, no default.
 	b := NewBuilder()
 	r := Row{
 		Kind:  vocab.RowKindCalls,
@@ -385,7 +385,7 @@ func TestCanonicalFormShape(t *testing.T) {
 }
 
 func TestBuildDeduplicatesIdenticalRows(t *testing.T) {
-	// stricttools/docs/graph-model.md: the relation is an ordered SET of rows.
+	// .strictmetadata/docs/graph-model.md: the relation is an ordered SET of rows.
 	b := NewBuilder()
 	if err := b.AddNode(moduleNode("a", false)); err != nil {
 		t.Fatal(err)
@@ -410,7 +410,7 @@ func TestBuildDeduplicatesIdenticalRows(t *testing.T) {
 }
 
 func TestCaseOnlyClashScopedToModuleIdentity(t *testing.T) {
-	// stricttools/docs/node-identity.md scopes the case-only-clash hard error to module identity
+	// .strictmetadata/docs/node-identity.md scopes the case-only-clash hard error to module identity
 	// (filesystem safety). Code identifiers differing only by case — class
 	// Outcome beside def outcome — are legal in every trio language and
 	// must coexist (found on the real corpus: strictcli).

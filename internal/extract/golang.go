@@ -221,7 +221,7 @@ func (ex *extraction) extractGoFile(m *workspace.Member, resolveIntra func(strin
 				}
 			}
 			// Member resolution: import path equals a member's module path
-			// or is prefixed by it (stricttools/docs/check-semantics.md, Go import resolution).
+			// or is prefixed by it (.strictmetadata/docs/check-semantics.md, Go import resolution).
 			for _, other := range ex.ws.Members {
 				omf := other.Manifests[vocab.LangGo]
 				if omf == nil || omf.GoModulePath == "" {

@@ -13,8 +13,8 @@ var idPattern = regexp.MustCompile(`^[a-z][a-z0-9]*(-[a-z0-9]+)*$`)
 
 func TestEveryRuleHasARulePage(t *testing.T) {
 	for _, r := range Rules {
-		if _, err := os.Stat(filepath.Join("..", "..", "stricttools", "docs", "rules", r.ID+".md")); err != nil {
-			t.Errorf("%s: no rule page under stricttools/docs/rules/: %v", r.ID, err)
+		if _, err := os.Stat(filepath.Join("..", "..", ".strictmetadata", "docs", "rules", r.ID+".md")); err != nil {
+			t.Errorf("%s: no rule page under .strictmetadata/docs/rules/: %v", r.ID, err)
 		}
 	}
 }

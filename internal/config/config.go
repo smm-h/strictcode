@@ -1,6 +1,6 @@
 // Package config loads strictcode.toml, the declarations file, through the
 // strictspec-generated reader and implements the consumer-native checks the
-// schema cannot express (stricttools/docs/config.md):
+// schema cannot express (.strictmetadata/docs/config.md):
 //
 //   - rule-ID validity against the registry, with tombstone rendering — a
 //     config referencing a retired ID hard-errors with the tombstone's
@@ -16,7 +16,7 @@
 // strictcode:<rule id> option (internal/options).
 //
 // Disk/registry staleness of suppression targets is NOT a load error — it is
-// the stale-suppression rule (stricttools/docs/rules/stale-suppression.md), evaluated during analysis with
+// the stale-suppression rule (.strictmetadata/docs/rules/stale-suppression.md), evaluated during analysis with
 // the workspace in hand.
 //
 // A missing config file yields no declarations: no suppressions, no tool or

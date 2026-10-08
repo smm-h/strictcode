@@ -266,7 +266,7 @@ Human-readable text, JSON, and exit codes. SARIF is deferred.
 
 Decided 2026-09-24. The design documents (a root `DESIGN.md`, `CATALOG.md`, and `BUILDLOG.md`, and
 `schema/SPEC.md`) were replaced by these pages. selfdoc refuses a `docs/` directory and requires
-`stricttools/docs/`, so the pages live there. Tables are rendered by directives from committed
+`.strictmetadata/docs/`, so the pages live there. Tables are rendered by directives from committed
 data (the registry dump, the vocabulary, the profiles, the strictspec schemas, and the CLI schema),
 so the site cannot disagree with the tool.
 

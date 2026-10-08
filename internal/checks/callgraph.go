@@ -13,7 +13,7 @@ import (
 	"github.com/smm-h/strictcode/internal/vocab"
 )
 
-// stdoutCallees are the Python standard-stream writers (stricttools/docs/check-semantics.md, library-boundary rules:
+// stdoutCallees are the Python standard-stream writers (.strictmetadata/docs/check-semantics.md, library-boundary rules:
 // print and sys.stdout/stderr writes are errors). Matched against the
 // alias-expanded canonical callee. The Go and TypeScript/JavaScript call
 // sites the extractor records are standard-stream writes already.

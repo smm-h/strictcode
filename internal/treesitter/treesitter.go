@@ -6,7 +6,7 @@
 //
 //   - grammar selection for the language trio (Python, Go, TS/JS);
 //   - LF normalization before parsing, so every byte span in the system is a
-//     span over LF-normalized UTF-8 (stricttools/docs/graph-model.md);
+//     span over LF-normalized UTF-8 (.strictmetadata/docs/graph-model.md);
 //   - the Parsers: one per grammar for the whole process, because each
 //     Parser owns a runtime instance and instances cost memory.
 //
@@ -95,7 +95,7 @@ func (g Grammar) parser() (*ts.Parser, error) {
 }
 
 // GrammarForFile maps a filename to its grammar. The boolean is false for
-// files strictcode does not parse. Extension mapping follows stricttools/docs/check-semantics.md
+// files strictcode does not parse. Extension mapping follows .strictmetadata/docs/check-semantics.md
 // (TS/JS resolution probes .ts/.tsx/.js/.jsx/.mjs/.cjs).
 func GrammarForFile(filename string) (Grammar, bool) {
 	dot := bytes.LastIndexByte([]byte(filename), '.')
@@ -117,7 +117,7 @@ func GrammarForFile(filename string) (Grammar, bool) {
 
 // NormalizeLF converts CRLF and lone CR line endings to LF. Canonical byte
 // positions everywhere in strictcode are offsets into this normalized form
-// (stricttools/docs/graph-model.md, spans and positions). The input slice is never modified; when no
+// (.strictmetadata/docs/graph-model.md, spans and positions). The input slice is never modified; when no
 // normalization is needed the input is returned as-is.
 func NormalizeLF(src []byte) []byte {
 	if !bytes.ContainsRune(src, '\r') {

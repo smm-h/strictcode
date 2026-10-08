@@ -42,7 +42,7 @@ with a mandatory reason, the Python tools some rules run, and the strictspec cer
 
 The documentation site covers the graph model, every rule, configuration, the support matrix by
 language, and the decisions behind the design, including the alternatives that were rejected. Its
-source is in `stricttools/docs/`.
+source is in `.strictmetadata/docs/`.
 
 ## License
 

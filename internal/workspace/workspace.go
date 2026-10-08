@@ -1,5 +1,5 @@
 // Package workspace loads the analysis inputs strictcode reconstructs from
-// disk (stricttools/docs/check-semantics.md, workspace and manifest inputs): the
+// disk (.strictmetadata/docs/check-semantics.md, workspace and manifest inputs): the
 // release declarations rlsbl keeps at
 // .strictmetadata/releasables/releasables.toml when present, the per-member
 // manifests (pyproject.toml, package.json, go.mod), declared dependency

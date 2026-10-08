@@ -33,7 +33,7 @@ var nodeBuiltins = map[string]bool{
 	"zlib": true, "test": true, "sea": true, "sqlite": true,
 }
 
-// tsExts are the probe extensions in probe order (stricttools/docs/check-semantics.md, lesson 18).
+// tsExts are the probe extensions in probe order (.strictmetadata/docs/check-semantics.md, lesson 18).
 var tsExts = []string{".ts", ".tsx", ".js", ".mjs", ".cjs"}
 
 var tsSourceExts = []string{".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".mts", ".cts"}
@@ -199,7 +199,7 @@ func stripJSONC(src []byte) []byte {
 }
 
 // tsLogicalName strips the extension and collapses index files to their
-// directory (stricttools/docs/node-identity.md, module segment). A root-level index file becomes ".".
+// directory (.strictmetadata/docs/node-identity.md, module segment). A root-level index file becomes ".".
 func tsLogicalName(file string) string {
 	ext := path.Ext(file)
 	stem := strings.TrimSuffix(file, ext)
@@ -389,7 +389,7 @@ func (ex *extraction) extractTSFile(m *workspace.Member, layout *tsLayout, file 
 		}
 
 		// Bare specifier: reduce to the package name and match members
-		// case-insensitively (stricttools/docs/check-semantics.md, TypeScript/JavaScript import resolution).
+		// case-insensitively (.strictmetadata/docs/check-semantics.md, TypeScript/JavaScript import resolution).
 		resolvedToMember := false
 		if pkg, ok := tsBarePackage(spec); ok {
 			for _, other := range ex.ws.Members {

@@ -10,7 +10,7 @@ import (
 )
 
 // defaultForbidden holds the per-language application-concern lists
-// (stricttools/docs/check-semantics.md, library-boundary rules), replaceable via config.
+// (.strictmetadata/docs/check-semantics.md, library-boundary rules), replaceable via config.
 var defaultForbidden = map[vocab.Lang][]string{
 	vocab.LangPy: {"argparse", "click", "typer", "flask", "fastapi", "django",
 		"uvicorn", "granian", "starlette", "tornado", "bottle"},

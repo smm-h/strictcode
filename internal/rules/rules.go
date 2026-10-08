@@ -1,4 +1,4 @@
-// Package rules is the rule registry: the Go declarations documented in stricttools/docs/rules.md.
+// Package rules is the rule registry: the Go declarations documented in .strictmetadata/docs/rules.md.
 // Rule IDs follow the mint-once scheme — flat lowercase-hyphenated names, one
 // ID per diagnosis, encoding nothing. All metadata lives here; the committed
 // registry dump (REGISTRY.json, produced by `strictcode registry dump`) is the
@@ -22,7 +22,7 @@ const (
 )
 
 // SuppressionShape is the natural target shape a rule's suppressions name
-// (stricttools/docs/config.md). Config suppressions for a rule must match its
+// (.strictmetadata/docs/config.md). Config suppressions for a rule must match its
 // shape; every suppression carries a mandatory non-empty reason.
 type SuppressionShape string
 
@@ -40,7 +40,7 @@ const (
 	SuppressMember SuppressionShape = "member"
 )
 
-// FixTier is a tier of the three-tier fix system (stricttools/docs/fixes.md).
+// FixTier is a tier of the three-tier fix system (.strictmetadata/docs/fixes.md).
 // Tier 3 is suggestion-only; every rule ships detection-first at tier 3.
 type FixTier int
 
@@ -125,7 +125,7 @@ var Groups = map[string][]string{
 }
 
 // Tombstones is the retired-rule set. Empty today: nothing has shipped, and
-// donor names were re-minted at their best form pre-ship (stricttools/docs/decisions.md).
+// donor names were re-minted at their best form pre-ship (.strictmetadata/docs/decisions.md).
 var Tombstones = []Tombstone{}
 
 // Rules lists the minted rules in catalog order.
@@ -250,7 +250,7 @@ var Rules = []Rule{
 			vocab.CapTestContextClassification,
 		},
 		// export-extraction is a uses-capability (moved from requires,
-		// stricttools/docs/decisions.md, 2026-08-04): the export-exemption facet (lesson 16) is
+		// .strictmetadata/docs/decisions.md, 2026-08-04): the export-exemption facet (lesson 16) is
 		// Python-only; the Go and TS algorithms need no export surface for
 		// the rule to hold.
 		Uses:          []vocab.Capability{vocab.CapExportExtraction, vocab.CapEntryPointDiscovery},

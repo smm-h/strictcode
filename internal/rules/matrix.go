@@ -30,7 +30,7 @@ func (r Rule) LanguageIndependent() bool {
 }
 
 // MatrixCell computes the matrix cell for a rule and language per the
-// requires/uses model (stricttools/docs/capabilities-and-profiles.md):
+// requires/uses model (.strictmetadata/docs/capabilities-and-profiles.md):
 //
 //  1. an explicit per-rule not_applicable override wins, with its reason;
 //  2. a required capability that is not-applicable in the profile makes the

@@ -1,4 +1,4 @@
-// Package engine is the stateless batch pipeline (stricttools/docs/implementation.md, runtime model):
+// Package engine is the stateless batch pipeline (.strictmetadata/docs/implementation.md, runtime model):
 // load the declarations and the options (hard errors), read the workspace
 // from disk, extract the one shared relation, run the checks whose options
 // are not off, produce findings. No cache, no persistence, no state between
